@@ -15,6 +15,8 @@ jobs:
   link-check:
     name: Check Links
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
