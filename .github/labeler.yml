@@ -22,8 +22,8 @@ configuration:
   - changed-files:
     - any-glob-to-any-file:
       - '*.config.*'
-      - '*.json'
       - 'tsconfig.json'
+      - 'vercel.json'
 
 dependencies:
   - changed-files:

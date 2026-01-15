@@ -28,7 +28,7 @@ jobs:
           config-file: '.github/markdown-link-check-config.json'
           folder-path: 'content/'
           file-extension: '.mdx'
-          check-modified-files-only: 'yes'
+          check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}
       
       - name: Check links in markdown files
         uses: gaurav-nelson/github-action-markdown-link-check@v1
@@ -37,4 +37,4 @@ jobs:
           use-verbose-mode: 'no'
           config-file: '.github/markdown-link-check-config.json'
           file-extension: '.md'
-          check-modified-files-only: 'yes'
+          check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}

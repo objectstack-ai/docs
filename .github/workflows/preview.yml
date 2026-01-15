@@ -18,8 +18,6 @@ jobs:
         with:
           script: |
             const prNumber = context.issue.number;
-            const repoName = context.repo.repo;
-            const ownerName = context.repo.owner;
             
             const comment = `## 🚀 Preview Deployment
             
