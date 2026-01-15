@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Check links in markdown files
+      - name: Check links in MDX files
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           use-quiet-mode: 'yes'
@@ -28,4 +28,13 @@ jobs:
           config-file: '.github/markdown-link-check-config.json'
           folder-path: 'content/'
           file-extension: '.mdx'
+          check-modified-files-only: 'yes'
+      
+      - name: Check links in markdown files
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+          file-extension: '.md'
           check-modified-files-only: 'yes'

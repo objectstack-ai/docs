@@ -14,8 +14,6 @@ updates:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
-    reviewers:
-      - "objectstack-ai/maintainers"
     
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
