@@ -20,21 +20,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Check links in MDX files
+      - name: Check links in content directory
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           use-quiet-mode: 'yes'
           use-verbose-mode: 'no'
           config-file: '.github/markdown-link-check-config.json'
           folder-path: 'content/'
-          file-extension: '.mdx'
           check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}
       
-      - name: Check links in markdown files
+      - name: Check links in root markdown files
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           use-quiet-mode: 'yes'
           use-verbose-mode: 'no'
           config-file: '.github/markdown-link-check-config.json'
-          file-extension: '.md'
+          file-path: './README.md'
           check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}
