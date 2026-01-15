@@ -1,4 +1,4 @@
 {
   "title": "文档",
-  "pages": ["index", "getting-started", "i18n-guide"]
+  "pages": ["index", "getting-started", "objectui", "objectql", "objectos", "i18n-guide"]
 }
