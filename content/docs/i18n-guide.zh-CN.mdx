@@ -1,0 +1,334 @@
+---
+title: 多语言文档指南
+description: 学习如何构建和维护多语言文档
+---
+
+# 多语言文档指南
+
+本指南介绍如何使用 Fumadocs 的国际化（i18n）支持来构建和维护多语言文档。
+
+## 概述
+
+本文档站点支持多种语言（目前支持英语和中文），使用 Fumadocs 内置的 i18n 功能。该系统允许您：
+
+- 创建多语言内容
+- 无缝切换语言
+- 维护 UI 元素的独立翻译
+- 配置特定语言的导航
+
+## 配置
+
+### 1. 定义支持的语言
+
+i18n 配置定义在 `lib/i18n.ts` 中：
+
+```typescript
+import type { I18nConfig } from 'fumadocs-core/i18n';
+
+export const i18n: I18nConfig<'en' | 'zh-CN'> = {
+  defaultLanguage: 'en',
+  languages: ['en', 'zh-CN'],
+};
+```
+
+**关键点：**
+- `defaultLanguage`：未指定语言时的后备语言
+- `languages`：所有支持的语言代码数组
+
+### 2. 配置 UI 翻译
+
+UI 元素的翻译定义在 `lib/i18n-ui.ts` 中：
+
+```typescript
+import type { Translations } from 'fumadocs-ui/i18n';
+
+export const cn: Partial<Translations> = {
+  search: '搜索文档',
+  searchNoResult: '没有结果',
+  toc: '目录',
+  tocNoHeadings: '没有标题',
+  lastUpdate: '最后更新',
+  chooseTheme: '选择主题',
+  previousPage: '上一页',
+  nextPage: '下一页',
+  chooseLanguage: '选择语言',
+};
+```
+
+### 3. 设置源配置
+
+在 `lib/source.ts` 中，将 i18n 与您的内容源集成：
+
+```typescript
+import { loader } from 'fumadocs-core/source';
+import { docs, meta } from '@/.source/server';
+import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
+import { i18n } from './i18n';
+
+export const source = loader({
+  baseUrl: '/docs',
+  source: toFumadocsSource(docs, meta),
+  i18n,
+});
+```
+
+### 4. 配置应用布局
+
+`app/[lang]/layout.tsx` 中的语言布局为子组件提供语言上下文：
+
+```typescript
+import { I18nProvider } from 'fumadocs-ui/contexts/i18n';
+import { defineI18nUI } from 'fumadocs-ui/i18n';
+
+const i18nConfig = defineI18nUI(i18n, {
+  translations: {
+    en: {
+      displayName: 'English',
+    },
+    'zh-CN': {
+      ...cn,
+      displayName: '简体中文',
+    },
+  },
+});
+
+export default async function LangLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ lang: string }>;
+  children: ReactNode;
+}) {
+  const { lang } = await params;
+  const providerProps = i18nConfig.provider(lang);
+  
+  return <I18nProvider {...providerProps}>{children}</I18nProvider>;
+}
+```
+
+## 创建多语言内容
+
+### 文件命名规范
+
+内容文件使用语言后缀来区分不同的翻译：
+
+```
+content/docs/
+├── index.en.mdx          # 英文版本
+├── index.zh-CN.mdx       # 中文版本
+├── getting-started.en.mdx
+├── getting-started.zh-CN.mdx
+├── meta.en.json          # 英文导航
+└── meta.zh-CN.json       # 中文导航
+```
+
+**格式：** `{文件名}.{语言代码}.mdx`
+
+### 内容结构
+
+每个 MDX 文件都应该包含带有标题和描述的前置元数据：
+
+**英文 (`index.en.mdx`)：**
+```mdx
+---
+title: Welcome
+description: Welcome to the documentation
+---
+
+# Welcome to Our Documentation
+
+Content goes here...
+```
+
+**中文 (`index.zh-CN.mdx`)：**
+```mdx
+---
+title: 欢迎
+description: 欢迎访问文档
+---
+
+# 欢迎访问我们的文档
+
+内容在这里...
+```
+
+### 导航配置
+
+使用 `meta.{语言}.json` 创建特定语言的导航文件：
+
+**英文 (`meta.en.json`)：**
+```json
+{
+  "title": "Documentation",
+  "pages": ["index", "getting-started"]
+}
+```
+
+**中文 (`meta.zh-CN.json`)：**
+```json
+{
+  "title": "文档",
+  "pages": ["index", "getting-started"]
+}
+```
+
+## 添加新语言
+
+添加新语言（例如西班牙语）的步骤：
+
+1. **更新 i18n 配置** (`lib/i18n.ts`)：
+```typescript
+export const i18n: I18nConfig<'en' | 'zh-CN' | 'es'> = {
+  defaultLanguage: 'en',
+  languages: ['en', 'zh-CN', 'es'],
+};
+```
+
+2. **添加 UI 翻译** (`lib/i18n-ui.ts`)：
+```typescript
+export const es: Partial<Translations> = {
+  search: 'Buscar documentación',
+  searchNoResult: 'Sin resultados',
+  toc: 'Tabla de contenidos',
+  // ... 其他翻译
+};
+```
+
+3. **更新布局配置** (`app/[lang]/layout.tsx`)：
+```typescript
+const i18nConfig = defineI18nUI(i18n, {
+  translations: {
+    en: { displayName: 'English' },
+    'zh-CN': { ...cn, displayName: '简体中文' },
+    es: { ...es, displayName: 'Español' },
+  },
+});
+```
+
+4. **创建内容文件**：
+```
+content/docs/
+├── index.es.mdx
+├── getting-started.es.mdx
+└── meta.es.json
+```
+
+## 默认语言重定向
+
+在 `vercel.json` 中配置根路径重定向：
+
+```json
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/en/docs",
+      "permanent": true
+    }
+  ]
+}
+```
+
+**注意：** 如果您在 `lib/i18n.ts` 中更改了默认语言，请相应更新 `vercel.json` 中的目标路径。
+
+## URL 结构
+
+文档使用带语言前缀的 URL：
+
+```
+/en/docs              → 英文文档首页
+/en/docs/getting-started  → 英文快速开始页面
+/zh-CN/docs           → 中文文档首页
+/zh-CN/docs/getting-started → 中文快速开始页面
+```
+
+## 最佳实践
+
+1. **一致性**：在所有语言中保持相同的页面结构
+2. **完整翻译**：确保所有页面都有所有支持语言的翻译
+3. **元文件**：始终为正确的导航创建匹配的 `meta.{语言}.json` 文件
+4. **后备**：如果缺少翻译，默认语言将作为后备
+5. **测试**：在部署前测试所有语言版本
+
+## 构建和测试
+
+构建文档：
+```bash
+npm run build
+```
+
+运行开发服务器：
+```bash
+npm run dev
+```
+
+构建过程将为所有语言变体生成静态页面。
+
+## 故障排除
+
+### 特定语言的页面未找到
+
+**问题：** 页面在一种语言中有效，但在另一种语言中返回 404。
+
+**解决方案：** 确保 `{页面}.{语言1}.mdx` 和 `{页面}.{语言2}.mdx` 文件都存在且具有相同的基本文件名。
+
+### 导航显示不正确
+
+**问题：** 侧边栏导航缺失或不正确。
+
+**解决方案：** 检查所有语言的 `meta.{语言}.json` 文件是否存在并包含正确的页面引用。
+
+### 语言切换器未出现
+
+**问题：** 语言选择器在 UI 中不可见。
+
+**解决方案：** 验证：
+- 在 `lib/i18n.ts` 中定义了多种语言
+- `I18nProvider` 在 `app/[lang]/layout.tsx` 中正确配置
+- UI 翻译包含带有 `displayName` 的语言名称
+
+### 错误的默认语言
+
+**问题：** 网站重定向到错误的语言。
+
+**解决方案：**
+- 检查 `lib/i18n.ts` 中的 `defaultLanguage`
+- 更新 `vercel.json` 中的重定向目标以匹配
+- 清除浏览器缓存并重新构建
+
+## 示例仓库结构
+
+```
+docs/
+├── app/
+│   ├── [lang]/
+│   │   ├── docs/
+│   │   │   ├── [[...slug]]/
+│   │   │   │   └── page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── layout.config.tsx
+│   ├── layout.tsx
+│   └── page.tsx
+├── content/
+│   └── docs/
+│       ├── index.en.mdx
+│       ├── index.zh-CN.mdx
+│       ├── getting-started.en.mdx
+│       ├── getting-started.zh-CN.mdx
+│       ├── meta.en.json
+│       └── meta.zh-CN.json
+├── lib/
+│   ├── i18n.ts
+│   ├── i18n-ui.ts
+│   └── source.ts
+└── vercel.json
+```
+
+## 下一步
+
+- 添加多语言内容页面
+- 根据您的特定需求自定义 UI 翻译
+- 根据您的受众考虑添加更多语言
+- 如果需要，设置自动化翻译工作流程

@@ -1,0 +1,334 @@
+---
+title: Multi-language Documentation Guide
+description: Learn how to build and maintain multi-language documentation
+---
+
+# Multi-language Documentation Guide
+
+This guide explains how to build and maintain multi-language documentation using Fumadocs with internationalization (i18n) support.
+
+## Overview
+
+This documentation site supports multiple languages (currently English and Chinese) using Fumadocs' built-in i18n capabilities. The system allows you to:
+
+- Create content in multiple languages
+- Switch between languages seamlessly
+- Maintain separate translations for UI elements
+- Configure language-specific navigation
+
+## Configuration
+
+### 1. Define Supported Languages
+
+The i18n configuration is defined in `lib/i18n.ts`:
+
+```typescript
+import type { I18nConfig } from 'fumadocs-core/i18n';
+
+export const i18n: I18nConfig<'en' | 'zh-CN'> = {
+  defaultLanguage: 'en',
+  languages: ['en', 'zh-CN'],
+};
+```
+
+**Key Points:**
+- `defaultLanguage`: The fallback language when no language is specified
+- `languages`: Array of all supported language codes
+
+### 2. Configure UI Translations
+
+UI element translations are defined in `lib/i18n-ui.ts`:
+
+```typescript
+import type { Translations } from 'fumadocs-ui/i18n';
+
+export const cn: Partial<Translations> = {
+  search: '搜索文档',
+  searchNoResult: '没有结果',
+  toc: '目录',
+  tocNoHeadings: '没有标题',
+  lastUpdate: '最后更新',
+  chooseTheme: '选择主题',
+  previousPage: '上一页',
+  nextPage: '下一页',
+  chooseLanguage: '选择语言',
+};
+```
+
+### 3. Set Up Source Configuration
+
+In `lib/source.ts`, integrate i18n with your content source:
+
+```typescript
+import { loader } from 'fumadocs-core/source';
+import { docs, meta } from '@/.source/server';
+import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
+import { i18n } from './i18n';
+
+export const source = loader({
+  baseUrl: '/docs',
+  source: toFumadocsSource(docs, meta),
+  i18n,
+});
+```
+
+### 4. Configure App Layout
+
+The language layout in `app/[lang]/layout.tsx` provides language context to child components:
+
+```typescript
+import { I18nProvider } from 'fumadocs-ui/contexts/i18n';
+import { defineI18nUI } from 'fumadocs-ui/i18n';
+
+const i18nConfig = defineI18nUI(i18n, {
+  translations: {
+    en: {
+      displayName: 'English',
+    },
+    'zh-CN': {
+      ...cn,
+      displayName: '简体中文',
+    },
+  },
+});
+
+export default async function LangLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ lang: string }>;
+  children: ReactNode;
+}) {
+  const { lang } = await params;
+  const providerProps = i18nConfig.provider(lang);
+  
+  return <I18nProvider {...providerProps}>{children}</I18nProvider>;
+}
+```
+
+## Creating Multi-language Content
+
+### File Naming Convention
+
+Content files use language suffixes to distinguish between translations:
+
+```
+content/docs/
+├── index.en.mdx          # English version
+├── index.zh-CN.mdx       # Chinese version
+├── getting-started.en.mdx
+├── getting-started.zh-CN.mdx
+├── meta.en.json          # English navigation
+└── meta.zh-CN.json       # Chinese navigation
+```
+
+**Format:** `{filename}.{language-code}.mdx`
+
+### Content Structure
+
+Each MDX file should include frontmatter with title and description:
+
+**English (`index.en.mdx`):**
+```mdx
+---
+title: Welcome
+description: Welcome to the documentation
+---
+
+# Welcome to Our Documentation
+
+Content goes here...
+```
+
+**Chinese (`index.zh-CN.mdx`):**
+```mdx
+---
+title: 欢迎
+description: 欢迎访问文档
+---
+
+# 欢迎访问我们的文档
+
+内容在这里...
+```
+
+### Navigation Configuration
+
+Create language-specific navigation files using `meta.{language}.json`:
+
+**English (`meta.en.json`):**
+```json
+{
+  "title": "Documentation",
+  "pages": ["index", "getting-started"]
+}
+```
+
+**Chinese (`meta.zh-CN.json`):**
+```json
+{
+  "title": "文档",
+  "pages": ["index", "getting-started"]
+}
+```
+
+## Adding a New Language
+
+To add a new language (e.g., Spanish):
+
+1. **Update i18n configuration** (`lib/i18n.ts`):
+```typescript
+export const i18n: I18nConfig<'en' | 'zh-CN' | 'es'> = {
+  defaultLanguage: 'en',
+  languages: ['en', 'zh-CN', 'es'],
+};
+```
+
+2. **Add UI translations** (`lib/i18n-ui.ts`):
+```typescript
+export const es: Partial<Translations> = {
+  search: 'Buscar documentación',
+  searchNoResult: 'Sin resultados',
+  toc: 'Tabla de contenidos',
+  // ... other translations
+};
+```
+
+3. **Update layout configuration** (`app/[lang]/layout.tsx`):
+```typescript
+const i18nConfig = defineI18nUI(i18n, {
+  translations: {
+    en: { displayName: 'English' },
+    'zh-CN': { ...cn, displayName: '简体中文' },
+    es: { ...es, displayName: 'Español' },
+  },
+});
+```
+
+4. **Create content files**:
+```
+content/docs/
+├── index.es.mdx
+├── getting-started.es.mdx
+└── meta.es.json
+```
+
+## Default Language Redirect
+
+Configure the root redirect in `vercel.json`:
+
+```json
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/en/docs",
+      "permanent": true
+    }
+  ]
+}
+```
+
+**Note:** If you change the default language in `lib/i18n.ts`, update the destination path in `vercel.json` accordingly.
+
+## URL Structure
+
+The documentation uses language-prefixed URLs:
+
+```
+/en/docs              → English documentation home
+/en/docs/getting-started  → English getting started page
+/zh-CN/docs           → Chinese documentation home
+/zh-CN/docs/getting-started → Chinese getting started page
+```
+
+## Best Practices
+
+1. **Consistency**: Keep the same page structure across all languages
+2. **Complete translations**: Ensure all pages have translations for all supported languages
+3. **Meta files**: Always create matching `meta.{lang}.json` files for proper navigation
+4. **Fallback**: The default language serves as a fallback if a translation is missing
+5. **Testing**: Test all language versions before deploying
+
+## Building and Testing
+
+Build the documentation:
+```bash
+npm run build
+```
+
+Run the development server:
+```bash
+npm run dev
+```
+
+The build process will generate static pages for all language variants.
+
+## Troubleshooting
+
+### Page not found for specific language
+
+**Problem:** A page works in one language but returns 404 in another.
+
+**Solution:** Ensure both `{page}.{lang1}.mdx` and `{page}.{lang2}.mdx` files exist with the same base filename.
+
+### Navigation not showing correctly
+
+**Problem:** Sidebar navigation is missing or incorrect.
+
+**Solution:** Check that `meta.{lang}.json` files exist for all languages and contain the correct page references.
+
+### Language switcher not appearing
+
+**Problem:** Language selector is not visible in the UI.
+
+**Solution:** Verify that:
+- Multiple languages are defined in `lib/i18n.ts`
+- `I18nProvider` is properly configured in `app/[lang]/layout.tsx`
+- UI translations include language names with `displayName`
+
+### Wrong default language
+
+**Problem:** Site redirects to incorrect language.
+
+**Solution:** 
+- Check `defaultLanguage` in `lib/i18n.ts`
+- Update redirect destination in `vercel.json` to match
+- Clear browser cache and rebuild
+
+## Example Repository Structure
+
+```
+docs/
+├── app/
+│   ├── [lang]/
+│   │   ├── docs/
+│   │   │   ├── [[...slug]]/
+│   │   │   │   └── page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── layout.config.tsx
+│   ├── layout.tsx
+│   └── page.tsx
+├── content/
+│   └── docs/
+│       ├── index.en.mdx
+│       ├── index.zh-CN.mdx
+│       ├── getting-started.en.mdx
+│       ├── getting-started.zh-CN.mdx
+│       ├── meta.en.json
+│       └── meta.zh-CN.json
+├── lib/
+│   ├── i18n.ts
+│   ├── i18n-ui.ts
+│   └── source.ts
+└── vercel.json
+```
+
+## Next Steps
+
+- Add more content pages in multiple languages
+- Customize UI translations for your specific needs
+- Consider adding more languages based on your audience
+- Set up automated translation workflows if needed
