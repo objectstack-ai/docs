@@ -18,6 +18,15 @@ A multi-language documentation site built with Fumadocs, supporting English and 
 npm install
 ```
 
+After cloning the repository, configure the Git merge driver for `pnpm-lock.yaml`:
+
+```bash
+git config merge.pnpm-merge.name "pnpm-lock.yaml merge driver"
+git config merge.pnpm-merge.driver "pnpm install"
+```
+
+This helps avoid merge conflicts in the lock file by automatically regenerating it during merges.
+
 ### Development
 
 ```bash
