@@ -24,7 +24,7 @@ jobs:
             
             const comment = `## 🚀 Preview Deployment
             
-            This pull request will be automatically deployed to Vercel when merged.
+            This pull request will be automatically deployed to Vercel.
             
             ### Preview Links
             - 📝 **Documentation**: Will be available once Vercel deployment completes
