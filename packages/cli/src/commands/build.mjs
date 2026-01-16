@@ -39,7 +39,7 @@ export function registerBuildCommand(cli) {
       const child = spawn(nextCmd, args, {
         stdio: 'inherit',
         env,
-        cwd: nextAppDir // CRITICAL: Run in the Next.js app directory
+        // cwd: nextAppDir // CRITICAL: Run in the Next.js app directory
       });
 
     });
