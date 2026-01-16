@@ -1,0 +1,227 @@
+---
+title: ObjectOS - The Platform
+description: Runtime platform that binds data and UI together with Local-First architecture
+---
+
+# ObjectOS - The Platform
+
+ObjectOS is the runtime platform that brings ObjectQL (data) and ObjectUI (interface) together, providing a complete application environment with identity management, access control, and flexible deployment options.
+
+## What is ObjectOS?
+
+ObjectOS is the **runtime platform** that orchestrates the entire ObjectStack. It binds the data layer (ObjectQL) with the presentation layer (ObjectUI) while providing essential platform services like user management, security, and deployment capabilities.
+
+### Key Capabilities
+
+- 🔗 **QL-UI Binding** - Seamlessly connects data engine with UI framework
+- 🏠 **Local-First Architecture** - Run applications entirely on local devices
+- 👥 **Identity & Access Management** - Built-in user system with RBAC
+- 🔒 **Field-Level Security** - Fine-grained data access control
+- 🚀 **Flexible Deployment** - Standalone .oos files or Docker containers
+- 🏢 **Multi-Tenant Ready** - SaaS-ready with tenant isolation
+
+## How It Works
+
+ObjectOS operates as the runtime environment that:
+
+### 1. Binds Data and UI
+
+ObjectOS creates a bidirectional bridge between ObjectQL and ObjectUI:
+
+```typescript
+// ObjectOS automatically wires up data and UI
+const app = new ObjectOS({
+  schema: './schema',      // ObjectQL schemas
+  pages: './pages',        // ObjectUI components
+  storage: './data'        // Local-First storage
+})
+
+await app.start()
+```
+
+### 2. Manages Platform Services
+
+Provides essential platform capabilities:
+
+- **User System** - Authentication and user profiles in `_users` object
+- **Role Management** - Flexible role definitions in `_roles` object  
+- **Permission Control** - RBAC with field-level security
+- **Data Isolation** - Multi-tenant data segregation
+
+### 3. Enables Flexible Deployment
+
+Deploy applications in multiple modes:
+
+```bash
+# Standalone mode - single .oos file
+./myapp.oos
+
+# Server mode - Docker container
+docker run -p 3000:3000 myapp:latest
+
+# Multi-tenant SaaS mode
+docker run -e MULTI_TENANT=true myapp:latest
+```
+
+## Platform Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                 Application Layer                   │
+│              (Your Business Logic)                  │
+└──────────────────────┬──────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────┐
+│                   ObjectOS Platform                 │
+│  ┌──────────────────────────────────────────────┐  │
+│  │            Identity & Access Layer           │  │
+│  │   ┌────────┬────────┬──────────────────┐    │  │
+│  │   │ Users  │ Roles  │ Permissions (FLS)│    │  │
+│  │   └────────┴────────┴──────────────────┘    │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │              QL-UI Binding Layer             │  │
+│  │   ┌──────────────────┬──────────────────┐   │  │
+│  │   │   ObjectUI       │    ObjectQL      │   │  │
+│  │   │  (Presentation)  │   (Data Engine)  │   │  │
+│  │   └──────────────────┴──────────────────┘   │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │             Storage Abstraction              │  │
+│  │   ┌─────────┬──────────┬──────────────────┐ │  │
+│  │   │ SQLite  │  MySQL   │   PostgreSQL     │ │  │
+│  │   │ (Local) │ (Server) │   (Server)       │ │  │
+│  │   └─────────┴──────────┴──────────────────┘ │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+## Use Cases
+
+### Personal Productivity Apps
+
+Build Local-First applications that run entirely offline:
+
+```typescript
+const app = new ObjectOS({
+  mode: 'standalone',
+  storage: '~/.myapp/data.db'
+})
+```
+
+### Team Collaboration Tools
+
+Deploy server-based applications with user management:
+
+```typescript
+const app = new ObjectOS({
+  mode: 'server',
+  database: 'mysql://localhost/myapp',
+  auth: {
+    providers: ['email', 'oauth']
+  }
+})
+```
+
+### Multi-Tenant SaaS Platforms
+
+Build SaaS applications with complete tenant isolation:
+
+```typescript
+const app = new ObjectOS({
+  mode: 'multi-tenant',
+  tenantStrategy: 'virtualCity',
+  database: 'postgresql://localhost/saas'
+})
+```
+
+## What You'll Learn
+
+In this section, you will discover:
+
+- ✅ **Platform Architecture** - How ObjectOS binds QL and UI together
+- ✅ **Identity & Access** - User system, RBAC, and field-level security
+- ✅ **Deployment & Operations** - Standalone, server, and multi-tenant modes
+- ✅ **Best Practices** - Security configurations and optimization techniques
+
+## Getting Started
+
+Ready to dive in? Start with:
+
+1. **[Platform Architecture](./platform-architecture)** - Understand how ObjectOS works
+2. **[Identity & Access](./identity-access)** - Set up users and permissions
+3. **[Deployment](./deployment)** - Deploy your application
+
+## Quick Example
+
+Here's a complete example to get you started:
+
+```typescript
+import { ObjectOS } from '@objectstack/os'
+
+// 1. Initialize ObjectOS with schema and UI
+const app = new ObjectOS({
+  mode: 'standalone',
+  storage: './myapp.db',
+  schema: {
+    objects: {
+      tasks: {
+        fields: {
+          name: { type: 'text', required: true },
+          owner: { type: 'lookup', reference_to: '_users' }
+        },
+        permission_set: {
+          user_permission: {
+            allowCreate: true,
+            allowRead: true,
+            allowEdit: "owner eq $user.id",
+            allowDelete: "owner eq $user.id"
+          }
+        }
+      }
+    }
+  },
+  pages: {
+    home: {
+      type: 'list',
+      object: 'tasks'
+    }
+  }
+})
+
+// 2. Start the application
+await app.start()
+
+console.log('ObjectOS running at http://localhost:3000')
+```
+
+## Local-First Architecture
+
+ObjectOS is designed with Local-First principles:
+
+- **Offline-First** - Applications work without network connectivity
+- **User Ownership** - Data stays on user's device in standalone mode
+- **Sync When Ready** - Optional synchronization with cloud services
+- **Fast Performance** - SQLite-powered local storage
+
+```typescript
+// Local-First configuration
+const app = new ObjectOS({
+  mode: 'standalone',
+  storage: './local-data.db',
+  sync: {
+    enabled: false,  // Fully offline
+    // Or enable sync:
+    // remote: 'https://sync.example.com',
+    // strategy: 'manual'
+  }
+})
+```
+
+## Next Steps
+
+Begin your ObjectOS journey:
+
+- **New to ObjectOS?** Start with [Platform Architecture](./platform-architecture)
+- **Setting up security?** Jump to [Identity & Access](./identity-access)  
+- **Ready to deploy?** Check [Deployment & Operations](./deployment)
