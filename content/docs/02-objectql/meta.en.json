@@ -1,0 +1,10 @@
+{
+  "title": "ObjectQL",
+  "pages": [
+    "index",
+    "core-concepts",
+    "protocol-spec",
+    "core-features",
+    "server-sdk"
+  ]
+}
