@@ -6,14 +6,6 @@
     "01-quickstart",
     "02-objectql",
     "03-objectui",
-    "04-objectos",
-    "---",
-    "getting-started",
-    "architecture",
-    "objectui",
-    "objectql",
-    "objectos",
-    "---",
-    "i18n-guide"
+    "04-objectos"
   ]
 }
