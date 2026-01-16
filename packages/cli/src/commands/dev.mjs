@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 export function registerDevCommand(cli) {
   cli
     .command('dev [dir]', 'Start development server')
-    .option('--port <port>', 'Port to listen on', { default: 3000 })
+    .option('--port <port>', 'Port to listen on', { default: 7777 })
     .action(async (dir, options) => {
       // 1. Resolve user's docs directory (Absolute path)
       const docsDir = dir ? path.resolve(process.cwd(), dir) : path.resolve(process.cwd(), 'content/docs');
