@@ -51,10 +51,21 @@ ${content}
 }
 
 async function main() {
-  const files = process.env.CHANGED_FILES ? process.env.CHANGED_FILES.split(',') : [];
+  const isAll = process.argv.includes('--all');
+  let files = [];
+
+  if (isAll) {
+    console.log('Scanning for all .en.mdx files...');
+    files = getAllEnMdxFiles('content/docs');
+  } else {
+    files = process.env.CHANGED_FILES ? process.env.CHANGED_FILES.split(',') : [];
+  }
 
   if (files.length === 0) {
     console.log('No files to translate.');
+    console.log('Usage:');
+    console.log('  Automatic (CI): Set CHANGED_FILES environment variable');
+    console.log('  Manual (All):   node scripts/translate-docs.mjs --all');
     return;
   }
 
@@ -69,8 +80,9 @@ async function main() {
       continue;
     }
 
-    // Determine target file path (replace .en.mdx with .zh-CN.mdx)
-    const zhFilePath = enFilePath.replace('.en.mdx', '.zh-CN.mdx');
+
+    // Determine target file path
+    const zhFilePath = resolveTranslatedFilePath(enFilePath);
 
     if (zhFilePath === enFilePath) {
       console.log(`Skipping non-EN file: ${file}`);
@@ -96,6 +108,39 @@ async function main() {
       // We don't exit process so other files can still be processed
     }
   }
+}
+
+/**
+ * Resolves the path where the translated file should be saved.
+ * You can customize this function to change the directory structure.
+ */
+function resolveTranslatedFilePath(enFilePath) {
+  // Strategy 1: Same directory, different extension (Default)
+  // content/docs/intro.en.mdx -> content/docs/intro.zh-CN.mdx
+  // return enFilePath.replace('.en.mdx', '.zh-CN.mdx');
+
+  // Strategy 2: Separate directory tree
+  // content/docs/intro.en.mdx -> content/docs-zh/intro.zh-CN.mdx
+  const relativePath = path.relative(path.join(process.cwd(), 'content/docs'), enFilePath);
+  return path.join(process.cwd(), 'content/docs-zh', relativePath.replace('.en.mdx', '.zh-CN.mdx'));
+}
+
+function getAllEnMdxFiles(dir) {
+  let results = [];
+  const list = fs.readdirSync(dir);
+  list.forEach(file => {
+    file = path.join(dir, file);
+    const stat = fs.statSync(file);
+    if (stat && stat.isDirectory()) {
+      results = results.concat(getAllEnMdxFiles(file));
+    } else {
+      if (file.endsWith('.en.mdx')) {
+        // Return relative path to process.cwd() to match CHANGED_FILES format
+        results.push(path.relative(process.cwd(), file));
+      }
+    }
+  });
+  return results;
 }
 
 main();

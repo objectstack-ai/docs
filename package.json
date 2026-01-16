@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "translate": "node scripts/translate-docs.mjs",
+    "translate:all": "node scripts/translate-docs.mjs --all"
   },
   "dependencies": {
     "@fumadocs/ui": "^16.4.7",

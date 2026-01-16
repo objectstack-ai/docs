@@ -28,7 +28,7 @@ description: Short summary for search engines and preview cards
 ```
 
 ### Writing Style (MDX)
-- **Headings**: Use `##` (H2) for major sections. `H1` is handled automatically by the page title.
+- **Headings**: Use `#` (H1) for the page title and `##` (H2) for major sections.
 - **Tone**: Professional, technical, concise, and direct.
 - **Code Blocks**: Always specify the language for syntax highlighting (e.g., ```typescript, ```bash, ```json).
 - **Callouts**: Use the standard Fumadocs callout syntax or components if strictly required, but prefer standard markdown where possible.

@@ -24,7 +24,6 @@ export default async function Page({ params }: PageProps) {
   return (
     <DocsPage toc={page.data.toc as any} full={page.data.full as any}>
       <DocsBody>
-        <h1>{page.data.title}</h1>
         <MDX />
       </DocsBody>
     </DocsPage>

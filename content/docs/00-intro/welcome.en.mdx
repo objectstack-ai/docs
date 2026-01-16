@@ -1,132 +1,70 @@
 ---
 title: Welcome to ObjectStack
-description: Learn about ObjectStack's project vision and core components
+description: Build local-first, full-stack applications that run anywhere.
 ---
 
 # Welcome to ObjectStack
 
-## Project Vision
+> **Build local-first, full-stack applications that run anywhere.**
 
-ObjectStack is a local-first, database-agnostic, protocol-driven full-stack application development platform.
+ObjectStack is a development platform designed for **data sovereignty** and **technical decoupling**. By separating business logic from technical implementation through standardized protocols, it allows you to write your application once and deploy it on any infrastructure—from a local SQLite file to an enterprise Oracle cluster.
 
-### Core Value Propositions
+## Why ObjectStack?
 
-- **Local-First**: Data is stored locally, giving users complete control over their data
-- **Database-Agnostic**: Write once, run on any database
-- **Protocol-Driven**: Separation of business logic and technical implementation through standardized protocols
+### 1. Local-First & Data Sovereignty
+Your data belongs to you. ObjectStack applications store data locally by default, ensuring complete control, offline capability, and zero vendor lock-in risk.
 
-## Core Components
+### 2. Database Agnostic
+**Write once, adapter everywhere.** Don't bind your business logic to a specific database vendor. ObjectStack's protocol layer abstracts the underlying storage, allowing you to migrate freely between MySQL, PostgreSQL, SQLite, Oracle, and SQL Server.
 
-ObjectStack consists of three core components that work together to form a complete application development ecosystem:
+### 3. Protocol-Driven Development
+We separate the *what* from the *how*. You define your Backend (ObjectQL) and Frontend (ObjectUI) using standard JSON protocols, significantly reducing boilerplate code and technical debt.
 
-### ObjectQL - Data Query Engine
+---
 
-**Position**: Backend core, cross-database protocol
+## Core Ecosystem
 
-ObjectQL is a database-agnostic query engine that provides:
-- Unified data query language
-- Multi-database driver adaptation (MySQL, PostgreSQL, Oracle, SQL Server, SQLite)
-- Abstract Syntax Tree compiler
-- Automated database migration
+ObjectStack consists of three integrated engines that work together to form a complete platform:
 
-**Core Capabilities**:
-- Write Schema once, freely migrate between different databases
-- Virtual column indexing mechanism for improved query performance
-- Support for complex aggregation and relational queries
+### 1. ObjectQL (Backend Engine)
+**The universal data protocol.**
 
-### ObjectUI - Interface Rendering Engine
+ObjectQL is a database-agnostic query engine that acts as a translation layer between your app and the database.
+- **Unified Query Language**: Use a single JSON-based syntax to query any supported database.
+- **Auto-Migration**: Define your schema once, and let the engine handle database table creation and updates.
+- **Virtual Indexing**: Built-in performance optimization mechanisms.
 
-**Position**: Frontend core, JSON-driven interface
+### 2. ObjectUI (Frontend Engine)
+**The declarative interface protocol.**
 
-ObjectUI adopts a declarative UI paradigm, describing interfaces through JSON protocol:
-- Data-driven component rendering
-- Rich built-in component library
-- Custom themes and styles
-- React renderer implementation
+ObjectUI allows you to build complex user interfaces using pure JSON descriptions, rendering them into modern React components.
+- **Zero-Code UI**: Generate forms, tables, and dashboards without writing frontend implementation code.
+- **Responsive by Default**: Adapts automatically to mobile, tablet, and desktop layouts.
+- **Themeable**: Switch visual styles instantly without changing structure.
 
-**Core Capabilities**:
-- Generate interfaces without writing frontend code
-- Support for complex forms, tables, charts, and other components
-- Fully responsive, adapts to various devices
+### 3. ObjectOS (Runtime Platform)
+**The operating system for your apps.**
 
-### ObjectOS - Runtime Platform
-
-**Position**: Integration layer, providing authentication, file management, and commercial features
-
-ObjectOS is the runtime platform that binds ObjectQL and ObjectUI together:
-- Unified authentication center (RBAC, field-level security)
-- Plugin and extension system
-- Multi-tenant support
-- Local-first implementation mechanism
-
-**Core Capabilities**:
-- Out-of-the-box permission management
-- Flexible plugin extension mechanism
-- Support for standalone and server mode deployment
-- Multi-environment configuration management
+ObjectOS connects ObjectQL and ObjectUI into a cohesive runtime environment, handling the essential services every app needs.
+- **Identity & Access**: Out-of-the-box RBAC (Role-Based Access Control) and field-level security.
+- **Plugin Architecture**: Extend functionality with a flexible plugin system.
+- **Multi-Tenant Ready**: Deploy as a single-user local app or a multi-tenant SaaS platform seamlessly.
 
 ## Component Relationship Diagram
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    ObjectOS                         │
-│  ┌───────────────┐            ┌─────────────────┐  │
-│  │   ObjectUI    │◄──────────►│   ObjectQL      │  │
-│  │ (JSON-driven) │            │  (Cross-DB)     │  │
-│  └───────────────┘            └─────────────────┘  │
-│         │                              │            │
-│         │                              │            │
-│    React Renderer                  DB Drivers       │
-│         │                              │            │
-│    ┌────▼─────┐                  ┌────▼────────┐   │
-│    │ Browser  │                  │  MySQL/PG   │   │
-│    │ Frontend │                  │  Oracle/... │   │
-│    └──────────┘                  └─────────────┘   │
-└─────────────────────────────────────────────────────┘
-```
-
-## Technical Advantages
-
-### 1. Data Sovereignty
-
-User data is stored locally or in databases they control, with no vendor lock-in risk.
-
-### 2. Development Efficiency
-
-Protocol-driven approach significantly reduces repetitive code writing and improves development efficiency.
-
-### 3. Flexible Deployment
-
-Supports various deployment scenarios from personal local applications to enterprise-grade SaaS platforms.
-
-### 4. Technical Decoupling
-
-Separation of protocol layer and implementation layer allows independent evolution and reduces technical debt.
+![ObjectStack Architecture](/img/architecture.svg)
 
 ## Use Cases
 
-### Individual Developers
-- Quickly build local applications (Todo, notes, accounting, etc.)
-- No need to configure database servers
-- Complete control over your data
-
-### Enterprise IT Departments
-- Build internal enterprise management systems
-- Connect to existing heterogeneous databases
-- Unified data access layer
-
-### SaaS Startups
-- Quickly build multi-tenant SaaS platforms
-- Focus on core business logic
-- Reduce technology stack complexity
-
-### Low-Code Platform Vendors
-- Use as underlying data engine
-- Avoid database vendor lock-in
-- Provide more flexible deployment options
+| Scenario | Benefit |
+| :--- | :--- |
+| **Individual Developers** | Build local tools (Notes, CRM) quickly without setting up servers. |
+| **Enterprise IT** | Create unified management systems over heterogeneous legacy databases. |
+| **SaaS Startups** | Focus on core business logic while getting multi-tenancy for free. |
+| **Low-Code Vendors** | Use ObjectStack as a robust, vendor-neutral underlying engine. |
 
 ## Next Steps
 
-- Check out [Quick Start](../01-quickstart) to run your first application in 5 minutes
-- Read [The Manifesto](./manifesto) to understand the design principles in depth
-- Learn about [The AI Codex](./ai-codex) to improve development efficiency
+- **[Quick Start](../01-quickstart)**: Deploy your first application in 5 minutes.
+- **[The Manifesto](./manifesto)**: Deep dive into our "Protocol-Driven" design philosophy.
+- **[The AI Codex](./ai-codex)**: Learn how AI accelerates ObjectStack development.
