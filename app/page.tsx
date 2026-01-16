@@ -18,10 +18,28 @@ function getPreferredLanguage(acceptLanguage: string, availableLanguages: readon
     .split(',')
     .map(lang => {
       const parts = lang.trim().split(';');
-      const code = parts[0];
-      const quality = parts[1] ? parseFloat(parts[1].split('=')[1]) : 1.0;
+      const code = parts[0].trim();
+      
+      // Skip empty language codes
+      if (!code) {
+        return null;
+      }
+      
+      // Parse quality value, default to 1.0 if not present or invalid
+      let quality = 1.0;
+      if (parts[1]) {
+        const qPart = parts[1].trim();
+        if (qPart.startsWith('q=')) {
+          const parsedQuality = parseFloat(qPart.substring(2));
+          if (!isNaN(parsedQuality)) {
+            quality = parsedQuality;
+          }
+        }
+      }
+      
       return { code, quality };
     })
+    .filter((lang): lang is { code: string; quality: number } => lang !== null)
     .sort((a, b) => b.quality - a.quality);
 
   // Try to find the best match (exact or partial) respecting quality order
