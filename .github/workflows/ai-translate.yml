@@ -32,9 +32,14 @@ jobs:
           files: content/docs/**/*.mdx
           separator: ","
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
       - name: Install dependencies
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: npm install openai
+        run: pnpm install
 
       - name: Run translation script
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -45,7 +50,7 @@ jobs:
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }} 
           OPENAI_MODEL: "gpt-4o" 
           CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: node scripts/translate-docs.mjs
+        run: pnpm translate
 
       - name: Create Pull Request
         if: steps.changed-files.outputs.any_changed == 'true'

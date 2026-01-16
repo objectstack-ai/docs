@@ -7,8 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "translate": "node scripts/translate-docs.mjs",
-    "translate:all": "node scripts/translate-docs.mjs --all"
+    "translate": "docs-cli translate",
+    "translate:all": "docs-cli translate --all"
+  },
+  "devDependencies": {
+    "@docs/cli": "workspace:*"
   },
   "dependencies": {
     "@fumadocs/ui": "^16.4.7",
