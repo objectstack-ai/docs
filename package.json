@@ -10,6 +10,7 @@
     "translate:all": "objectdocs translate --all"
   },
   "devDependencies": {
-    "@objectdocs/cli": "workspace:*"
+    "@objectdocs/cli": "workspace:*",
+    "next": "^16.1.2"
   }
 }

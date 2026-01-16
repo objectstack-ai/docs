@@ -11,6 +11,9 @@ importers:
       '@objectdocs/cli':
         specifier: workspace:*
         version: link:packages/cli
+      next:
+        specifier: ^16.1.2
+        version: 16.1.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
 
   packages/cli:
     dependencies:
