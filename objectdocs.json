@@ -13,9 +13,6 @@
       { "code": "zh-CN", "name": "简体中文" }
     ]
   },
-  "build": {
-    "output": ""
-  },
   "branding": {
     "logo": {
       "text": "ObjectStack"
