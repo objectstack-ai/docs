@@ -51,13 +51,18 @@ export function registerStartCommand(cli) {
         console.log('Starting Next.js production server...');
         console.log(`  Engine: ${nextAppDir}`);
         
+        const docsDir = path.resolve(process.cwd(), 'content/docs');
+
+        const env = {
+          ...process.env,
+          DOCS_DIR: docsDir
+        };
+
+
         const child = spawn('npm', ['start'], {
           cwd: nextAppDir,
           stdio: 'inherit',
-          env: {
-            ...process.env,
-            DOCS_DIR: path.resolve(process.cwd(), 'content/docs')
-          }
+          env: env
         });
       }
     });

@@ -5,7 +5,6 @@ import fs from 'node:fs';
 
 function resolveContentDir(dir: string) {
   if (process.env.DOCS_DIR && dir === 'content/docs') return process.env.DOCS_DIR;
-  if (process.env.DOCS_ZH_DIR && dir === 'content/docs-zh-CN') return process.env.DOCS_ZH_DIR;
 
   // Try local first (Root deployment)
   if (fs.existsSync(path.resolve(dir))) return dir;
@@ -18,14 +17,9 @@ function resolveContentDir(dir: string) {
 }
 
 const docsDir = resolveContentDir('content/docs');
-const docsZhDir = resolveContentDir('content/docs-zh-CN');
 
 export const { docs, meta } = defineDocs({
   dir: docsDir,
-});
-
-export const { docs: docsZh, meta: metaZh } = defineDocs({
-  dir: docsZhDir,
 });
 
 export default defineConfig({
