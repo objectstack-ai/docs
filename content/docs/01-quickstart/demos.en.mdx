@@ -1,0 +1,664 @@
+---
+title: Demo Projects
+description: Explore ready-to-run ObjectStack demo applications
+---
+
+# Demo Projects Showcase
+
+Explore real-world ObjectStack applications. Download, install, and run them immediately to see ObjectStack in action.
+
+## Available Demos
+
+### 1. Personal Accounting App (本地记账应用)
+
+A complete personal finance tracker built with ObjectStack's local-first architecture.
+
+**Features:**
+- 💰 Track income and expenses
+- 📊 Visual reports and charts
+- 🏷️ Categories and tags
+- 📅 Monthly budgets
+- 💾 100% local data storage (SQLite)
+- 📦 Portable `.oos` package format
+
+**Technology Stack:**
+- ObjectQL with SQLite driver
+- ObjectUI dashboard layouts
+- Chart components for visualization
+- Triggers for automated calculations
+
+**Perfect For:**
+- Learning ObjectStack basics
+- Understanding local-first architecture
+- Personal finance management
+- Offline-first applications
+
+#### Quick Start
+
+**Option 1: Install from .oos Package**
+
+```bash
+# Download the package
+curl -O https://demos.objectstack.io/accounting-app.oos
+
+# Install using ObjectOS CLI
+objectos install accounting-app.oos
+
+# Run the app
+objectos run accounting-app
+```
+
+Access at: `http://localhost:3000`
+
+**Option 2: Clone and Run from Source**
+
+```bash
+# Clone the repository
+git clone https://github.com/objectstack/demo-accounting-app.git
+cd demo-accounting-app
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+#### Key Files to Explore
+
+```
+demo-accounting-app/
+├── src/
+│   ├── objects/
+│   │   ├── transaction.object.js      # Income/expense records
+│   │   ├── category.object.js         # Transaction categories
+│   │   ├── budget.object.js           # Monthly budgets
+│   │   └── account.object.js          # Bank accounts
+│   ├── pages/
+│   │   ├── dashboard.page.json        # Main dashboard with charts
+│   │   ├── transactions.page.json     # Transaction list view
+│   │   └── reports.page.json          # Financial reports
+│   └── triggers/
+│       ├── transaction.trigger.js     # Auto-calculate balances
+│       └── budget.trigger.js          # Budget alerts
+└── objectos.config.js                 # SQLite configuration
+```
+
+#### Sample Data Model: Transaction Object
+
+```javascript
+// src/objects/transaction.object.js
+export default {
+  name: "transaction",
+  label: "Transaction",
+  icon: "DollarSign",
+  fields: {
+    date: {
+      type: "date",
+      label: "Date",
+      required: true,
+      defaultValue: "TODAY"
+    },
+    type: {
+      type: "select",
+      label: "Type",
+      options: [
+        { label: "Income", value: "income" },
+        { label: "Expense", value: "expense" }
+      ],
+      required: true
+    },
+    amount: {
+      type: "currency",
+      label: "Amount",
+      required: true,
+      scale: 2
+    },
+    category: {
+      type: "lookup",
+      label: "Category",
+      reference_to: "category",
+      required: true
+    },
+    account: {
+      type: "lookup",
+      label: "Account",
+      reference_to: "account"
+    },
+    description: {
+      type: "text",
+      label: "Description"
+    },
+    // Virtual field - computed
+    impact: {
+      type: "formula",
+      label: "Impact",
+      formula: "type == 'income' ? amount : -amount",
+      returnType: "currency"
+    }
+  },
+  list_views: {
+    all: {
+      label: "All Transactions",
+      columns: ["date", "type", "amount", "category", "account"],
+      sort: [["date", "desc"]]
+    },
+    income: {
+      label: "Income",
+      filter_scope: "type eq 'income'",
+      columns: ["date", "amount", "category", "description"]
+    },
+    expenses: {
+      label: "Expenses",
+      filter_scope: "type eq 'expense'",
+      columns: ["date", "amount", "category", "description"]
+    }
+  }
+};
+```
+
+#### Dashboard Configuration
+
+```json
+// src/pages/dashboard.page.json
+{
+  "name": "dashboard",
+  "label": "Dashboard",
+  "icon": "LayoutDashboard",
+  "layout": {
+    "type": "dashboard",
+    "widgets": [
+      {
+        "type": "summary_card",
+        "title": "Total Income",
+        "object": "transaction",
+        "aggregation": "sum",
+        "field": "amount",
+        "filter": "type eq 'income'",
+        "size": "small"
+      },
+      {
+        "type": "summary_card",
+        "title": "Total Expenses",
+        "object": "transaction",
+        "aggregation": "sum",
+        "field": "amount",
+        "filter": "type eq 'expense'",
+        "size": "small"
+      },
+      {
+        "type": "chart",
+        "title": "Monthly Trend",
+        "chartType": "line",
+        "object": "transaction",
+        "groupBy": "date.month",
+        "metrics": [
+          { "field": "amount", "aggregation": "sum", "label": "Total" }
+        ]
+      },
+      {
+        "type": "chart",
+        "title": "Expenses by Category",
+        "chartType": "pie",
+        "object": "transaction",
+        "filter": "type eq 'expense'",
+        "groupBy": "category",
+        "metrics": [
+          { "field": "amount", "aggregation": "sum" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 2. Enterprise CRM System (企业 CRM 系统)
+
+A full-featured Customer Relationship Management system demonstrating enterprise-grade ObjectStack capabilities.
+
+**Features:**
+- 👥 Contact and company management
+- 🎯 Lead tracking and conversion
+- 📞 Activity logging (calls, emails, meetings)
+- 📈 Sales pipeline visualization
+- 🔐 Role-based access control
+- 🐳 Docker deployment ready
+- 🗄️ PostgreSQL backend
+
+**Technology Stack:**
+- ObjectQL with PostgreSQL driver
+- Multi-tenant configuration
+- Advanced permissions (RBAC)
+- ObjectUI complex forms and kanban boards
+- Email integration triggers
+
+**Perfect For:**
+- Understanding enterprise features
+- Learning multi-tenant architecture
+- Docker deployment practice
+- Complex business logic implementation
+
+#### Quick Start with Docker
+
+```bash
+# Clone the repository
+git clone https://github.com/objectstack/demo-crm-system.git
+cd demo-crm-system
+
+# Start with Docker Compose
+docker-compose up -d
+
+# Wait for initialization (about 30 seconds)
+docker-compose logs -f objectos
+```
+
+Access at: `http://localhost:3000`
+
+**Default Login:**
+- Username: `admin@demo.com`
+- Password: `demo123` (change after login!)
+
+#### Architecture Overview
+
+```
+┌─────────────────────────────────────────────┐
+│           Docker Compose Stack              │
+│  ┌────────────┐  ┌──────────────────────┐  │
+│  │  ObjectOS  │  │    PostgreSQL 15     │  │
+│  │  Container │──│   (CRM Database)     │  │
+│  └────────────┘  └──────────────────────┘  │
+│        │                                     │
+│  ┌────────────┐  ┌──────────────────────┐  │
+│  │   Redis    │  │      Nginx           │  │
+│  │  (Session) │  │  (Reverse Proxy)     │  │
+│  └────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+#### Key Objects
+
+**Contact Object:**
+
+```javascript
+// src/objects/contact.object.js
+export default {
+  name: "contact",
+  label: "Contact",
+  icon: "User",
+  fields: {
+    firstName: {
+      type: "text",
+      label: "First Name",
+      required: true
+    },
+    lastName: {
+      type: "text",
+      label: "Last Name",
+      required: true
+    },
+    fullName: {
+      type: "formula",
+      label: "Full Name",
+      formula: "firstName + ' ' + lastName"
+    },
+    email: {
+      type: "email",
+      label: "Email",
+      unique: true
+    },
+    phone: {
+      type: "phone",
+      label: "Phone"
+    },
+    company: {
+      type: "lookup",
+      label: "Company",
+      reference_to: "company"
+    },
+    status: {
+      type: "select",
+      label: "Status",
+      options: [
+        { label: "Lead", value: "lead" },
+        { label: "Qualified", value: "qualified" },
+        { label: "Customer", value: "customer" },
+        { label: "Inactive", value: "inactive" }
+      ],
+      defaultValue: "lead"
+    },
+    assignedTo: {
+      type: "lookup",
+      label: "Assigned To",
+      reference_to: "user"
+    }
+  },
+  permissions: {
+    allowRead: "field(assignedTo) == $user.id or $user.role == 'admin'",
+    allowEdit: "field(assignedTo) == $user.id or $user.role == 'admin'",
+    allowDelete: "$user.role == 'admin'"
+  }
+};
+```
+
+**Lead Pipeline:**
+
+```json
+// src/pages/pipeline.page.json
+{
+  "name": "pipeline",
+  "label": "Sales Pipeline",
+  "icon": "TrendingUp",
+  "layout": {
+    "type": "kanban",
+    "object": "opportunity",
+    "groupBy": "stage",
+    "cardFields": ["name", "amount", "closeDate", "contact"],
+    "stages": [
+      { "value": "prospecting", "label": "Prospecting" },
+      { "value": "qualification", "label": "Qualification" },
+      { "value": "proposal", "label": "Proposal" },
+      { "value": "negotiation", "label": "Negotiation" },
+      { "value": "closed_won", "label": "Closed Won" },
+      { "value": "closed_lost", "label": "Closed Lost" }
+    ],
+    "aggregation": {
+      "field": "amount",
+      "function": "sum",
+      "label": "Total Value"
+    }
+  }
+}
+```
+
+#### Multi-Tenant Setup
+
+```javascript
+// objectos.config.js
+export default {
+  datasources: {
+    default: {
+      driver: "postgresql",
+      host: process.env.DB_HOST || "postgres",
+      port: 5432,
+      database: process.env.DB_NAME || "crm",
+      username: process.env.DB_USER || "crm_user",
+      password: process.env.DB_PASSWORD
+    }
+  },
+  
+  multiTenant: {
+    enabled: true,
+    mode: "schema",
+    schemaPattern: "tenant_{tenantId}",
+    
+    // Resolve tenant from subdomain
+    resolver: async (request) => {
+      const host = request.headers.host;
+      const subdomain = host.split('.')[0];
+      
+      // Lookup tenant in database
+      return {
+        id: subdomain,
+        name: subdomain
+      };
+    }
+  },
+  
+  auth: {
+    providers: {
+      local: {
+        enabled: true
+      },
+      saml: {
+        enabled: process.env.SAML_ENABLED === 'true',
+        entryPoint: process.env.SAML_ENTRY_POINT,
+        cert: process.env.SAML_CERT
+      }
+    }
+  }
+};
+```
+
+#### Email Integration Trigger
+
+```javascript
+// src/triggers/activity.trigger.js
+export default {
+  listenTo: "activity",
+  
+  afterInsert: async function(context) {
+    const { doc, object } = context;
+    
+    // Send notification email when activity is assigned
+    if (doc.type === 'meeting' && doc.assignedTo) {
+      const user = await object.findOne('user', doc.assignedTo);
+      const contact = await object.findOne('contact', doc.contactId);
+      
+      await context.services.email.send({
+        to: user.email,
+        subject: `New Meeting Scheduled with ${contact.fullName}`,
+        template: 'meeting_notification',
+        data: {
+          userName: user.name,
+          contactName: contact.fullName,
+          meetingDate: doc.scheduledDate,
+          notes: doc.notes
+        }
+      });
+    }
+  }
+};
+```
+
+## Comparing the Demos
+
+| Feature | Accounting App | CRM System |
+|---------|---------------|------------|
+| **Database** | SQLite (local) | PostgreSQL (server) |
+| **Deployment** | .oos package | Docker Compose |
+| **Users** | Single user | Multi-user, multi-tenant |
+| **Complexity** | Beginner | Advanced |
+| **Use Case** | Personal | Enterprise |
+| **Setup Time** | 2 minutes | 10 minutes |
+| **Offline Support** | Full | Limited |
+
+## Learning Path
+
+### For Beginners
+
+1. **Start with Accounting App**
+   - Understand ObjectQL schema definitions
+   - Learn ObjectUI layouts
+   - Practice with triggers
+   - Master local-first concepts
+
+2. **Progress to CRM System**
+   - Explore multi-user features
+   - Study RBAC implementation
+   - Learn Docker deployment
+   - Understand multi-tenant architecture
+
+### For Enterprise Developers
+
+1. **Study CRM System First**
+   - Review enterprise patterns
+   - Examine security model
+   - Understand Docker setup
+   - Explore integration patterns
+
+2. **Simplify with Accounting App**
+   - See minimal configuration
+   - Understand core concepts
+   - Learn packaging strategies
+
+## Extending the Demos
+
+### Accounting App Extensions
+
+**Add Investment Tracking:**
+
+```javascript
+// src/objects/investment.object.js
+export default {
+  name: "investment",
+  label: "Investment",
+  fields: {
+    name: { type: "text", label: "Name", required: true },
+    type: {
+      type: "select",
+      label: "Type",
+      options: [
+        { label: "Stocks", value: "stocks" },
+        { label: "Bonds", value: "bonds" },
+        { label: "Real Estate", value: "real_estate" }
+      ]
+    },
+    purchaseDate: { type: "date", label: "Purchase Date" },
+    purchasePrice: { type: "currency", label: "Purchase Price" },
+    currentValue: { type: "currency", label: "Current Value" },
+    gain: {
+      type: "formula",
+      label: "Gain/Loss",
+      formula: "currentValue - purchasePrice",
+      returnType: "currency"
+    }
+  }
+};
+```
+
+### CRM System Extensions
+
+**Add Customer Support Tickets:**
+
+```javascript
+// src/objects/ticket.object.js
+export default {
+  name: "ticket",
+  label: "Support Ticket",
+  fields: {
+    subject: { type: "text", label: "Subject", required: true },
+    description: { type: "textarea", label: "Description" },
+    contact: {
+      type: "lookup",
+      label: "Contact",
+      reference_to: "contact",
+      required: true
+    },
+    priority: {
+      type: "select",
+      label: "Priority",
+      options: [
+        { label: "Low", value: "low" },
+        { label: "Medium", value: "medium" },
+        { label: "High", value: "high" },
+        { label: "Critical", value: "critical" }
+      ]
+    },
+    status: {
+      type: "select",
+      label: "Status",
+      options: [
+        { label: "New", value: "new" },
+        { label: "In Progress", value: "in_progress" },
+        { label: "Waiting", value: "waiting" },
+        { label: "Resolved", value: "resolved" }
+      ]
+    },
+    assignedTo: {
+      type: "lookup",
+      label: "Assigned To",
+      reference_to: "user"
+    }
+  }
+};
+```
+
+## Demo Data
+
+Both demos include sample data for exploration:
+
+### Accounting App Sample Data
+- 50+ sample transactions
+- 10 expense categories
+- 3 income categories
+- 2 bank accounts
+- 3 months of historical data
+
+### CRM System Sample Data
+- 25 contacts
+- 10 companies
+- 15 opportunities
+- 30+ activities
+- 5 user accounts (different roles)
+
+## Download Links
+
+### Accounting App
+- **Source Code**: [github.com/objectstack/demo-accounting-app](https://github.com/objectstack/demo-accounting-app)
+- **.oos Package**: [demos.objectstack.io/accounting-app.oos](https://demos.objectstack.io/accounting-app.oos)
+- **Documentation**: [demos.objectstack.io/accounting-app/docs](https://demos.objectstack.io/accounting-app/docs)
+
+### CRM System
+- **Source Code**: [github.com/objectstack/demo-crm-system](https://github.com/objectstack/demo-crm-system)
+- **Docker Image**: `objectstack/demo-crm:latest`
+- **Documentation**: [demos.objectstack.io/crm-system/docs](https://demos.objectstack.io/crm-system/docs)
+
+## Troubleshooting
+
+### Accounting App Issues
+
+**Database not found:**
+```bash
+# Reset database
+rm ~/.objectos/accounting-app/database.sqlite
+npm run dev
+```
+
+**Port conflict:**
+```bash
+# Change port in objectos.config.js
+export default {
+  server: { port: 3001 }
+};
+```
+
+### CRM System Issues
+
+**Docker containers not starting:**
+```bash
+# Check logs
+docker-compose logs
+
+# Restart clean
+docker-compose down -v
+docker-compose up -d
+```
+
+**Database connection error:**
+```bash
+# Wait for PostgreSQL to initialize
+docker-compose logs postgres | grep "ready to accept"
+
+# Test connection
+docker-compose exec postgres psql -U crm_user -d crm
+```
+
+## Next Steps
+
+After exploring the demos:
+
+1. **Customize** - Modify objects and pages to fit your needs
+2. **Build** - Create your own application from scratch
+3. **Deploy** - Take your app to production
+4. **Share** - Package and distribute your creation
+
+## Community Demos
+
+Browse more demos from the community:
+
+- [Recipe Manager](https://github.com/objectstack-community/recipe-manager)
+- [Project Tracker](https://github.com/objectstack-community/project-tracker)
+- [Inventory System](https://github.com/objectstack-community/inventory)
+- [Event Calendar](https://github.com/objectstack-community/event-calendar)
+
+Submit your own demo: [community/demos](https://github.com/objectstack/community/demos)

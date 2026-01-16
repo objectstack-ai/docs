@@ -1,0 +1,132 @@
+---
+title: Welcome to ObjectStack
+description: Learn about ObjectStack's project vision and core components
+---
+
+# Welcome to ObjectStack
+
+## Project Vision
+
+ObjectStack is a local-first, database-agnostic, protocol-driven full-stack application development platform.
+
+### Core Value Propositions
+
+- **Local-First**: Data is stored locally, giving users complete control over their data
+- **Database-Agnostic**: Write once, run on any database
+- **Protocol-Driven**: Separation of business logic and technical implementation through standardized protocols
+
+## Core Components
+
+ObjectStack consists of three core components that work together to form a complete application development ecosystem:
+
+### ObjectQL - Data Query Engine
+
+**Position**: Backend core, cross-database protocol
+
+ObjectQL is a database-agnostic query engine that provides:
+- Unified data query language
+- Multi-database driver adaptation (MySQL, PostgreSQL, Oracle, SQL Server, SQLite)
+- Abstract Syntax Tree compiler
+- Automated database migration
+
+**Core Capabilities**:
+- Write Schema once, freely migrate between different databases
+- Virtual column indexing mechanism for improved query performance
+- Support for complex aggregation and relational queries
+
+### ObjectUI - Interface Rendering Engine
+
+**Position**: Frontend core, JSON-driven interface
+
+ObjectUI adopts a declarative UI paradigm, describing interfaces through JSON protocol:
+- Data-driven component rendering
+- Rich built-in component library
+- Custom themes and styles
+- React renderer implementation
+
+**Core Capabilities**:
+- Generate interfaces without writing frontend code
+- Support for complex forms, tables, charts, and other components
+- Fully responsive, adapts to various devices
+
+### ObjectOS - Runtime Platform
+
+**Position**: Integration layer, providing authentication, file management, and commercial features
+
+ObjectOS is the runtime platform that binds ObjectQL and ObjectUI together:
+- Unified authentication center (RBAC, field-level security)
+- Plugin and extension system
+- Multi-tenant support
+- Local-first implementation mechanism
+
+**Core Capabilities**:
+- Out-of-the-box permission management
+- Flexible plugin extension mechanism
+- Support for standalone and server mode deployment
+- Multi-environment configuration management
+
+## Component Relationship Diagram
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    ObjectOS                         │
+│  ┌───────────────┐            ┌─────────────────┐  │
+│  │   ObjectUI    │◄──────────►│   ObjectQL      │  │
+│  │ (JSON-driven) │            │  (Cross-DB)     │  │
+│  └───────────────┘            └─────────────────┘  │
+│         │                              │            │
+│         │                              │            │
+│    React Renderer                  DB Drivers       │
+│         │                              │            │
+│    ┌────▼─────┐                  ┌────▼────────┐   │
+│    │ Browser  │                  │  MySQL/PG   │   │
+│    │ Frontend │                  │  Oracle/... │   │
+│    └──────────┘                  └─────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
+
+## Technical Advantages
+
+### 1. Data Sovereignty
+
+User data is stored locally or in databases they control, with no vendor lock-in risk.
+
+### 2. Development Efficiency
+
+Protocol-driven approach significantly reduces repetitive code writing and improves development efficiency.
+
+### 3. Flexible Deployment
+
+Supports various deployment scenarios from personal local applications to enterprise-grade SaaS platforms.
+
+### 4. Technical Decoupling
+
+Separation of protocol layer and implementation layer allows independent evolution and reduces technical debt.
+
+## Use Cases
+
+### Individual Developers
+- Quickly build local applications (Todo, notes, accounting, etc.)
+- No need to configure database servers
+- Complete control over your data
+
+### Enterprise IT Departments
+- Build internal enterprise management systems
+- Connect to existing heterogeneous databases
+- Unified data access layer
+
+### SaaS Startups
+- Quickly build multi-tenant SaaS platforms
+- Focus on core business logic
+- Reduce technology stack complexity
+
+### Low-Code Platform Vendors
+- Use as underlying data engine
+- Avoid database vendor lock-in
+- Provide more flexible deployment options
+
+## Next Steps
+
+- Check out [Quick Start](/en/docs/01-quickstart) to run your first application in 5 minutes
+- Read [The Manifesto](./manifesto) to understand the design principles in depth
+- Learn about [The AI Codex](./ai-codex) to improve development efficiency

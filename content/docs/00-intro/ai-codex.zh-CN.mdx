@@ -1,0 +1,373 @@
+---
+title: AI 协作指引
+description: 使用 AI 辅助开发 ObjectStack 项目的最佳实践
+---
+
+# AI 协作指引（The AI Codex）
+
+本指南帮助开发者充分利用 AI 工具来提升 ObjectStack 项目的开发效率。
+
+## 为什么需要 AI 协作
+
+ObjectStack 作为一个协议驱动的平台，有大量的：
+- Schema 定义
+- UI 协议配置
+- 重复性 CRUD 代码
+- API 文档生成
+
+这些都非常适合使用 AI 辅助完成，可以显著提升开发效率。
+
+## 核心术语表
+
+在与 AI 协作时，使用统一的术语非常重要。以下是 ObjectStack 的核心术语：
+
+### 数据层术语
+
+- **Schema**：数据模型定义，使用 JSON 格式描述表结构
+- **Object**：业务对象，对应数据库中的表
+- **Field**：对象的字段，对应数据库列
+- **Reference**：关系字段，用于建立对象间的关联
+- **Virtual Field**：虚拟字段，不存储在数据库中，通过计算得出
+
+### 查询层术语
+
+- **ObjectQL**：跨数据库的统一查询语言
+- **Query DSL**：查询领域特定语言
+- **Filter**：查询过滤条件
+- **Aggregation**：聚合查询
+- **Driver**：数据库驱动，如 `@objectql/driver-mysql`
+
+### UI 层术语
+
+- **ObjectUI**：JSON 驱动的 UI 协议
+- **Component**：组件，如 Form、Table、Card 等
+- **Action**：交互动作，如 API 请求、页面跳转等
+- **Renderer**：渲染器，将 JSON 协议转换为实际 UI
+
+### 平台层术语
+
+- **ObjectOS**：运行时平台
+- **Plugin**：插件，用于扩展功能
+- **Hook**：生命周期钩子，如 beforeInsert、afterUpdate
+- **RBAC**：基于角色的访问控制
+- **FLS**：Field-Level Security，字段级安全
+
+## AI 辅助 Schema 设计
+
+### 提示词模板
+
+```
+我需要为 ObjectStack 创建一个 [业务场景] 的 Schema。
+
+业务需求：
+- [需求 1]
+- [需求 2]
+- [需求 3]
+
+请生成符合 ObjectStack 规范的 JSON Schema，包括：
+1. 所有必要的字段定义
+2. 字段类型（text, number, date, reference 等）
+3. 字段约束（required, unique 等）
+4. 对象之间的关系定义
+```
+
+### 示例对话
+
+**用户**：
+```
+我需要为 ObjectStack 创建一个电商订单管理系统的 Schema。
+
+业务需求：
+- 管理客户信息（姓名、电话、邮箱）
+- 管理产品信息（名称、价格、库存）
+- 管理订单（订单号、客户、产品列表、总金额、状态）
+- 订单状态包括：待支付、已支付、已发货、已完成、已取消
+
+请生成符合 ObjectStack 规范的 JSON Schema。
+```
+
+**AI 回复**：
+```json
+{
+  "objects": {
+    "customers": {
+      "label": "客户",
+      "fields": {
+        "name": { "type": "text", "label": "姓名", "required": true },
+        "phone": { "type": "text", "label": "电话" },
+        "email": { "type": "email", "label": "邮箱", "unique": true }
+      }
+    },
+    "products": {
+      "label": "产品",
+      "fields": {
+        "name": { "type": "text", "label": "产品名称", "required": true },
+        "price": { "type": "number", "label": "价格", "required": true },
+        "stock": { "type": "number", "label": "库存", "default": 0 }
+      }
+    },
+    "orders": {
+      "label": "订单",
+      "fields": {
+        "order_no": { "type": "text", "label": "订单号", "unique": true },
+        "customer": { "type": "reference", "ref": "customers", "label": "客户" },
+        "items": { "type": "grid", "label": "订单项", "fields": {
+          "product": { "type": "reference", "ref": "products" },
+          "quantity": { "type": "number", "default": 1 },
+          "price": { "type": "number" }
+        }},
+        "total": { "type": "number", "label": "总金额" },
+        "status": { 
+          "type": "select", 
+          "label": "状态",
+          "options": ["pending", "paid", "shipped", "completed", "cancelled"],
+          "default": "pending"
+        }
+      }
+    }
+  }
+}
+```
+
+## AI 辅助 UI 协议生成
+
+### 提示词模板
+
+```
+我需要为 [对象名称] 创建 ObjectUI 协议。
+
+UI 需求：
+- [UI 需求 1]
+- [UI 需求 2]
+
+请生成符合 ObjectStack ObjectUI 规范的 JSON 协议。
+```
+
+### 示例对话
+
+**用户**：
+```
+我需要为 orders 对象创建一个列表页面和详情表单。
+
+UI 需求：
+- 列表页显示订单号、客户名称、总金额、状态
+- 支持按状态筛选
+- 点击订单可以查看详情
+- 详情表单可以编辑订单状态
+```
+
+**AI 回复**：
+```json
+{
+  "pages": {
+    "order_list": {
+      "type": "page",
+      "title": "订单列表",
+      "components": [
+        {
+          "type": "table",
+          "object": "orders",
+          "columns": [
+            { "field": "order_no", "label": "订单号" },
+            { "field": "customer.name", "label": "客户" },
+            { "field": "total", "label": "总金额" },
+            { "field": "status", "label": "状态" }
+          ],
+          "filters": [
+            { "field": "status", "type": "select", "label": "状态" }
+          ],
+          "actions": [
+            { "type": "navigate", "target": "order_detail", "label": "查看" }
+          ]
+        }
+      ]
+    },
+    "order_detail": {
+      "type": "page",
+      "title": "订单详情",
+      "components": [
+        {
+          "type": "form",
+          "object": "orders",
+          "fields": [
+            { "name": "order_no", "label": "订单号", "readonly": true },
+            { "name": "customer", "label": "客户", "readonly": true },
+            { "name": "total", "label": "总金额", "readonly": true },
+            { "name": "status", "label": "状态", "type": "select" }
+          ],
+          "actions": [
+            { "type": "submit", "label": "保存" }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+## AI 辅助插件开发
+
+### 提示词模板
+
+```
+我需要为 ObjectStack 开发一个服务端插件。
+
+功能需求：
+- [需求描述]
+
+请生成符合 ObjectStack 插件规范的代码，包括：
+1. 插件入口文件
+2. 必要的生命周期钩子
+3. 错误处理
+```
+
+### 示例代码生成
+
+**用户**：
+```
+我需要开发一个插件，在订单创建后自动发送邮件通知。
+```
+
+**AI 回复**：
+```javascript
+// plugins/order-notification.js
+module.exports = {
+  name: 'order-notification',
+  
+  hooks: {
+    afterInsert: async (context, object, record) => {
+      if (object === 'orders') {
+        const { customer, total, order_no } = record;
+        
+        // 查询客户邮箱
+        const customerData = await context.db.query({
+          object: 'customers',
+          filters: { _id: customer },
+          fields: ['email', 'name']
+        });
+        
+        if (customerData && customerData[0]?.email) {
+          await context.email.send({
+            to: customerData[0].email,
+            subject: `订单确认 - ${order_no}`,
+            body: `
+              尊敬的 ${customerData[0].name}：
+              
+              您的订单 ${order_no} 已创建成功。
+              订单金额：¥${total}
+              
+              感谢您的订购！
+            `
+          });
+        }
+      }
+    }
+  }
+};
+```
+
+## AI 辅助文档生成
+
+### 自动生成 API 文档
+
+使用 TypeDoc 或 JSDoc 从代码注释自动生成文档：
+
+```typescript
+/**
+ * 查询对象数据
+ * @param {Object} options - 查询选项
+ * @param {string} options.object - 对象名称
+ * @param {Object} options.filters - 过滤条件
+ * @param {Object} options.sort - 排序规则
+ * @param {number} options.limit - 限制数量
+ * @returns {Promise<Array>} 查询结果
+ * 
+ * @example
+ * const users = await db.query({
+ *   object: 'users',
+ *   filters: { age: { $gt: 18 } },
+ *   sort: { created_at: 'desc' },
+ *   limit: 10
+ * });
+ */
+async function query(options) {
+  // 实现代码
+}
+```
+
+然后运行：
+```bash
+npx typedoc --out docs/api src/
+```
+
+## 最佳实践
+
+### 1. 明确上下文
+
+在与 AI 对话时，明确说明：
+- 使用的是 ObjectStack 框架
+- 需要遵循的协议规范
+- 目标数据库类型（如果有特殊需求）
+
+### 2. 提供完整信息
+
+包括：
+- 业务需求的详细描述
+- 数据模型之间的关系
+- UI 交互流程
+- 特殊的业务规则
+
+### 3. 验证生成的代码
+
+AI 生成的代码需要：
+- 检查是否符合 ObjectStack 规范
+- 测试功能是否正常
+- 审查安全性和性能
+
+### 4. 迭代优化
+
+如果生成的结果不理想：
+- 提供更具体的要求
+- 给出示例或参考
+- 分步骤细化需求
+
+## 工具推荐
+
+### 代码生成
+- **GitHub Copilot**：代码补全和生成
+- **ChatGPT / Claude**：架构设计和问题解答
+- **Cursor**：AI 辅助编程 IDE
+
+### 文档生成
+- **TypeDoc**：TypeScript API 文档
+- **JSDoc**：JavaScript API 文档
+- **Swagger/OpenAPI**：REST API 文档
+
+### 测试辅助
+- **AI 生成测试用例**：覆盖边界情况
+- **AI 代码审查**：发现潜在问题
+
+## 注意事项
+
+### ⚠️ AI 的局限性
+
+- AI 可能生成不符合最新规范的代码
+- 需要人工验证业务逻辑的正确性
+- 复杂的架构设计仍需要人工决策
+
+### ✅ AI 的优势
+
+- 快速生成重复性代码
+- 提供多种实现方案
+- 辅助文档编写
+- 代码重构建议
+
+## 总结
+
+AI 是 ObjectStack 开发的强大助手，但不是替代品。最佳实践是：
+
+1. **使用 AI 加速**：Schema 定义、UI 协议、重复代码
+2. **人工审核**：业务逻辑、安全性、性能优化
+3. **持续学习**：了解 AI 的能力边界，合理使用
+
+通过合理使用 AI 工具，可以将开发效率提升 3-5 倍，让开发者更专注于核心业务逻辑。

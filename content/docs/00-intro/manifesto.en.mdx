@@ -1,0 +1,244 @@
+---
+title: The Manifesto
+description: ObjectStack's core design principles
+---
+
+# The Manifesto
+
+ObjectStack's design follows three core principles that form the foundation of the entire architecture.
+
+## Principle I: Protocol Neutrality
+
+### Definition
+
+The protocol layer must remain technology-neutral, not dependent on any specific implementation technology.
+
+### Core Philosophy
+
+**"Protocol is the standard, implementation is replaceable"**
+
+ObjectStack's protocol layer (ObjectQL, ObjectUI) is purely specification definition, containing no concrete implementation. This means:
+
+- ObjectQL protocol can have multiple implementations (JavaScript, Python, Java, etc.)
+- ObjectUI protocol can have multiple renderers (React, Vue, Angular, etc.)
+- Underlying databases can be switched freely (MySQL, PostgreSQL, Oracle, etc.)
+
+### Practice Guidelines
+
+**When designing protocols**:
+- Use standard JSON Schema format
+- Avoid introducing language or framework-specific concepts
+- Keep protocols simple and extensible
+
+**When developing implementations**:
+- Strictly follow protocol specifications
+- Validate protocol compatibility through test suites
+- Implementations should be interchangeable without affecting applications
+
+### Example
+
+```json
+{
+  "type": "query",
+  "object": "users",
+  "filters": {
+    "age": { "$gt": 18 }
+  },
+  "sort": { "created_at": "desc" },
+  "limit": 10
+}
+```
+
+This ObjectQL query protocol can be:
+- Transpiled to MySQL queries by JavaScript implementation
+- Transpiled to PostgreSQL queries by Python implementation
+- Transpiled to Oracle queries by Java implementation
+
+## Principle II: Mechanism-Implementation Separation
+
+### Definition
+
+Completely separate "what to do" (mechanism) from "how to do it" (implementation).
+
+### Core Philosophy
+
+**"Define behavior, not implementation"**
+
+Developers only need to:
+- Define data models (Schema)
+- Define interface structure (UI Protocol)
+- Define business rules (Validation Rules)
+
+Without worrying about:
+- How data is stored
+- How interfaces are rendered
+- How queries are optimized
+
+### Practice Guidelines
+
+**Schema Definition**:
+
+```json
+{
+  "object": "orders",
+  "fields": {
+    "order_id": { "type": "text", "primary": true },
+    "customer": { "type": "reference", "ref": "customers" },
+    "total": { "type": "number" },
+    "status": { "type": "select", "options": ["pending", "completed"] }
+  }
+}
+```
+
+Developers only define the data model, and the system automatically:
+- Creates database table structure
+- Generates CRUD APIs
+- Provides data validation
+- Establishes relationship mappings
+
+**UI Definition**:
+
+```json
+{
+  "type": "page",
+  "components": [
+    {
+      "type": "form",
+      "fields": [
+        { "name": "customer", "label": "Customer", "type": "select" },
+        { "name": "total", "label": "Total", "type": "number" }
+      ]
+    }
+  ]
+}
+```
+
+Developers only define the interface structure, and the system automatically:
+- Renders form components
+- Handles data binding
+- Executes form validation
+- Manages state updates
+
+### Benefits
+
+1. **Lower learning curve**: Developers don't need to learn implementation details
+2. **Higher development efficiency**: Focus on business logic rather than technical implementation
+3. **Enhanced maintainability**: Business logic is independent of technology stack
+4. **Easier technology upgrades**: Changing underlying implementation doesn't affect business code
+
+## Principle III: Data Sovereignty Declaration
+
+### Definition
+
+Users have complete control and ownership of their data.
+
+### Core Philosophy
+
+**"Data belongs to users, not platforms"**
+
+ObjectStack adheres to the Local-First philosophy:
+- Data is stored locally by default
+- Users can choose their own database
+- No mandatory cloud service binding
+- Supports fully offline data operation
+
+### Practice Guidelines
+
+**Local-First Architecture**:
+
+1. **Standalone Mode**:
+   - Use .oos files to store data (based on SQLite)
+   - Data completely local, no network required
+   - Suitable for personal application scenarios
+
+2. **Self-Hosted Mode**:
+   - Deploy to enterprise's own servers
+   - Use enterprise's existing databases (MySQL, Oracle, etc.)
+   - Enterprise has complete data control
+
+3. **Hybrid Mode**:
+   - Local-first with optional cloud sync
+   - Supports end-to-end encryption
+   - Users can export data anytime
+
+### Data Migration Freedom
+
+**Zero-Friction Migration**:
+
+```bash
+# Migrate from SQLite to MySQL
+objectstack migrate --from sqlite://app.oos --to mysql://localhost/mydb
+
+# Migrate from MySQL to PostgreSQL
+objectstack migrate --from mysql://... --to postgresql://...
+```
+
+Due to protocol layer abstraction, data can freely migrate between different databases without vendor lock-in.
+
+### Privacy Protection
+
+- **Field-level encryption**: Sensitive fields can be encrypted in storage
+- **Field-level permissions**: Fine-grained data access control
+- **Audit logs**: Complete data access records
+- **Data erasure**: Support for complete user data deletion
+
+### Open Source Commitment
+
+- Core protocol layer (ObjectQL, ObjectUI) uses MIT/Apache 2.0 open source license
+- Ensures protocol specifications are permanently open
+- Community can freely implement compatible engines
+- Avoids single vendor control
+
+## Significance of the Manifesto
+
+These three principles are not technical details, but ObjectStack's **core values**:
+
+1. **Protocol Neutrality**: Ensures freedom of technology choice
+2. **Mechanism-Implementation Separation**: Ensures development efficiency and maintainability
+3. **Data Sovereignty**: Ensures user rights
+
+Features that violate these principles, even if they have short-term benefits, should not be added to ObjectStack.
+
+## Design Decision Examples
+
+### ✅ Compliant Design
+
+**Scenario**: Adding full-text search functionality
+
+**Decision**:
+- Define unified full-text search syntax in protocol layer
+- Allow different implementations to use different search engines (Elasticsearch, Meilisearch, etc.)
+- Users can choose the search solution that suits them
+
+### ❌ Non-Compliant Design
+
+**Scenario**: Adding cloud storage functionality
+
+**Decision**:
+- Mandatory use of a specific cloud service provider
+- Data must be uploaded to platform servers
+- No local storage option provided
+
+**Why it violates**:
+- Violates Protocol Neutrality principle (binding to specific provider)
+- Violates Data Sovereignty principle (mandatory cloud storage)
+
+## Practice Checklist
+
+When designing new features, ask yourself:
+
+- [ ] Is this feature defined in the protocol layer or implementation layer?
+- [ ] Does it depend on specific technology or services?
+- [ ] Do users maintain complete control over data?
+- [ ] Can it have multiple implementation approaches?
+- [ ] Does it increase vendor lock-in risk?
+
+## Summary
+
+ObjectStack's architectural manifesto is not just a technical guide, but a declaration of values. It ensures:
+
+- **Technical Freedom**: Developers can choose the most suitable technology stack
+- **Data Freedom**: Users fully own and control their data
+- **Evolution Freedom**: System can continuously evolve without breaking compatibility
+
+These principles are what fundamentally distinguish ObjectStack from other platforms.
