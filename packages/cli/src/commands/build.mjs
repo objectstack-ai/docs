@@ -61,12 +61,13 @@ export function registerBuildCommand(cli) {
             const destNext = path.join(process.cwd(), '.next');
             
             if (fs.existsSync(srcNext) && srcNext !== destNext) {
-               console.log(`\nMoving .next build output to ${destNext}...`);
+               console.log(`\nLinking .next build output to ${destNext}...`);
                if (fs.existsSync(destNext)) {
                    fs.rmSync(destNext, { recursive: true, force: true });
                }
-               fs.cpSync(srcNext, destNext, { recursive: true });
-               console.log(`Build successfully output to: ${destNext}`);
+               // Use symlink instead of copy to preserve internal symlinks in .next (pnpm support)
+               fs.symlinkSync(srcNext, destNext, 'dir');
+               console.log(`Build successfully linked to: ${destNext}`);
             } else {
                console.log(`\nNo 'out' directory generated in ${src}.`);
                console.log(`This is expected if 'output: export' is disabled.`);
