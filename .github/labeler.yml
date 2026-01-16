@@ -7,7 +7,7 @@ documentation:
 i18n:
   - changed-files:
     - any-glob-to-any-file:
-      - 'content/**/*.zh-CN.mdx'
+      - 'content/**/*.cn.mdx'
       - 'content/**/*.en.mdx'
       - 'lib/i18n.ts'
 

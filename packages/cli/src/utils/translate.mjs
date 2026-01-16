@@ -22,7 +22,7 @@ export function getAllMdxFiles(dir) {
 }
 
 export function resolveTranslatedFilePath(enFilePath) {
-  // Strategy: content/docs/path/to/file.mdx -> content/docs-zh-CN/path/to/file.mdx
+  // Strategy: content/docs/path/to/file.mdx -> content/docs-cn/path/to/file.mdx
   const docsRoot = path.join(process.cwd(), 'content/docs');
   
   // If input path is relative, make it absolute first to check
@@ -30,11 +30,11 @@ export function resolveTranslatedFilePath(enFilePath) {
   
   if (!absPath.startsWith(docsRoot)) {
      // Fallback or specific logic if file is not in content/docs
-     return enFilePath.replace('content/docs', 'content/docs-zh-CN');
+     return enFilePath.replace('content/docs', 'content/docs-cn');
   }
 
   const relativePath = path.relative(docsRoot, enFilePath);
-  return path.join(process.cwd(), 'content/docs-zh-CN', relativePath);
+  return path.join(process.cwd(), 'content/docs-cn', relativePath);
 }
 
 export async function translateContent(content, openai, model) {

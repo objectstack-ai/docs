@@ -14,7 +14,7 @@ This repository contains the documentation for:
 
 - 🌍 **Multi-language Support**: 
   - Source: English (`content/docs`)
-  - Target: Chinese (`content/docs-zh-CN`) - *Auto-translated via AI*
+  - Target: Chinese (`content/docs-cn`) - *Auto-translated via AI*
 - 📝 **MDX Content**: Interactive documentation with Type-safe components.
 - 🛠️ **Automated Workflows**: 
   - AI Translation CLI (`packages/cli`)
@@ -63,7 +63,7 @@ pnpm objectdocs translate --all
 For a comprehensive guide on how to build and maintain multi-language documentation, see the [Multi-language Documentation Guide](content/docs/i18n-guide.en.mdx) available in the documentation:
 
 - English: `/en/docs/i18n-guide`
-- Chinese: `/zh-CN/docs/i18n-guide`
+- Chinese: `/cn/docs/i18n-guide`
 
 The guide covers:
 - Configuration setup
@@ -82,6 +82,6 @@ The default language is configured in `lib/i18n.ts` as `en`. If you change the d
 
 Content files are located in `content/docs/` and use language suffixes:
 - `{filename}.en.mdx` - English content
-- `{filename}.zh-CN.mdx` - Chinese content
+- `{filename}.cn.mdx` - Chinese content
 - `meta.en.json` - English navigation
-- `meta.zh-CN.json` - Chinese navigation
+- `meta.cn.json` - Chinese navigation

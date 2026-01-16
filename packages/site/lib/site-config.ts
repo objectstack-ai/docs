@@ -12,7 +12,7 @@ export interface SiteConfig {
   i18n: {
     enabled: boolean;
     defaultLanguage: string;
-    languages: Array<{ code: string; name: string }>;
+    languages: Array<string>;
   };
   build?: {
     output?: 'export' | 'standalone' | undefined;
@@ -92,9 +92,7 @@ const defaultConfig: SiteConfig = {
   i18n: {
     enabled: true,
     defaultLanguage: 'en',
-    languages: [
-      { code: 'en', name: 'English' },
-      { code: 'zh-CN', name: '简体中文' }
+    languages: ["en", "cn"
     ],
   },
   branding: {

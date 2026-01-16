@@ -39,7 +39,7 @@ pnpm objectdocs build ./content/docs
 
 ### Translate Documentation
 
-The `translate` command reads English documentation from `content/docs` and generates Chinese translations in `content/docs-zh-CN`.
+The `translate` command reads English documentation from `content/docs` and generates Chinese translations in `content/docs-cn`.
 
 **Prerequisites:**
 You must set the following environment variables (in `.env` or your shell):

@@ -57,8 +57,8 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "docs: auto-translate updates to zh-CN"
-          title: "🤖 Auto Translate: Sync zh-CN docs"
+          commit-message: "docs: auto-translate updates to cn"
+          title: "🤖 Auto Translate: Sync cn docs"
           body: |
             This PR automatically syncs the Chinese documentation with the latest English changes.
             

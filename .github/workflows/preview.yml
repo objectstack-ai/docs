@@ -28,7 +28,7 @@ jobs:
             
             ### Preview Links
             - 📝 **Documentation**: Will be available once Vercel deployment completes
-            - 🌍 **Languages**: English (\`/en/docs\`) and Chinese (\`/zh-CN/docs\`)
+            - 🌍 **Languages**: English (\`/en/docs\`) and Chinese (\`/cn/docs\`)
             
             ### Build Status
             Check the CI workflow for build status and any errors.
