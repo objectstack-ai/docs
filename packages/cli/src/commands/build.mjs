@@ -56,8 +56,21 @@ export function registerBuildCommand(cli) {
             fs.cpSync(src, dest, { recursive: true });
             console.log(`Build successfully output to: ${dest}`);
           } else {
-            console.log(`\nNo 'out' directory generated in ${src}.`);
-            console.log(`This is expected if 'output: export' is disabled.`);
+            // Check for .next directory (dynamic build)
+            const srcNext = path.join(nextAppDir, '.next');
+            const destNext = path.join(process.cwd(), '.next');
+            
+            if (fs.existsSync(srcNext) && srcNext !== destNext) {
+               console.log(`\nMoving .next build output to ${destNext}...`);
+               if (fs.existsSync(destNext)) {
+                   fs.rmSync(destNext, { recursive: true, force: true });
+               }
+               fs.cpSync(srcNext, destNext, { recursive: true });
+               console.log(`Build successfully output to: ${destNext}`);
+            } else {
+               console.log(`\nNo 'out' directory generated in ${src}.`);
+               console.log(`This is expected if 'output: export' is disabled.`);
+            }
           }
         }
         process.exit(code);
