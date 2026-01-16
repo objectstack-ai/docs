@@ -1,4 +1,5 @@
 {
-  "title": "ObjectStack",
+  "title": "Framework",
+  "root": true,
   "pages": ["index", "welcome", "manifesto", "ai-codex"]
 }
