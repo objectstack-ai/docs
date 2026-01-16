@@ -9,6 +9,11 @@ export interface SiteConfig {
     url: string;
     favicon: string;
   };
+  i18n: {
+    enabled: boolean;
+    defaultLanguage: string;
+    languages: Array<{ code: string; name: string }>;
+  };
   build?: {
     output?: 'export' | 'standalone' | undefined;
   };
@@ -83,6 +88,14 @@ const defaultConfig: SiteConfig = {
     description: 'Documentation',
     url: 'https://objectstack.com',
     favicon: '/favicon.ico',
+  },
+  i18n: {
+    enabled: true,
+    defaultLanguage: 'en',
+    languages: [
+      { code: 'en', name: 'English' },
+      { code: 'zh-CN', name: '简体中文' }
+    ],
   },
   branding: {
     logo: {
@@ -160,4 +173,3 @@ export function getSiteConfig(): SiteConfig {
 }
 
 export const siteConfig = getSiteConfig();
-console.log('Active Site Config Sidebar Tabs:', JSON.stringify(siteConfig.layout.sidebar.tabs, null, 2));

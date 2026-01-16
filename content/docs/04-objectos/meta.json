@@ -1,5 +1,6 @@
 {
   "title": "ObjectOS",
+  "root": true,
   "pages": [
     "index",
     "platform-architecture",

@@ -13,5 +13,6 @@ export const baseOptions: BaseLayoutProps = {
     external: link.external,
   })),
   githubUrl: siteConfig.layout.navbar.socials.find(s => s.platform === 'github')?.url,
+  i18n: siteConfig.i18n.enabled,
 };
 

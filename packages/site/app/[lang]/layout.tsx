@@ -3,21 +3,20 @@ import { defineI18nUI } from 'fumadocs-ui/i18n';
 import type { ReactNode } from 'react';
 import { i18n } from '@/lib/i18n';
 import { cn } from '@/lib/i18n-ui';
-
-const translations = {
-  'zh-CN': cn,
-};
+import { siteConfig } from '@/lib/site-config';
 
 const i18nConfig = defineI18nUI(i18n, {
-  translations: {
-    en: {
-      displayName: 'English',
-    },
-    'zh-CN': {
-      ...cn,
-      displayName: '简体中文',
-    },
-  },
+  translations: Object.fromEntries(
+    siteConfig.i18n.languages.map((lang) => [
+      lang.code,
+      {
+        name: lang.name, // fumadocs-ui uses name or displayName? Let's check docs or types. Usually 'name' in newer versions or 'displayName'. 
+        // Checking previous code: it used `displayName`.
+        displayName: lang.name, 
+        ...(lang.code === 'zh-CN' ? cn : {}),
+      },
+    ])
+  ),
 });
 
 export default async function LangLayout({

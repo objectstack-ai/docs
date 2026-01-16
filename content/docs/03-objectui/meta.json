@@ -1,5 +1,6 @@
 {
   "title": "ObjectUI",
+  "root": true,
   "pages": [
     "index",
     "core-concepts",

@@ -1,8 +1,10 @@
 import type { I18nConfig } from 'fumadocs-core/i18n';
+import { siteConfig } from './site-config';
 
-export const i18n: I18nConfig<'en' | 'zh-CN'> = {
-  defaultLanguage: 'en',
-  languages: ['en', 'zh-CN'],
+export const i18n: I18nConfig = {
+  defaultLanguage: siteConfig.i18n.defaultLanguage,
+  languages: siteConfig.i18n.languages.map((lang) => lang.code),
 };
 
-export type Locale = (typeof i18n.languages)[number];
+export type Locale = string;
+

@@ -5,6 +5,14 @@
     "url": "https://docs.objectstack.ai",
     "favicon": "/favicon.ico"
   },
+  "i18n": {
+    "enabled": true,
+    "defaultLanguage": "en",
+    "languages": [
+      { "code": "en", "name": "English" },
+      { "code": "zh-CN", "name": "简体中文" }
+    ]
+  },
   "build": {
     "output": ""
   },
@@ -37,18 +45,7 @@
       "prefetch": true,
       "defaultOpenLevel": 1,
       "collapsible": true,
-      "tabs": [
-        {
-          "title": "v2.0",
-          "url": "/docs/v2",
-          "description": "Latest version"
-        },
-        {
-          "title": "v1.0",
-          "url": "/docs/v1",
-          "description": "Legacy version"
-        }
-      ]
+      "tabs": []
     },
     "toc": {
       "enabled": true,
