@@ -15,10 +15,9 @@ const { provider } = defineI18nUI(i18n, {
   },
 });
 
-export default async function Layout({ params, children }: LayoutProps<'/[lang]'>) {
-  const { lang } = await params;
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang={lang} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         style={{
           display: 'flex',
@@ -26,7 +25,7 @@ export default async function Layout({ params, children }: LayoutProps<'/[lang]'
           minHeight: '100vh',
         }}
       >
-        <RootProvider i18n={provider(lang)}>{children}</RootProvider>
+        {children}
       </body>
     </html>
   );
