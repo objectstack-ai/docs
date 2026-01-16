@@ -36,8 +36,8 @@ export function registerTranslateCommand(cli) {
       if (targetFiles.length === 0) {
         console.log('No files to translate.');
         console.log('Usage:');
-        console.log('  docs-cli translate content/docs/file.mdx');
-        console.log('  docs-cli translate --all');
+        console.log('  objectdocs translate content/docs/file.mdx');
+        console.log('  objectdocs translate --all');
         console.log('  (CI): Set CHANGED_FILES environment variable');
         return;
       }

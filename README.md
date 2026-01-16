@@ -17,7 +17,7 @@ This repository contains the documentation for:
   - Target: Chinese (`content/docs-zh-CN`) - *Auto-translated via AI*
 - 📝 **MDX Content**: Interactive documentation with Type-safe components.
 - 🛠️ **Automated Workflows**: 
-  - AI Translation CLI (`packages/docs-cli`)
+  - AI Translation CLI (`packages/cli`)
   - Broken link checking
   - SEO optimization
 
@@ -56,7 +56,7 @@ We provide a custom CLI for translation tasks:
 
 ```bash
 # Translate all files
-pnpm docs-cli translate --all
+pnpm objectdocs translate --all
 ```
 
 

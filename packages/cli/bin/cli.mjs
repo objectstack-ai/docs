@@ -2,10 +2,14 @@
 import { cac } from 'cac';
 import 'dotenv/config';
 import { registerTranslateCommand } from '../src/commands/translate.mjs';
+import { registerDevCommand } from '../src/commands/dev.mjs';
+import { registerBuildCommand } from '../src/commands/build.mjs';
 
-const cli = cac('docs-cli');
+const cli = cac('objectdocs');
 
 registerTranslateCommand(cli);
+registerDevCommand(cli);
+registerBuildCommand(cli);
 
 cli.help();
 cli.version('0.0.1');

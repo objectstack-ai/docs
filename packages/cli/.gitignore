@@ -4,3 +4,9 @@ dist
 .DS_Store
 *.log
 coverage
+
+# Next.js
+site/.next
+site/out
+.next
+out

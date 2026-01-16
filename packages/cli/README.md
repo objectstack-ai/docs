@@ -1,4 +1,4 @@
-# @docs/cli
+# objectdocs/cli
 
 Internal CLI tool for automating documentation workflows for ObjectStack.
 
@@ -17,6 +17,20 @@ pnpm install
 
 ## Usage
 
+### Site Management
+
+The CLI can also be used to run the documentation site locally with a VitePress-like experience.
+
+```bash
+# Start Dev Server
+# Usage: pnpm objectdocs dev [docs-directory]
+pnpm objectdocs dev ./content/docs
+
+# Build Static Site
+# Usage: pnpm objectdocs build [docs-directory]
+pnpm objectdocs build ./content/docs
+```
+
 ### Translate Documentation
 
 The `translate` command reads English documentation from `content/docs` and generates Chinese translations in `content/docs-zh-CN`.
@@ -33,16 +47,16 @@ OPENAI_BASE_URL=https://api.openai.com/v1 # Optional
 
 ```bash
 # Translate a specific file
-pnpm docs-cli translate content/docs/00-intro/index.mdx
+pnpm objectdocs translate content/docs/00-intro/index.mdx
 
 # Translate multiple files
-pnpm docs-cli translate content/docs/00-intro/index.mdx content/docs/01-quickstart/index.mdx
+pnpm objectdocs translate content/docs/00-intro/index.mdx content/docs/01-quickstart/index.mdx
 
 # Translate all files in content/docs
-pnpm docs-cli translate --all
+pnpm objectdocs translate --all
 
 # Specify a custom model (default: gpt-4o)
-pnpm docs-cli translate --all --model gpt-4-turbo
+pnpm objectdocs translate --all --model gpt-4-turbo
 ```
 
 ### CI/CD Integration
@@ -51,5 +65,5 @@ In CI environments, you can use the `CHANGED_FILES` environment variable to tran
 
 ```bash
 export CHANGED_FILES="content/docs/new-page.mdx"
-pnpm docs-cli translate
+pnpm objectdocs translate
 ```
