@@ -1,9 +1,11 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 export function registerBuildCommand(cli) {
   cli
@@ -12,9 +14,14 @@ export function registerBuildCommand(cli) {
       // 1. Resolve user's docs directory
       const docsDir = dir ? path.resolve(process.cwd(), dir) : path.resolve(process.cwd(), 'content/docs');
       
-      // 2. Resolve the Next.js App directory (Inside the package now)
-      // packages/objectdocs/src/commands/build.mjs -> ../../site
-      const nextAppDir = path.resolve(__dirname, '../../site');
+      // 2. Resolve the Next.js App directory
+      let nextAppDir;
+      try {
+        nextAppDir = path.dirname(require.resolve('@objectdocs/site/package.json'));
+      } catch (e) {
+        // Fallback for local development
+         nextAppDir = path.resolve(__dirname, '../../../site');
+      }
 
       console.log(`Building docs site...`);
       console.log(`  Engine: ${nextAppDir}`);
