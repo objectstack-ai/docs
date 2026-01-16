@@ -9,10 +9,12 @@
     "translate": "objectdocs translate",
     "translate:all": "objectdocs translate --all"
   },
+  "dependencies": {
+    "client-only": "^0.0.1",
+    "server-only": "^0.0.1"
+  },
   "devDependencies": {
     "@objectdocs/cli": "workspace:*",
-    "client-only": "^0.0.1",
-    "next": "^16.1.2",
-    "server-only": "^0.0.1"
+    "next": "^16.1.2"
   }
 }
