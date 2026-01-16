@@ -45,8 +45,8 @@ export function registerBuildCommand(cli) {
       child.on('close', (code) => {
         if (code === 0) {
           // Copy output to project root
-          const src = path.join(nextAppDir, '.next');
-          const dest = path.join(process.cwd(), '.next');
+          const src = path.join(nextAppDir, 'out');
+          const dest = path.join(process.cwd(), 'out');
           
           if (fs.existsSync(src)) {
             console.log(`\nMoving build output to ${dest}...`);
