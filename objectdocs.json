@@ -8,9 +8,7 @@
   "i18n": {
     "enabled": true,
     "defaultLanguage": "en",
-    "languages": [
-      { "code": "en", "name": "English" },
-      { "code": "cn", "name": "简体中文" }
+    "languages": ["en", "cn"
     ]
   },
   "branding": {

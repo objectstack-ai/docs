@@ -1,9 +1,7 @@
+import 'fumadocs-ui/style.css';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { defineI18nUI } from 'fumadocs-ui/i18n';
-import type { ReactNode } from 'react';
 import { i18n } from '@/lib/i18n';
-import { cn } from '@/lib/i18n-ui';
-import { siteConfig } from '@/lib/site-config';
 
 
 const { provider } = defineI18nUI(i18n, {
@@ -13,23 +11,30 @@ const { provider } = defineI18nUI(i18n, {
     },
     cn: {
       displayName: 'Chinese',
+      toc: '目錄',
+      search: '搜尋文檔',
+      lastUpdate: '最後更新於',
+      searchNoResult: '沒有結果',
+      previousPage: '上一頁',
+      nextPage: '下一頁',
+      chooseLanguage: '選擇語言',
     },
   },
 });
 
-export default async function LangLayout({
-  params,
-  children,
-}: {
-  params: Promise<{ lang: string }>;
-  children: ReactNode;
-}) {
+export default async function Layout({ params, children }: LayoutProps<'/[lang]'>) {
   const { lang } = await params;
-  
-  return  <RootProvider i18n={provider(lang)}>{children}</RootProvider>;
-
-}
-
-export async function generateStaticParams() {
-  return i18n.languages.map((lang) => ({ lang }));
+  return (
+    <html lang={lang} csuppressHydrationWarning>
+      <body
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+        }}
+      >
+        <RootProvider i18n={provider(lang)}>{children}</RootProvider>
+      </body>
+    </html>
+  );
 }
