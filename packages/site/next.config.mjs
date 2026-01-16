@@ -1,5 +1,4 @@
 import { createMDX } from 'fumadocs-mdx/next';
-import path from 'path';
 
 const withMDX = createMDX();
 
