@@ -30,6 +30,7 @@ jobs:
           config-file: '.github/markdown-link-check-config.json'
           folder-path: 'content/'
           check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}
+          base-branch: 'main'
       
       - name: Check links in root markdown files
         uses: gaurav-nelson/github-action-markdown-link-check@1.0.17
@@ -39,3 +40,4 @@ jobs:
           config-file: '.github/markdown-link-check-config.json'
           file-path: './README.md'
           check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}
+          base-branch: 'main'
