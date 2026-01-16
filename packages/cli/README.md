@@ -1,10 +1,16 @@
-# objectdocs/cli
+# @objectdocs/cli
 
-Internal CLI tool for automating documentation workflows for ObjectStack.
+The central CLI orchestration tool for the ObjectStack documentation platform.
+
+## Overview
+
+This CLI acts as the unified interface for developing, building, and translating the ObjectStack documentation. It wraps the application logic in `@objectdocs/site` and adds workflow automation.
 
 ## Features
 
-- **AI Translation**: Automatically translate MDX documentation from English to Chinese using OpenAI models.
+- **Site Orchestration**: Manages the Next.js development server and static build process.
+- **AI Translation**: Automatically translates MDX documentation from English to Chinese using OpenAI.
+- **Artifact Management**: Handles build output movement and directory structure organization.
 - **Smart Updates**: Can process specific files or bulk translate the entire documentation.
 
 ## Installation
