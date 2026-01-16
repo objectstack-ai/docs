@@ -13,7 +13,6 @@ The project uses **Next.js (App Router)** and **Fumadocs**.
 
 ### File Structure
 - **English Documentation**: `content/docs/**/*.mdx` (The source of truth)
-- **Chinese Documentation**: `content/docs-zh/**/*.mdx` (Translation)
 - **Navigation**: `meta.json` in each directory defines the sidebar structure.
 
 ### Frontmatter
@@ -48,14 +47,11 @@ description: Short summary for search engines and preview cards
 
 ### Internationalization (i18n)
 - `content/docs` is for English (default).
-- `content/docs-zh-CN` is for Chinese.
-- Structure in `content/docs-zh-CN` must mirror `content/docs`.
 
 ## Task Specific Instructions
 
 - **Translation Workflow**:
   - Always write the English documentation in `content/docs/` first.
-  - The CI workflow will automatically generate Chinese translations in `content/docs-zh-CN/`.
 
 - **When creating a new page**:
   1. Create `filename.mdx` in `content/docs/`.
@@ -63,7 +59,6 @@ description: Short summary for search engines and preview cards
   
 - **When editing content**:
   - Edit the file in `content/docs/`.
-  - Do not manually edit files in `content/docs-zh-CN/` unless fixing a bad translation.
 
 - **When explaining code**:
   - Provide context about where the code belongs (e.g., "In `source.config.ts`...").
