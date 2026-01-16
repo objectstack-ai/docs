@@ -2,8 +2,7 @@
   "title": "文档",
   "pages": [
     "index",
-    "00-intro",
-    "01-quickstart",
+    "00-framework",
     "02-objectql",
     "03-objectui",
     "04-objectos"
