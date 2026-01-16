@@ -55,6 +55,9 @@ export function registerBuildCommand(cli) {
             }
             fs.cpSync(src, dest, { recursive: true });
             console.log(`Build successfully output to: ${dest}`);
+          } else {
+            console.log(`\nNo 'out' directory generated in ${src}.`);
+            console.log(`This is expected if 'output: export' is disabled.`);
           }
         }
         process.exit(code);

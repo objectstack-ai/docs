@@ -1,5 +1,6 @@
 {
   "title": "ObjectQL",
+  "root": true,
   "pages": [
     "index",
     "core-concepts",

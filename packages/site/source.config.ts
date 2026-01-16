@@ -1,5 +1,5 @@
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
-import path from 'path';
+import { siteConfig } from './lib/site-config';
 
 const docsDir = process.env.DOCS_DIR || 'content/docs';
 const docsZhDir = process.env.DOCS_ZH_DIR || 'content/docs-zh-CN';
@@ -12,4 +12,11 @@ export const { docs: docsZh, meta: metaZh } = defineDocs({
   dir: docsZhDir,
 });
 
-export default defineConfig();
+export default defineConfig({
+  mdxOptions: {
+    rehypeCodeOptions: {
+      theme: siteConfig.content.codeBlock.theme,
+    }
+  }
+});
+

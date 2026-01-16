@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "title": "ObjectStack Docs",
+    "description": "Enterprise-grade low-code platform documentation",
+    "url": "https://docs.objectstack.ai",
+    "favicon": "/favicon.ico"
+  },
+  "build": {
+    "output": ""
+  },
+  "branding": {
+    "logo": {
+      "text": "ObjectStack"
+    },
+    "theme": {
+      "accentColor": "blue", 
+      "radius": "0.5rem"
+    }
+  },
+  "layout": {
+    "navbar": {
+      "enabled": true,
+      "transparentMode": "top",
+      "links": [
+        {
+          "text": "Home",
+          "url": "https://www.objectstack.ai",
+          "external": true
+        }
+      ],
+      "socials": [
+        { "platform": "github", "url": "https://github.com/objectstack-ai/" }
+      ]
+    },
+    "sidebar": {
+      "enabled": true,
+      "prefetch": true,
+      "defaultOpenLevel": 1,
+      "collapsible": true,
+      "tabs": [
+        {
+          "title": "v2.0",
+          "url": "/docs/v2",
+          "description": "Latest version"
+        },
+        {
+          "title": "v1.0",
+          "url": "/docs/v1",
+          "description": "Legacy version"
+        }
+      ]
+    },
+    "toc": {
+      "enabled": true,
+      "depth": 3
+    },
+    "footer": {
+      "enabled": false,
+      "copyright": "© 2026 ObjectStack Inc."
+    }
+  },
+  "page": {
+    "showLastUpdate": true,
+    "showEditLink": true,
+    "repoBaseUrl": "https://github.com/objectstack-ai/docs"
+  },
+  "content": {
+    "math": false,
+    "imageZoom": true,
+    "codeBlock": {
+      "theme": "vesper",
+      "showLineNumbers": true
+    }
+  }
+}

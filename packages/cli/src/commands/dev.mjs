@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
@@ -37,14 +38,45 @@ export function registerDevCommand(cli) {
       const nextCmd = 'npm'; 
       const args = ['run', 'dev', '--', '-p', options.port];
 
-      const child = spawn(nextCmd, args, {
-        stdio: 'inherit',
-        env,
-        cwd: nextAppDir // CRITICAL: Run in the Next.js app directory
-      });
+      let child;
+      let isRestarting = false;
+      let debounceTimer;
 
-      child.on('close', (code) => {
-        process.exit(code);
-      });
+      const startServer = () => {
+        child = spawn(nextCmd, args, {
+          stdio: 'inherit',
+          env,
+          cwd: nextAppDir // CRITICAL: Run in the Next.js app directory
+        });
+
+        child.on('close', (code) => {
+          if (isRestarting) {
+            isRestarting = false;
+            startServer();
+          } else {
+            // Only exit if we are not restarting. 
+            // Null code means killed by signal (like our kill() call), but we handle that via flag.
+            process.exit(code || 0);
+          }
+        });
+      };
+
+      startServer();
+
+      // Watch for config changes
+      const configFile = path.resolve(process.cwd(), 'objectdocs.json');
+      if (fs.existsSync(configFile)) {
+        console.log(`Watching config: ${configFile}`);
+        fs.watch(configFile, (eventType) => {
+          if (eventType === 'change') {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+              console.log('\nConfig changed. Restarting server...');
+              isRestarting = true;
+              child.kill();
+            }, 500);
+          }
+        });
+      }
     });
 }
