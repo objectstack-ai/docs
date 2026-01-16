@@ -39,7 +39,42 @@ export function registerBuildCommand(cli) {
       const child = spawn(nextCmd, args, {
         stdio: 'inherit',
         env,
-        // cwd: nextAppDir // CRITICAL: Run in the Next.js app directory
+        cwd: nextAppDir // CRITICAL: Run in the Next.js app directory
+      });
+
+      child.on('close', (code) => {
+        if (code === 0) {
+          // Copy output to project root
+          const src = path.join(nextAppDir, '.next');
+          const dest = path.join(process.cwd(), '.next');
+          
+          if (fs.existsSync(src)) {
+            console.log(`\nMoving build output to ${dest}...`);
+            if (fs.existsSync(dest)) {
+                fs.rmSync(dest, { recursive: true, force: true });
+            }
+            fs.cpSync(src, dest, { recursive: true });
+            console.log(`Build successfully output to: ${dest}`);
+          } else {
+            // Check for .next directory (dynamic build)
+            const srcNext = path.join(nextAppDir, '.next');
+            const destNext = path.join(process.cwd(), '.next');
+            
+            if (fs.existsSync(srcNext) && srcNext !== destNext) {
+               console.log(`\nLinking .next build output to ${destNext}...`);
+               if (fs.existsSync(destNext)) {
+                   fs.rmSync(destNext, { recursive: true, force: true });
+               }
+               // Use symlink instead of copy to preserve internal symlinks in .next (pnpm support)
+               fs.symlinkSync(srcNext, destNext, 'dir');
+               console.log(`Build successfully linked to: ${destNext}`);
+            } else {
+               console.log(`\nNo 'out' directory generated in ${src}.`);
+               console.log(`This is expected if 'output: export' is disabled.`);
+            }
+          }
+        }
+        process.exit(code);
       });
 
     });

@@ -6,7 +6,7 @@ const withMDX = createMDX();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  distDir: path.join(process.cwd(), '.next'),
+  distDir: '.next',
   images: { unoptimized: true },
 };
 
