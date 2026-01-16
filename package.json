@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "objectdocs dev",
-    "build": "pnpm --filter './packages/site' -r build",
-    "start": "objectdocs start",
+    "build": "pnpm --filter '@objectdocs/site' -r build",
+    "start": "pnpm --filter '@objectdocs/site' -r start",
     "translate": "objectdocs translate",
     "translate:all": "objectdocs translate --all"
   },
