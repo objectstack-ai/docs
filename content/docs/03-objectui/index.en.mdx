@@ -1,0 +1,335 @@
+---
+title: ObjectUI - The Interface Engine
+description: Declarative UI engine with data-driven rendering and protocol-based components
+---
+
+# ObjectUI - The Interface Engine
+
+ObjectUI is the presentation layer of ObjectStack, providing a declarative UI engine that renders interfaces from JSON protocols. It transforms UI development from imperative code to data-driven declarations.
+
+## What is ObjectUI?
+
+ObjectUI is a **declarative UI engine** that allows you to define user interfaces as JSON protocols instead of writing component code. It provides a complete set of pre-built components that render automatically based on data specifications.
+
+### Key Capabilities
+
+- 🎨 **Declarative UI** - Define interfaces with JSON instead of JSX/code
+- 🔄 **Data-Driven Rendering** - UI automatically reflects data changes
+- 📦 **Component Protocol** - Rich set of pre-built components
+- 🎭 **Theme Support** - Customizable styles and themes
+- ⚡ **Performance Optimized** - Smart rendering and updates
+- 🔌 **Framework Agnostic** - React renderer with others planned
+
+## How It Works
+
+ObjectUI operates on a simple principle: **UI as Data**.
+
+### 1. Define UI Protocol
+
+Describe your interface using JSON:
+
+```json
+{
+  "type": "page",
+  "title": "Todo List",
+  "body": {
+    "type": "form",
+    "fields": [
+      {
+        "name": "title",
+        "type": "input",
+        "label": "Task Name",
+        "required": true
+      },
+      {
+        "name": "priority",
+        "type": "select",
+        "label": "Priority",
+        "options": ["High", "Medium", "Low"]
+      }
+    ]
+  }
+}
+```
+
+### 2. Render with ObjectUI
+
+Pass the protocol to the renderer:
+
+```tsx
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+
+function App() {
+  return <ObjectUIRenderer schema={uiProtocol} />
+}
+```
+
+### 3. Automatic UI Generation
+
+ObjectUI renders a fully functional interface with forms, validation, actions, and state management—all from the JSON protocol.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────┐
+│         Application Layer               │
+│       (Business Logic)                  │
+└────────────────┬────────────────────────┘
+                 │
+                 │ UI Protocol (JSON)
+                 │
+┌────────────────▼────────────────────────┐
+│         ObjectUI Engine                 │
+│  ┌────────────┬──────────────────────┐  │
+│  │  Protocol  │   Component          │  │
+│  │  Parser    │   Registry           │  │
+│  └────────────┴──────────────────────┘  │
+│  ┌──────────────────────────────────┐  │
+│  │    Render Coordinator            │  │
+│  │    (State & Actions)             │  │
+│  └──────────────────────────────────┘  │
+└────────────────┬────────────────────────┘
+                 │
+                 │ Component Instances
+                 │
+┌────────────────▼────────────────────────┐
+│        React Renderer                   │
+│  ┌──────┬──────┬──────┬──────┬──────┐  │
+│  │Input │Select│Table │Form  │Page  │  │
+│  │      │      │      │      │      │  │
+│  └──────┴──────┴──────┴──────┴──────┘  │
+└─────────────────────────────────────────┘
+```
+
+## Core Concepts
+
+### Declarative vs Imperative
+
+**Imperative UI (Traditional):**
+```tsx
+// Write code to describe HOW to build UI
+function TodoForm() {
+  const [title, setTitle] = useState('')
+  const [priority, setPriority] = useState('')
+  
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    // Submit logic...
+  }
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <input 
+        value={title} 
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <select 
+        value={priority} 
+        onChange={(e) => setPriority(e.target.value)}
+      >
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+      </select>
+      <button type="submit">Submit</button>
+    </form>
+  )
+}
+```
+
+**Declarative UI (ObjectUI):**
+```json
+{
+  "type": "form",
+  "api": "/api/todos",
+  "fields": [
+    { "name": "title", "type": "input", "required": true },
+    { "name": "priority", "type": "select", "options": ["High", "Medium", "Low"] }
+  ]
+}
+```
+
+The declarative approach:
+- ✅ Less code to write and maintain
+- ✅ Easier to understand and modify
+- ✅ Can be generated, stored, and versioned as data
+- ✅ Enables dynamic UI generation
+
+### Data-Driven Rendering
+
+ObjectUI components are **data-driven**:
+
+1. **Protocol defines structure** - JSON describes what to render
+2. **Data defines content** - Component fetches or receives data
+3. **State triggers updates** - Changes automatically re-render
+
+```json
+{
+  "type": "table",
+  "api": "/api/users",
+  "columns": [
+    { "name": "name", "label": "Name" },
+    { "name": "email", "label": "Email" },
+    { "name": "status", "label": "Status" }
+  ]
+}
+```
+
+This table:
+- Automatically fetches data from `/api/users`
+- Renders columns as specified
+- Handles pagination, sorting, filtering
+- Updates when data changes
+
+## Use Cases
+
+### Admin Panels
+
+Build complete admin interfaces without writing UI code:
+
+```json
+{
+  "type": "page",
+  "title": "User Management",
+  "body": {
+    "type": "crud",
+    "api": "/api/users",
+    "columns": [...],
+    "filters": [...],
+    "actions": [...]
+  }
+}
+```
+
+### Dynamic Forms
+
+Create forms that adapt based on configuration:
+
+```json
+{
+  "type": "form",
+  "api": "/api/submit",
+  "fields": [
+    { "name": "name", "type": "input", "required": true },
+    { 
+      "name": "country", 
+      "type": "select", 
+      "api": "/api/countries" 
+    },
+    { 
+      "name": "state", 
+      "type": "select", 
+      "api": "/api/states",
+      "dependsOn": "country"
+    }
+  ]
+}
+```
+
+### Low-Code Platforms
+
+Enable users to build interfaces through configuration:
+
+```typescript
+// Store UI protocol in database
+await db.mutation('pages', {
+  action: 'insert',
+  data: {
+    name: 'dashboard',
+    protocol: { type: 'page', ... }
+  }
+})
+
+// Render from database
+const page = await db.query('pages', { filters: [['name', '=', 'dashboard']] })
+return <ObjectUIRenderer schema={page.protocol} />
+```
+
+## What You'll Learn
+
+In this section, you will discover:
+
+- ✅ **Core Concepts** - Understanding declarative UI and data-driven rendering
+- ✅ **Component Specification** - Complete protocol reference for all components
+- ✅ **Renderer Usage** - How to integrate ObjectUI in React applications
+- ✅ **Customization** - Theming, styling, and extending components
+
+## Getting Started
+
+Ready to dive in? Start with:
+
+1. **[Core Concepts](./core-concepts)** - Understand declarative UI principles
+2. **[Component Spec](./component-spec)** - Learn the component protocols
+3. **[Renderer Usage](./renderer-usage)** - Integrate in your application
+
+## Quick Example
+
+Here's a complete example to get you started:
+
+```tsx
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+
+// 1. Define UI Protocol
+const todoApp = {
+  type: 'page',
+  title: 'My Todos',
+  body: {
+    type: 'grid',
+    columns: 2,
+    items: [
+      {
+        type: 'form',
+        title: 'Add Todo',
+        api: '/api/todos',
+        method: 'POST',
+        fields: [
+          {
+            name: 'title',
+            type: 'input',
+            label: 'Task',
+            required: true
+          },
+          {
+            name: 'completed',
+            type: 'switch',
+            label: 'Completed',
+            defaultValue: false
+          }
+        ],
+        submitText: 'Add Task'
+      },
+      {
+        type: 'table',
+        title: 'Todo List',
+        api: '/api/todos',
+        columns: [
+          { name: 'title', label: 'Task' },
+          { name: 'completed', label: 'Done', type: 'boolean' }
+        ],
+        actions: [
+          { label: 'Delete', api: '/api/todos/${id}', method: 'DELETE' }
+        ]
+      }
+    ]
+  }
+}
+
+// 2. Render
+function App() {
+  return <ObjectUIRenderer schema={todoApp} />
+}
+```
+
+This creates a fully functional todo application with:
+- A form to add todos
+- A table showing all todos
+- Delete actions for each todo
+- Automatic data fetching and updates
+
+## Next Steps
+
+Begin your ObjectUI journey:
+
+- **New to declarative UI?** Start with [Core Concepts](./core-concepts)
+- **Need component reference?** Jump to [Component Spec](./component-spec)
+- **Ready to build?** Check [Renderer Usage](./renderer-usage)
