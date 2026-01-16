@@ -1,53 +1,64 @@
-# docs
+# ObjectStack Documentation
 
-A multi-language documentation site built with Fumadocs, supporting English and Chinese.
+The official documentation for ObjectStack, built with Next.js (App Router) and [Fumadocs](https://fumadocs.vercel.app).
+
+## Project Structure
+
+This repository contains the documentation for:
+- **ObjectStack Platform**: The core development platform.
+- **ObjectQL**: The backend data protocol engine.
+- **ObjectUI**: The declarative UI engine.
+- **ObjectOS**: The runtime operating system.
 
 ## Features
 
-- 🌍 **Multi-language Support**: Full internationalization with English (en) and Chinese (zh-CN)
-- 📝 **MDX Content**: Write documentation using MDX for interactive content
-- 🔍 **Fast Search**: Quick search across all documentation
-- 🎨 **Modern UI**: Beautiful and responsive design with Fumadocs UI
-- 📱 **Mobile Friendly**: Fully responsive on all devices
+- 🌍 **Multi-language Support**: 
+  - Source: English (`content/docs`)
+  - Target: Chinese (`content/docs-zh-CN`) - *Auto-translated via AI*
+- 📝 **MDX Content**: Interactive documentation with Type-safe components.
+- 🛠️ **Automated Workflows**: 
+  - AI Translation CLI (`packages/docs-cli`)
+  - Broken link checking
+  - SEO optimization
 
 ## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
-
-After cloning the repository, configure the Git merge driver for `pnpm-lock.yaml`:
-
-```bash
-git config merge.pnpm-merge.name "pnpm-lock.yaml merge driver"
-git config merge.pnpm-merge.driver "pnpm install"
-```
-
-This helps avoid merge conflicts in the lock file by automatically regenerating it during merges.
 
 ### Development
 
-```bash
-npm run dev
-```
-
-Visit `http://localhost:3000` to view the documentation site.
-
-### Build
+Start the development server:
 
 ```bash
-npm run build
+pnpm run dev
 ```
 
-### Production
+Visit `http://localhost:3000` to view the documentation.
+
+## Writing Documentation
+
+1. Create new MDX files in `content/docs`.
+2. Update `meta.json` in the corresponding directory.
+3. Commit your changes (CI will handle translation).
+
+### CLI Tools
+
+We provide a custom CLI for translation tasks:
 
 ```bash
-npm start
+# Translate all files
+pnpm docs-cli translate --all
 ```
 
-## Building Multi-language Documentation
 
 For a comprehensive guide on how to build and maintain multi-language documentation, see the [Multi-language Documentation Guide](content/docs/i18n-guide.en.mdx) available in the documentation:
 

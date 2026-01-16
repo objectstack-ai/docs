@@ -303,13 +303,13 @@ export default {
 ### Step 4: Launch Containers
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Check status:
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 Expected output:
@@ -325,13 +325,13 @@ objectos-redis      redis:7-alpine               Up 2 minutes
 
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Just ObjectOS
-docker-compose logs -f objectos
+docker compose logs -f objectos
 
 # Last 100 lines
-docker-compose logs --tail=100 objectos
+docker compose logs --tail=100 objectos
 ```
 
 ### Step 6: Access Application
@@ -569,13 +569,13 @@ export default {
 
 ```bash
 # Check database is running
-docker-compose ps postgres
+docker compose ps postgres
 
 # Test connection
-docker-compose exec postgres psql -U objectstack -d objectstack
+docker compose exec postgres psql -U objectstack -d objectstack
 
 # Check logs
-docker-compose logs postgres
+docker compose logs postgres
 ```
 
 ### Permission Denied
@@ -590,13 +590,13 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO objectstack_user;
 
 ```bash
 # Check logs
-docker-compose logs objectos
+docker compose logs objectos
 
 # Validate config
-docker-compose config
+docker compose config
 
 # Restart containers
-docker-compose restart
+docker compose restart
 ```
 
 ## Next Steps
