@@ -1,0 +1,41 @@
+name: Link Check
+
+on:
+  pull_request:
+    paths:
+      - 'content/**'
+      - '**.md'
+      - '**.mdx'
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  link-check:
+    name: Check Links
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check links in content directory
+        uses: gaurav-nelson/github-action-markdown-link-check@v1.0.15
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+          folder-path: 'content/'
+          check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}
+      
+      - name: Check links in root markdown files
+        uses: gaurav-nelson/github-action-markdown-link-check@v1.0.15
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+          file-path: './README.md'
+          check-modified-files-only: ${{ github.event_name == 'pull_request' && 'yes' || 'no' }}

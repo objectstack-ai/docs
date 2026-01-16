@@ -1,0 +1,38 @@
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: 
+      - 'content/**/*.mdx'
+      - '*.md'
+
+i18n:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'content/**/*.zh-CN.mdx'
+      - 'content/**/*.en.mdx'
+      - 'lib/i18n.ts'
+
+ui:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'app/**/*.tsx'
+      - 'app/**/*.ts'
+      - '*.tsx'
+
+configuration:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '*.config.*'
+      - 'tsconfig.json'
+      - 'vercel.json'
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+
+workflows:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**'
