@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
@@ -32,8 +33,8 @@ export function registerBuildCommand(cli) {
         DOCS_DIR: docsDir
       };
 
-      const nextCmd = 'next'; 
-      const args = ['build'];
+      const nextCmd = 'npm'; 
+      const args = ['run', 'build'];
 
       const child = spawn(nextCmd, args, {
         stdio: 'inherit',
@@ -42,6 +43,20 @@ export function registerBuildCommand(cli) {
       });
 
       child.on('close', (code) => {
+        if (code === 0) {
+          // Copy output to project root
+          const src = path.join(nextAppDir, 'out');
+          const dest = path.join(process.cwd(), 'out');
+          
+          if (fs.existsSync(src)) {
+            console.log(`\nMoving build output to ${dest}...`);
+            if (fs.existsSync(dest)) {
+                fs.rmSync(dest, { recursive: true, force: true });
+            }
+            fs.cpSync(src, dest, { recursive: true });
+            console.log(`Build successfully output to: ${dest}`);
+          }
+        }
         process.exit(code);
       });
     });

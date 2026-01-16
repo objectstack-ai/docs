@@ -34,8 +34,8 @@ export function registerDevCommand(cli) {
         PORT: options.port
       };
       
-      const nextCmd = 'next'; // Ideally absolute path to next bin if needed, but relative usually works if deps are installed
-      const args = ['dev', '-p', options.port];
+      const nextCmd = 'npm'; 
+      const args = ['run', 'dev', '--', '-p', options.port];
 
       const child = spawn(nextCmd, args, {
         stdio: 'inherit',
