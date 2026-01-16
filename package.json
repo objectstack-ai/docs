@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "client-only": "^0.0.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "next": "^16.1.2"
   },
   "devDependencies": {
-    "@objectdocs/cli": "workspace:*",
-    "next": "^16.1.2"
+    "@objectdocs/cli": "workspace:*"
   }
 }
