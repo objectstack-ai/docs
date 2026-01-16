@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "objectdocs dev",
     "build": "objectdocs build",
+    "start": "objectdocs start",
     "translate": "objectdocs translate",
     "translate:all": "objectdocs translate --all"
   },
