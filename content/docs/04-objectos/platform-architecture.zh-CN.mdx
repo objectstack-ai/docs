@@ -1,0 +1,425 @@
+---
+title: 平台架构
+description: ObjectOS 如何将 ObjectQL 和 ObjectUI 绑定在一起并实现本地优先架构
+---
+
+# 平台架构
+
+ObjectOS 作为运行时平台,将 ObjectQL(数据引擎)和 ObjectUI(界面框架)编排成一个完整的应用环境。本页面解释 ObjectOS 如何绑定这些组件并实现本地优先架构。
+
+## 架构概览
+
+ObjectOS 分为三个主要层次:
+
+```
+┌─────────────────────────────────────────────────────┐
+│              应用层                                  │
+│  ┌──────────────┐  ┌──────────────┐                │
+│  │   业务逻辑   │  │   自定义组件 │                │
+│  └──────────────┘  └──────────────┘                │
+└────────────────────┬────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────┐
+│              ObjectOS 平台                          │
+│  ┌──────────────────────────────────────────────┐  │
+│  │         运行时绑定层                          │  │
+│  │  ┌────────────────┬────────────────────────┐ │  │
+│  │  │  Schema-UI     │   数据-组件            │ │  │
+│  │  │   映射         │   同步                  │ │  │
+│  │  └────────────────┴────────────────────────┘ │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │         平台服务层                            │  │
+│  │  ┌───────┬───────┬─────────┬──────────────┐ │  │
+│  │  │ 认证  │ RBAC  │   FLS   │ 多租户       │ │  │
+│  │  └───────┴───────┴─────────┴──────────────┘ │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌────────────┬────────────────────┐              │
+│  │  ObjectUI  │     ObjectQL       │              │
+│  │   组件     │    数据引擎        │              │
+│  └────────────┴────────────────────┘              │
+└─────────────────────────────────────────────────────┘
+```
+
+## QL-UI 绑定机制
+
+ObjectOS 通过声明式绑定系统自动连接 ObjectQL schema 和 ObjectUI 组件。
+
+### Schema 驱动的 UI 生成
+
+当您定义对象 schema 时,ObjectOS 自动生成相应的 UI 组件:
+
+```typescript
+// Schema 定义 (ObjectQL)
+const schema = {
+  objects: {
+    contacts: {
+      label: '联系人',
+      fields: {
+        name: { 
+          type: 'text', 
+          label: '姓名',
+          required: true 
+        },
+        email: { 
+          type: 'email', 
+          label: '邮箱' 
+        },
+        company: { 
+          type: 'lookup',
+          reference_to: 'companies',
+          label: '公司'
+        },
+        status: {
+          type: 'select',
+          options: ['active', 'inactive'],
+          label: '状态'
+        }
+      }
+    }
+  }
+}
+
+// ObjectOS 自动生成:
+// - 带有适当输入控件的表单组件
+// - 可排序列的列表视图
+// - 格式化字段的详情视图
+// - 关联关系的查找选择器
+```
+
+### 组件到数据的绑定
+
+ObjectUI 组件自动绑定到 ObjectQL 数据:
+
+```typescript
+// 页面定义 (ObjectUI)
+const pages = {
+  contacts: {
+    type: 'list',
+    object: 'contacts',  // 自动绑定到 schema
+    fields: ['name', 'email', 'company', 'status'],
+    filters: {
+      status: 'active'
+    }
+  },
+  contactDetail: {
+    type: 'detail',
+    object: 'contacts',  // 自动绑定到 schema
+    layout: [
+      { field: 'name' },
+      { field: 'email' },
+      { field: 'company' },  // 渲染查找选择器
+      { field: 'status' }    // 渲染下拉框
+    ]
+  }
+}
+```
+
+### 实时数据同步
+
+ObjectOS 在 UI 和数据之间保持双向同步:
+
+```typescript
+// 当用户在 UI 中编辑字段时:
+// 1. ObjectUI 捕获变更
+// 2. ObjectOS 根据 schema 进行验证
+// 3. ObjectQL 持久化到数据库
+// 4. ObjectOS 广播更新
+// 5. 所有 UI 组件自动刷新
+
+const app = new ObjectOS({
+  schema,
+  pages,
+  reactivity: {
+    enabled: true,        // 启用实时同步
+    debounce: 300,       // 防抖更新 (毫秒)
+    optimistic: true     // 乐观 UI 更新
+  }
+})
+```
+
+## 本地优先实现
+
+ObjectOS 实现了本地优先架构原则,使应用可以无缝离线工作,同时支持可选的云同步。
+
+### 存储架构
+
+```
+┌─────────────────────────────────────────────────┐
+│           应用运行时                             │
+└────────────────┬────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────┐
+│         ObjectOS 存储层                         │
+│  ┌──────────────────────────────────────────┐  │
+│  │      本地存储 (SQLite)                   │  │
+│  │  ┌─────────┬──────────┬───────────────┐  │  │
+│  │  │ 应用数据│ 用户数据 │  系统数据     │  │  │
+│  │  └─────────┴──────────┴───────────────┘  │  │
+│  └──────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────┐  │
+│  │    同步引擎(可选)                        │  │
+│  │  ┌────────────┬──────────────────────┐   │  │
+│  │  │ 变更日志   │  冲突解决            │   │  │
+│  │  └────────────┴──────────────────────┘   │  │
+│  └──────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+                 │
+                 │ (可选同步)
+                 │
+┌────────────────▼────────────────────────────────┐
+│          远程服务器(可选)                       │
+└─────────────────────────────────────────────────┘
+```
+
+### 独立模式(纯本地优先)
+
+在独立模式下,所有内容都在本地运行:
+
+```typescript
+const app = new ObjectOS({
+  mode: 'standalone',
+  storage: {
+    type: 'sqlite',
+    path: './myapp.db'    // 本地 SQLite 文件
+  },
+  offline: {
+    enabled: true,         // 完整离线支持
+    persistQueries: true   // 本地缓存查询
+  }
+})
+
+// 应用 100% 离线工作:
+// - 所有数据存储在本地
+// - 无需网络连接
+// - 即时性能
+// - 用户拥有数据
+```
+
+### 混合模式(本地优先 + 同步)
+
+应用可以在在线时与远程服务器同步:
+
+```typescript
+const app = new ObjectOS({
+  mode: 'hybrid',
+  storage: {
+    type: 'sqlite',
+    path: './myapp.db'
+  },
+  sync: {
+    enabled: true,
+    remote: 'https://api.example.com',
+    strategy: 'eventual',  // 最终一致性
+    interval: 60000,       // 在线时每 60 秒同步
+    conflictResolution: 'last-write-wins'
+  }
+})
+
+// 优势:
+// - 离线优先工作
+// - 网络可用时同步
+// - 自动处理冲突
+// - 快速的本地操作
+```
+
+### 数据持久化
+
+ObjectOS 确保数据持久性:
+
+```typescript
+const app = new ObjectOS({
+  storage: {
+    type: 'sqlite',
+    path: './myapp.db',
+    persistence: {
+      wal: true,              // 预写日志
+      autoCheckpoint: 1000,   // 每 1000 页检查点
+      backup: {
+        enabled: true,
+        interval: 3600000,    // 每小时备份
+        retention: 7          // 保留 7 个备份
+      }
+    }
+  }
+})
+```
+
+## 运行时生命周期
+
+理解 ObjectOS 生命周期有助于优化应用行为:
+
+### 初始化阶段
+
+```typescript
+const app = new ObjectOS({ /* config */ })
+
+// 阶段 1: 初始化核心服务
+await app.initialize()
+// - 加载配置
+// - 设置存储层
+// - 初始化 ObjectQL 引擎
+// - 注册 schemas
+
+// 阶段 2: 启动平台服务
+await app.start()
+// - 初始化认证系统
+// - 加载用户权限
+// - 启动 UI 运行时
+// - 绑定组件到数据
+// - 开始同步(如果配置)
+
+console.log('应用就绪于', app.url)
+```
+
+### 请求处理
+
+```typescript
+// 传入请求流程:
+请求 → ObjectOS 路由器
+         ↓
+    认证中间件(验证用户)
+         ↓
+    权限检查(RBAC + FLS)
+         ↓
+    ObjectQL 查询(带过滤器)
+         ↓
+    ObjectUI 渲染(带数据)
+         ↓
+    响应
+```
+
+### 关闭阶段
+
+```typescript
+// 优雅关闭
+process.on('SIGTERM', async () => {
+  await app.shutdown({
+    // 完成待处理写入
+    flushWrites: true,
+    // 检查点 WAL
+    checkpoint: true,
+    // 关闭连接
+    closeConnections: true,
+    // 超时时间(毫秒)
+    timeout: 5000
+  })
+})
+```
+
+## 配置选项
+
+完整的 ObjectOS 配置参考:
+
+```typescript
+const app = new ObjectOS({
+  // 部署模式
+  mode: 'standalone' | 'server' | 'multi-tenant',
+  
+  // 存储配置
+  storage: {
+    type: 'sqlite' | 'mysql' | 'postgresql',
+    path: './data.db',           // SQLite 路径
+    url: 'mysql://...',          // 或连接 URL
+    pool: {
+      min: 2,
+      max: 10
+    }
+  },
+  
+  // Schema 定义
+  schema: {
+    objects: { /* ... */ }
+  },
+  
+  // UI 页面
+  pages: {
+    /* ... */
+  },
+  
+  // 认证
+  auth: {
+    enabled: true,
+    providers: ['email', 'oauth'],
+    session: {
+      secret: 'your-secret',
+      maxAge: 86400000
+    }
+  },
+  
+  // 同步配置(本地优先)
+  sync: {
+    enabled: false,
+    remote: 'https://api.example.com',
+    strategy: 'eventual' | 'manual',
+    interval: 60000,
+    conflictResolution: 'last-write-wins' | 'manual'
+  },
+  
+  // 服务器设置
+  server: {
+    port: 3000,
+    host: '0.0.0.0'
+  },
+  
+  // 多租户设置
+  multiTenant: {
+    enabled: false,
+    strategy: 'virtualCity' | 'database',
+    isolation: 'strict' | 'shared-schema'
+  }
+})
+```
+
+## 性能优化
+
+ObjectOS 包含多种优化策略:
+
+### 查询优化
+
+```typescript
+const app = new ObjectOS({
+  performance: {
+    // 启用查询结果缓存
+    queryCache: {
+      enabled: true,
+      maxSize: 100,        // 缓存 100 个查询
+      ttl: 60000          // 60 秒 TTL
+    },
+    
+    // 优化虚拟列索引(SQLite)
+    virtualColumnIndex: true,
+    
+    // 批量变更
+    batchMutations: {
+      enabled: true,
+      maxSize: 100,
+      flushInterval: 1000
+    }
+  }
+})
+```
+
+### UI 渲染优化
+
+```typescript
+const pages = {
+  largeList: {
+    type: 'list',
+    object: 'records',
+    performance: {
+      virtualScroll: true,     // 只渲染可见行
+      pageSize: 50,            // 一次加载 50 条
+      lazyLoad: true,          // 滚动时加载
+      memoizeRows: true        // 缓存已渲染行
+    }
+  }
+}
+```
+
+## 下一步
+
+现在您已经理解了平台架构:
+
+- **[身份与访问](./identity-access)** - 了解用户管理和 RBAC
+- **[部署与运维](./deployment)** - 部署 ObjectOS 应用

@@ -1,0 +1,668 @@
+---
+title: 示例项目
+description: 探索可直接运行的 ObjectStack 示例应用
+---
+
+# 示例项目展示
+
+探索真实的 ObjectStack 应用。下载、安装并立即运行,体验 ObjectStack 的实际效果。
+
+## 可用示例
+
+### 1. 个人记账应用
+
+使用 ObjectStack 本地优先架构构建的完整个人财务追踪器。
+
+**功能特性:**
+- 💰 跟踪收入和支出
+- 📊 可视化报表和图表
+- 🏷️ 类别和标签
+- 📅 月度预算
+- 💾 100% 本地数据存储(SQLite)
+- 📦 便携式 `.oos` 包格式
+
+**技术栈:**
+- ObjectQL 与 SQLite 驱动
+- ObjectUI 仪表板布局
+- 可视化图表组件
+- 自动计算触发器
+
+**适用于:**
+- 学习 ObjectStack 基础
+- 理解本地优先架构
+- 个人财务管理
+- 离线优先应用
+
+#### 快速开始
+
+**选项 1: 从 .oos 包安装**
+
+> **注意**: 下面的下载 URL 仅为演示目的的占位符。请查看 ObjectStack 官方仓库获取实际的示例包。
+
+```bash
+# 下载包
+curl -O https://demos.objectstack.io/accounting-app.oos
+
+# 使用 ObjectOS CLI 安装
+objectos install accounting-app.oos
+
+# 运行应用
+objectos run accounting-app
+```
+
+访问: `http://localhost:3000`
+
+**选项 2: 从源码克隆并运行**
+
+```bash
+# 克隆仓库
+git clone https://github.com/objectstack/demo-accounting-app.git
+cd demo-accounting-app
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+#### 探索关键文件
+
+```
+demo-accounting-app/
+├── src/
+│   ├── objects/
+│   │   ├── transaction.object.js      # 收支记录
+│   │   ├── category.object.js         # 交易类别
+│   │   ├── budget.object.js           # 月度预算
+│   │   └── account.object.js          # 银行账户
+│   ├── pages/
+│   │   ├── dashboard.page.json        # 主仪表板(含图表)
+│   │   ├── transactions.page.json     # 交易列表视图
+│   │   └── reports.page.json          # 财务报表
+│   └── triggers/
+│       ├── transaction.trigger.js     # 自动计算余额
+│       └── budget.trigger.js          # 预算提醒
+└── objectos.config.js                 # SQLite 配置
+```
+
+#### 示例数据模型: 交易对象
+
+```javascript
+// src/objects/transaction.object.js
+export default {
+  name: "transaction",
+  label: "交易",
+  icon: "DollarSign",
+  fields: {
+    date: {
+      type: "date",
+      label: "日期",
+      required: true,
+      defaultValue: "TODAY"
+    },
+    type: {
+      type: "select",
+      label: "类型",
+      options: [
+        { label: "收入", value: "income" },
+        { label: "支出", value: "expense" }
+      ],
+      required: true
+    },
+    amount: {
+      type: "currency",
+      label: "金额",
+      required: true,
+      scale: 2
+    },
+    category: {
+      type: "lookup",
+      label: "类别",
+      reference_to: "category",
+      required: true
+    },
+    account: {
+      type: "lookup",
+      label: "账户",
+      reference_to: "account"
+    },
+    description: {
+      type: "text",
+      label: "描述"
+    },
+    // 虚拟字段 - 计算得出
+    impact: {
+      type: "formula",
+      label: "影响",
+      formula: "type == 'income' ? amount : -amount",
+      returnType: "currency"
+    }
+  },
+  list_views: {
+    all: {
+      label: "所有交易",
+      columns: ["date", "type", "amount", "category", "account"],
+      sort: [["date", "desc"]]
+    },
+    income: {
+      label: "收入",
+      filter_scope: "type eq 'income'",
+      columns: ["date", "amount", "category", "description"]
+    },
+    expenses: {
+      label: "支出",
+      filter_scope: "type eq 'expense'",
+      columns: ["date", "amount", "category", "description"]
+    }
+  }
+};
+```
+
+#### 仪表板配置
+
+```json
+// src/pages/dashboard.page.json
+{
+  "name": "dashboard",
+  "label": "仪表板",
+  "icon": "LayoutDashboard",
+  "layout": {
+    "type": "dashboard",
+    "widgets": [
+      {
+        "type": "summary_card",
+        "title": "总收入",
+        "object": "transaction",
+        "aggregation": "sum",
+        "field": "amount",
+        "filter": "type eq 'income'",
+        "size": "small"
+      },
+      {
+        "type": "summary_card",
+        "title": "总支出",
+        "object": "transaction",
+        "aggregation": "sum",
+        "field": "amount",
+        "filter": "type eq 'expense'",
+        "size": "small"
+      },
+      {
+        "type": "chart",
+        "title": "月度趋势",
+        "chartType": "line",
+        "object": "transaction",
+        "groupBy": "date.month",
+        "metrics": [
+          { "field": "amount", "aggregation": "sum", "label": "总计" }
+        ]
+      },
+      {
+        "type": "chart",
+        "title": "按类别的支出",
+        "chartType": "pie",
+        "object": "transaction",
+        "filter": "type eq 'expense'",
+        "groupBy": "category",
+        "metrics": [
+          { "field": "amount", "aggregation": "sum" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 2. 企业 CRM 系统
+
+展示企业级 ObjectStack 功能的全功能客户关系管理系统。
+
+**功能特性:**
+- 👥 联系人和公司管理
+- 🎯 线索跟踪和转化
+- 📞 活动日志(电话、邮件、会议)
+- 📈 销售管道可视化
+- 🔐 基于角色的访问控制
+- 🐳 Docker 部署就绪
+- 🗄️ PostgreSQL 后端
+
+**技术栈:**
+- ObjectQL 与 PostgreSQL 驱动
+- 多租户配置
+- 高级权限(RBAC)
+- ObjectUI 复杂表单和看板
+- 邮件集成触发器
+
+**适用于:**
+- 理解企业功能
+- 学习多租户架构
+- Docker 部署实践
+- 复杂业务逻辑实现
+
+#### 使用 Docker 快速开始
+
+```bash
+# 克隆仓库
+git clone https://github.com/objectstack/demo-crm-system.git
+cd demo-crm-system
+
+# 使用 Docker Compose 启动
+docker-compose up -d
+
+# 等待初始化(约 30 秒)
+docker-compose logs -f objectos
+```
+
+访问: `http://localhost:3000`
+
+**默认登录:**
+- 用户名: `admin@demo.com`
+- 密码: `demo123` (登录后请更改!)
+
+#### 架构概览
+
+```
+┌─────────────────────────────────────────────┐
+│           Docker Compose 技术栈             │
+│  ┌────────────┐  ┌──────────────────────┐  │
+│  │  ObjectOS  │  │    PostgreSQL 15     │  │
+│  │   容器     │──│    (CRM 数据库)      │  │
+│  └────────────┘  └──────────────────────┘  │
+│        │                                     │
+│  ┌────────────┐  ┌──────────────────────┐  │
+│  │   Redis    │  │      Nginx           │  │
+│  │  (会话)    │  │    (反向代理)        │  │
+│  └────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+#### 核心对象
+
+**联系人对象:**
+
+```javascript
+// src/objects/contact.object.js
+export default {
+  name: "contact",
+  label: "联系人",
+  icon: "User",
+  fields: {
+    firstName: {
+      type: "text",
+      label: "名",
+      required: true
+    },
+    lastName: {
+      type: "text",
+      label: "姓",
+      required: true
+    },
+    fullName: {
+      type: "formula",
+      label: "全名",
+      formula: "firstName + ' ' + lastName"
+    },
+    email: {
+      type: "email",
+      label: "邮箱",
+      unique: true
+    },
+    phone: {
+      type: "phone",
+      label: "电话"
+    },
+    company: {
+      type: "lookup",
+      label: "公司",
+      reference_to: "company"
+    },
+    status: {
+      type: "select",
+      label: "状态",
+      options: [
+        { label: "线索", value: "lead" },
+        { label: "合格", value: "qualified" },
+        { label: "客户", value: "customer" },
+        { label: "未激活", value: "inactive" }
+      ],
+      defaultValue: "lead"
+    },
+    assignedTo: {
+      type: "lookup",
+      label: "分配给",
+      reference_to: "user"
+    }
+  },
+  permissions: {
+    allowRead: "field(assignedTo) == $user.id or $user.role == 'admin'",
+    allowEdit: "field(assignedTo) == $user.id or $user.role == 'admin'",
+    allowDelete: "$user.role == 'admin'"
+  }
+};
+```
+
+**销售管道:**
+
+```json
+// src/pages/pipeline.page.json
+{
+  "name": "pipeline",
+  "label": "销售管道",
+  "icon": "TrendingUp",
+  "layout": {
+    "type": "kanban",
+    "object": "opportunity",
+    "groupBy": "stage",
+    "cardFields": ["name", "amount", "closeDate", "contact"],
+    "stages": [
+      { "value": "prospecting", "label": "潜在客户" },
+      { "value": "qualification", "label": "资格确认" },
+      { "value": "proposal", "label": "提案" },
+      { "value": "negotiation", "label": "谈判" },
+      { "value": "closed_won", "label": "成交" },
+      { "value": "closed_lost", "label": "丢失" }
+    ],
+    "aggregation": {
+      "field": "amount",
+      "function": "sum",
+      "label": "总价值"
+    }
+  }
+}
+```
+
+#### 多租户设置
+
+```javascript
+// objectos.config.js
+export default {
+  datasources: {
+    default: {
+      driver: "postgresql",
+      host: process.env.DB_HOST || "postgres",
+      port: 5432,
+      database: process.env.DB_NAME || "crm",
+      username: process.env.DB_USER || "crm_user",
+      password: process.env.DB_PASSWORD
+    }
+  },
+  
+  multiTenant: {
+    enabled: true,
+    mode: "schema",
+    schemaPattern: "tenant_{tenantId}",
+    
+    // 从子域名解析租户
+    resolver: async (request) => {
+      const host = request.headers.host;
+      const subdomain = host.split('.')[0];
+      
+      // 在数据库中查找租户
+      return {
+        id: subdomain,
+        name: subdomain
+      };
+    }
+  },
+  
+  auth: {
+    providers: {
+      local: {
+        enabled: true
+      },
+      saml: {
+        enabled: process.env.SAML_ENABLED === 'true',
+        entryPoint: process.env.SAML_ENTRY_POINT,
+        cert: process.env.SAML_CERT
+      }
+    }
+  }
+};
+```
+
+#### 邮件集成触发器
+
+```javascript
+// src/triggers/activity.trigger.js
+export default {
+  listenTo: "activity",
+  
+  afterInsert: async function(context) {
+    const { doc, object } = context;
+    
+    // 分配活动时发送通知邮件
+    if (doc.type === 'meeting' && doc.assignedTo) {
+      const user = await object.findOne('user', doc.assignedTo);
+      const contact = await object.findOne('contact', doc.contactId);
+      
+      await context.services.email.send({
+        to: user.email,
+        subject: `已安排与 ${contact.fullName} 的新会议`,
+        template: 'meeting_notification',
+        data: {
+          userName: user.name,
+          contactName: contact.fullName,
+          meetingDate: doc.scheduledDate,
+          notes: doc.notes
+        }
+      });
+    }
+  }
+};
+```
+
+## 对比示例
+
+| 功能 | 记账应用 | CRM 系统 |
+|---------|---------------|------------|
+| **数据库** | SQLite (本地) | PostgreSQL (服务器) |
+| **部署** | .oos 包 | Docker Compose |
+| **用户** | 单用户 | 多用户、多租户 |
+| **复杂度** | 初学者 | 高级 |
+| **使用场景** | 个人 | 企业 |
+| **配置时间** | 2 分钟 | 10 分钟 |
+| **离线支持** | 完全 | 有限 |
+
+## 学习路径
+
+### 初学者
+
+1. **从记账应用开始**
+   - 理解 ObjectQL 模式定义
+   - 学习 ObjectUI 布局
+   - 实践触发器
+   - 掌握本地优先概念
+
+2. **进阶到 CRM 系统**
+   - 探索多用户功能
+   - 研究 RBAC 实现
+   - 学习 Docker 部署
+   - 理解多租户架构
+
+### 企业开发者
+
+1. **先学习 CRM 系统**
+   - 审查企业模式
+   - 检查安全模型
+   - 理解 Docker 设置
+   - 探索集成模式
+
+2. **通过记账应用简化**
+   - 查看最小配置
+   - 理解核心概念
+   - 学习打包策略
+
+## 扩展示例
+
+### 记账应用扩展
+
+**添加投资追踪:**
+
+```javascript
+// src/objects/investment.object.js
+export default {
+  name: "investment",
+  label: "投资",
+  fields: {
+    name: { type: "text", label: "名称", required: true },
+    type: {
+      type: "select",
+      label: "类型",
+      options: [
+        { label: "股票", value: "stocks" },
+        { label: "债券", value: "bonds" },
+        { label: "房地产", value: "real_estate" }
+      ]
+    },
+    purchaseDate: { type: "date", label: "购买日期" },
+    purchasePrice: { type: "currency", label: "购买价格" },
+    currentValue: { type: "currency", label: "当前价值" },
+    gain: {
+      type: "formula",
+      label: "收益/损失",
+      formula: "currentValue - purchasePrice",
+      returnType: "currency"
+    }
+  }
+};
+```
+
+### CRM 系统扩展
+
+**添加客户支持工单:**
+
+```javascript
+// src/objects/ticket.object.js
+export default {
+  name: "ticket",
+  label: "支持工单",
+  fields: {
+    subject: { type: "text", label: "主题", required: true },
+    description: { type: "textarea", label: "描述" },
+    contact: {
+      type: "lookup",
+      label: "联系人",
+      reference_to: "contact",
+      required: true
+    },
+    priority: {
+      type: "select",
+      label: "优先级",
+      options: [
+        { label: "低", value: "low" },
+        { label: "中", value: "medium" },
+        { label: "高", value: "high" },
+        { label: "紧急", value: "critical" }
+      ]
+    },
+    status: {
+      type: "select",
+      label: "状态",
+      options: [
+        { label: "新建", value: "new" },
+        { label: "处理中", value: "in_progress" },
+        { label: "等待", value: "waiting" },
+        { label: "已解决", value: "resolved" }
+      ]
+    },
+    assignedTo: {
+      type: "lookup",
+      label: "分配给",
+      reference_to: "user"
+    }
+  }
+};
+```
+
+## 示例数据
+
+两个示例都包含样本数据供探索:
+
+### 记账应用示例数据
+- 50+ 条示例交易
+- 10 个支出类别
+- 3 个收入类别
+- 2 个银行账户
+- 3 个月的历史数据
+
+### CRM 系统示例数据
+- 25 个联系人
+- 10 家公司
+- 15 个机会
+- 30+ 条活动
+- 5 个用户账户(不同角色)
+
+## 下载链接
+
+> **注意**: 这些是文档目的的占位符 URL。实际的示例资源将通过 ObjectStack GitHub 仓库提供。
+
+### 记账应用
+- **源码**: [github.com/objectstack/demo-accounting-app](https://github.com/objectstack/demo-accounting-app)
+- **.oos 包**: [demos.objectstack.io/accounting-app.oos](https://demos.objectstack.io/accounting-app.oos)
+- **文档**: [demos.objectstack.io/accounting-app/docs](https://demos.objectstack.io/accounting-app/docs)
+
+### CRM 系统
+- **源码**: [github.com/objectstack/demo-crm-system](https://github.com/objectstack/demo-crm-system)
+- **Docker 镜像**: `objectstack/demo-crm:latest`
+- **文档**: [demos.objectstack.io/crm-system/docs](https://demos.objectstack.io/crm-system/docs)
+
+## 故障排除
+
+### 记账应用问题
+
+**数据库未找到:**
+```bash
+# 重置数据库
+rm ~/.objectos/accounting-app/database.sqlite
+npm run dev
+```
+
+**端口冲突:**
+```bash
+# 在 objectos.config.js 中更改端口
+export default {
+  server: { port: 3001 }
+};
+```
+
+### CRM 系统问题
+
+**Docker 容器无法启动:**
+```bash
+# 查看日志
+docker-compose logs
+
+# 清理重启
+docker-compose down -v
+docker-compose up -d
+```
+
+**数据库连接错误:**
+```bash
+# 等待 PostgreSQL 初始化
+docker-compose logs postgres | grep "ready to accept"
+
+# 测试连接
+docker-compose exec postgres psql -U crm_user -d crm
+```
+
+## 下一步
+
+探索示例后:
+
+1. **自定义** - 修改对象和页面以适应您的需求
+2. **构建** - 从零开始创建您自己的应用
+3. **部署** - 将应用部署到生产环境
+4. **分享** - 打包并分发您的创作
+
+## 社区示例
+
+浏览社区的更多示例:
+
+- [食谱管理器](https://github.com/objectstack-community/recipe-manager)
+- [项目追踪器](https://github.com/objectstack-community/project-tracker)
+- [库存系统](https://github.com/objectstack-community/inventory)
+- [活动日历](https://github.com/objectstack-community/event-calendar)
+
+提交您自己的示例: [community/demos](https://github.com/objectstack/community/demos)

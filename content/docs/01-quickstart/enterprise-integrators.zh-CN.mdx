@@ -1,0 +1,617 @@
+---
+title: 企业集成人员
+description: 连接 ObjectStack 到企业数据库并使用 Docker 部署的指南
+---
+
+# 企业集成人员指南
+
+本指南展示如何将 ObjectStack 与现有企业数据库集成,以及如何使用 Docker 容器部署。
+
+## 为什么企业选择 ObjectStack?
+
+企业优势包括:
+
+- 🔌 **跨数据库** - 连接到 MySQL、PostgreSQL、Oracle、SQL Server
+- 🏢 **多租户** - 在一个部署中支持多个组织
+- 🔐 **企业安全** - RBAC、字段级权限、审计日志
+- 📦 **容器化** - Docker 就绪,适配现代 DevOps 工作流
+- 🔄 **遗留系统集成** - 连接现有数据库,无需迁移
+
+## 部署选项
+
+### 选项 1: 连接到现有数据库
+
+将 ObjectStack 与当前的 MySQL 或 PostgreSQL 数据库配合使用。
+
+**适用于**: 与现有系统集成、渐进式迁移
+
+### 选项 2: Docker 容器部署
+
+在 Docker 容器中部署 ObjectOS,使用托管数据库。
+
+**适用于**: 新部署、微服务架构、云原生环境
+
+## 选项 1: 连接到现有数据库
+
+### 前置要求
+
+- Node.js 18+ 已安装
+- 可访问 MySQL 5.7+ 或 PostgreSQL 12+ 数据库
+- 数据库凭据(主机、端口、用户名、密码、数据库名)
+- 数据库服务器的网络访问权限
+
+### 步骤 1: 创建项目
+
+```bash
+npm create object-app my-enterprise-app
+```
+
+选择适当的模板:
+
+```
+? 选择一个模板:
+  SQLite 本地模板
+❯ MySQL 企业模板
+  PostgreSQL 企业模板
+  自定义配置
+```
+
+### 步骤 2: 配置数据库连接
+
+编辑 `objectos.config.js`:
+
+#### MySQL 配置
+
+```javascript
+export default {
+  datasources: {
+    default: {
+      driver: "mysql",
+      host: "mysql.yourcompany.com",
+      port: 3306,
+      database: "objectstack_db",
+      username: "objectstack_user",
+      password: process.env.DB_PASSWORD,
+      options: {
+        charset: "utf8mb4",
+        timezone: "+00:00",
+        pool: {
+          min: 2,
+          max: 10
+        }
+      }
+    }
+  },
+  server: {
+    port: 3000,
+    host: "0.0.0.0"
+  },
+  security: {
+    secret: process.env.APP_SECRET,
+    sessionTimeout: 7200 // 2 小时
+  }
+};
+```
+
+#### PostgreSQL 配置
+
+```javascript
+export default {
+  datasources: {
+    default: {
+      driver: "postgresql",
+      host: "postgres.yourcompany.com",
+      port: 5432,
+      database: "objectstack_db",
+      username: "objectstack_user",
+      password: process.env.DB_PASSWORD,
+      options: {
+        ssl: {
+          rejectUnauthorized: false
+        },
+        pool: {
+          min: 2,
+          max: 10
+        }
+      }
+    }
+  }
+};
+```
+
+### 步骤 3: 环境变量
+
+创建 `.env` 文件存储敏感凭据:
+
+```bash
+# 数据库
+DB_PASSWORD=your_secure_password
+
+# 应用
+APP_SECRET=your_random_secret_key_min_32_chars
+NODE_ENV=production
+
+# 可选: 多数据库
+DB_ANALYTICS_HOST=analytics.yourcompany.com
+DB_ANALYTICS_PASSWORD=analytics_password
+```
+
+**安全最佳实践**: 永远不要将 `.env` 提交到版本控制!
+
+添加到 `.gitignore`:
+
+```
+.env
+.env.local
+.env.*.local
+```
+
+### 步骤 4: 数据库初始化
+
+运行迁移以创建 ObjectStack 系统表:
+
+```bash
+npm run migrate
+```
+
+这将创建:
+
+- 用户认证表
+- 权限和角色表
+- 对象元数据表
+- 审计日志表
+
+### 步骤 5: 连接到遗留表(可选)
+
+如果有现有表,将它们映射为外部对象:
+
+```javascript
+// src/objects/legacy_customer.object.js
+export default {
+  name: "legacy_customer",
+  label: "客户(遗留)",
+  table_name: "customers", // 现有表名
+  external: true,
+  fields: {
+    customer_id: {
+      type: "number",
+      label: "客户 ID",
+      name: "id", // 映射到现有列
+      primary: true
+    },
+    customer_name: {
+      type: "text",
+      label: "名称",
+      name: "name" // 映射到现有列
+    },
+    email: {
+      type: "email",
+      label: "邮箱",
+      name: "email_address"
+    },
+    // 虚拟字段 - 计算得出,不在数据库中
+    full_info: {
+      type: "formula",
+      label: "完整信息",
+      formula: "customer_name + ' (' + email + ')'"
+    }
+  }
+};
+```
+
+### 步骤 6: 启动服务器
+
+```bash
+npm run start
+```
+
+访问 `http://localhost:3000`
+
+## 选项 2: Docker 容器部署
+
+### 前置要求
+
+- Docker 20.10+ 已安装
+- Docker Compose(可选,用于多容器设置)
+- 基本的 Docker 知识
+
+### 步骤 1: 拉取 ObjectOS 镜像
+
+```bash
+docker pull objectstack/objectos:latest
+```
+
+### 步骤 2: 创建 Docker Compose 文件
+
+创建 `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  objectos:
+    image: objectstack/objectos:latest
+    container_name: objectos-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=objectstack
+      - DB_USER=objectstack
+      - DB_PASSWORD=secure_password
+      - APP_SECRET=your_secret_key_min_32_characters
+    volumes:
+      - ./src:/app/src
+      - ./objectos.config.js:/app/objectos.config.js
+      - objectos-storage:/app/storage
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: objectos-postgres
+    environment:
+      - POSTGRES_DB=objectstack
+      - POSTGRES_USER=objectstack
+      - POSTGRES_PASSWORD=secure_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # 可选: Redis 用于会话存储
+  redis:
+    image: redis:7-alpine
+    container_name: objectos-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  objectos-storage:
+```
+
+### 步骤 3: 创建应用目录结构
+
+```bash
+mkdir -p src/objects src/pages src/triggers
+```
+
+创建示例对象 `src/objects/contact.object.js`:
+
+```javascript
+export default {
+  name: "contact",
+  label: "联系人",
+  fields: {
+    name: { type: "text", label: "姓名", required: true },
+    email: { type: "email", label: "邮箱" },
+    phone: { type: "phone", label: "电话" },
+    company: { type: "text", label: "公司" }
+  }
+};
+```
+
+### 步骤 4: 启动容器
+
+```bash
+docker-compose up -d
+```
+
+检查状态:
+
+```bash
+docker-compose ps
+```
+
+预期输出:
+
+```
+NAME                IMAGE                        STATUS
+objectos-app        objectstack/objectos:latest  Up 2 minutes
+objectos-postgres   postgres:15-alpine           Up 2 minutes
+objectos-redis      redis:7-alpine               Up 2 minutes
+```
+
+### 步骤 5: 查看日志
+
+```bash
+# 所有服务
+docker-compose logs -f
+
+# 仅 ObjectOS
+docker-compose logs -f objectos
+
+# 最后 100 行
+docker-compose logs --tail=100 objectos
+```
+
+### 步骤 6: 访问应用
+
+打开浏览器: `http://localhost:3000`
+
+默认凭据(首次运行):
+
+- 用户名: `admin`
+- 密码: `admin` (立即更改!)
+
+## 多数据库配置
+
+同时连接到多个数据库:
+
+```javascript
+// objectos.config.js
+export default {
+  datasources: {
+    // 主数据库
+    default: {
+      driver: "postgresql",
+      host: "postgres.internal",
+      database: "main_db",
+      username: "app_user",
+      password: process.env.DB_PASSWORD
+    },
+    
+    // 遗留 MySQL 数据库
+    legacy: {
+      driver: "mysql",
+      host: "mysql.legacy.internal",
+      database: "old_crm",
+      username: "readonly_user",
+      password: process.env.LEGACY_DB_PASSWORD
+    },
+    
+    // 分析数据库
+    analytics: {
+      driver: "postgresql",
+      host: "analytics.internal",
+      database: "warehouse",
+      username: "analytics_user",
+      password: process.env.ANALYTICS_PASSWORD,
+      options: {
+        readOnly: true
+      }
+    }
+  }
+};
+```
+
+在对象定义中使用特定数据源:
+
+```javascript
+export default {
+  name: "legacy_order",
+  label: "遗留订单",
+  datasource: "legacy", // 使用遗留数据源
+  table_name: "orders",
+  external: true,
+  fields: {
+    // ... 字段定义
+  }
+};
+```
+
+## 多租户配置
+
+配置多组织支持:
+
+```javascript
+// objectos.config.js
+export default {
+  multiTenant: {
+    enabled: true,
+    mode: "schema", // 或 "database" 或 "discriminator"
+    
+    // 基于模式(PostgreSQL)
+    schemaPattern: "tenant_{tenantId}",
+    
+    // 基于数据库(MySQL)
+    // databasePattern: "tenant_{tenantId}_db",
+    
+    // 基于区分字段(共享表)
+    // discriminatorField: "tenant_id"
+  },
+  
+  tenantResolver: async (request) => {
+    // 从子域名提取租户
+    const hostname = request.headers.host;
+    const subdomain = hostname.split('.')[0];
+    
+    // 或从请求头
+    // const tenantId = request.headers['x-tenant-id'];
+    
+    return {
+      id: subdomain,
+      name: subdomain
+    };
+  }
+};
+```
+
+## 生产部署检查清单
+
+### 安全
+
+- [ ] 更改默认管理员密码
+- [ ] 使用强 `APP_SECRET`(至少 32 个随机字符)
+- [ ] 将密码存储在环境变量或密钥管理器中
+- [ ] 为数据库连接启用 SSL/TLS
+- [ ] 配置防火墙规则
+- [ ] 启用审计日志
+
+### 性能
+
+- [ ] 设置适当的数据库连接池大小
+- [ ] 配置 Redis 用于会话存储
+- [ ] 为静态资源启用缓存
+- [ ] 为文件存储设置 CDN
+- [ ] 配置负载均衡器(如使用多实例)
+
+### 监控
+
+- [ ] 设置健康检查端点
+- [ ] 配置应用日志
+- [ ] 监控数据库性能
+- [ ] 为错误设置告警
+- [ ] 跟踪资源使用(CPU、内存、磁盘)
+
+### 备份
+
+- [ ] 自动化数据库备份
+- [ ] 文件存储备份
+- [ ] 测试恢复流程
+- [ ] 记录恢复过程
+
+## 高级: Kubernetes 部署
+
+Kubernetes 清单示例:
+
+### Deployment
+
+```yaml
+# objectos-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: objectos
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: objectos
+  template:
+    metadata:
+      labels:
+        app: objectos
+    spec:
+      containers:
+      - name: objectos
+        image: objectstack/objectos:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: objectos-config
+              key: db-host
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: objectos-secrets
+              key: db-password
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+```
+
+### Service
+
+```yaml
+# objectos-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: objectos
+spec:
+  selector:
+    app: objectos
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: LoadBalancer
+```
+
+## 数据库迁移策略
+
+### 零停机迁移
+
+1. **双写阶段**: 同时写入旧数据库和新数据库
+2. **回填阶段**: 复制历史数据
+3. **验证阶段**: 验证数据一致性
+4. **切换阶段**: 将读取路由到新数据库
+5. **清理阶段**: 删除旧数据库
+
+### 渐进式迁移
+
+```javascript
+// 使用对象级数据源路由
+export default {
+  name: "customer",
+  datasource: process.env.MIGRATION_PHASE === 'complete' 
+    ? 'new_db' 
+    : 'legacy_db',
+  // ... 字段
+};
+```
+
+## 故障排除
+
+### 连接被拒绝
+
+```bash
+# 检查数据库是否运行
+docker-compose ps postgres
+
+# 测试连接
+docker-compose exec postgres psql -U objectstack -d objectstack
+
+# 查看日志
+docker-compose logs postgres
+```
+
+### 权限被拒绝
+
+```sql
+-- 授予必要权限
+GRANT ALL PRIVILEGES ON DATABASE objectstack TO objectstack_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO objectstack_user;
+```
+
+### 容器无法启动
+
+```bash
+# 查看日志
+docker-compose logs objectos
+
+# 验证配置
+docker-compose config
+
+# 重启容器
+docker-compose restart
+```
+
+## 下一步
+
+> **注意**: 以下链接指向正在开发中的未来文档章节。
+
+- 多租户配置(即将推出)
+- 安全与权限(即将推出)
+- 监控与日志(即将推出)
+- 高可用性设置(即将推出)
+
+## 获取帮助
+
+> **注意**: 商业文档正在开发中。
+
+- 📚 企业文档(即将推出)
+- 💼 [企业支持](https://objectstack.io/enterprise)
+- 🔧 [专业服务](https://objectstack.io/services)

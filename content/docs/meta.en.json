@@ -1,4 +1,19 @@
 {
   "title": "Documentation",
-  "pages": ["index", "getting-started", "architecture", "objectui", "objectql", "objectos", "i18n-guide"]
+  "pages": [
+    "index",
+    "00-intro",
+    "01-quickstart",
+    "02-objectql",
+    "03-objectui",
+    "04-objectos",
+    "---",
+    "getting-started",
+    "architecture",
+    "objectui",
+    "objectql",
+    "objectos",
+    "---",
+    "i18n-guide"
+  ]
 }

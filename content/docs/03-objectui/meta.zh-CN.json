@@ -1,0 +1,9 @@
+{
+  "title": "ObjectUI",
+  "pages": [
+    "index",
+    "core-concepts",
+    "component-spec",
+    "renderer-usage"
+  ]
+}

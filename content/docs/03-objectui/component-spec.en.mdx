@@ -1,0 +1,787 @@
+---
+title: Component Specification
+description: Complete protocol reference for all ObjectUI components
+---
+
+# Component Specification
+
+This comprehensive reference documents all ObjectUI components and their JSON protocols.
+
+## Basic Components
+
+Basic components are the fundamental building blocks for forms and data input.
+
+### Input
+
+Text input field for single-line text entry.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'input',
+  name: string,              // Field name
+  label?: string,            // Display label
+  placeholder?: string,      // Placeholder text
+  defaultValue?: string,     // Default value
+  required?: boolean,        // Required validation
+  disabled?: boolean,        // Disabled state
+  maxLength?: number,        // Maximum length
+  minLength?: number,        // Minimum length
+  pattern?: string,          // Regex pattern
+  inputType?: 'text' | 'email' | 'password' | 'url' | 'tel' | 'number',
+  onChange?: Action,         // Change event handler
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "input",
+  "name": "email",
+  "label": "Email Address",
+  "placeholder": "user@example.com",
+  "inputType": "email",
+  "required": true,
+  "maxLength": 255
+}
+```
+
+**Advanced Example - Dependent Fields:**
+
+```json
+{
+  "type": "form",
+  "fields": [
+    {
+      "type": "input",
+      "name": "username",
+      "label": "Username",
+      "required": true,
+      "onChange": {
+        "type": "api",
+        "api": "/api/check-username",
+        "method": "POST",
+        "data": { "username": "${value}" }
+      }
+    }
+  ]
+}
+```
+
+### Select
+
+Dropdown selection field.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'select',
+  name: string,
+  label?: string,
+  placeholder?: string,
+  defaultValue?: string | number,
+  required?: boolean,
+  disabled?: boolean,
+  multiple?: boolean,         // Allow multiple selections
+  searchable?: boolean,       // Enable search/filter
+  clearable?: boolean,        // Show clear button
+  options?: Array<{           // Static options
+    label: string,
+    value: string | number,
+    disabled?: boolean
+  }>,
+  api?: string,               // API endpoint for dynamic options
+  optionLabel?: string,       // Field name for option label
+  optionValue?: string,       // Field name for option value
+  dependsOn?: string,         // Field dependency
+  onChange?: Action,
+}
+```
+
+**Example - Static Options:**
+
+```json
+{
+  "type": "select",
+  "name": "status",
+  "label": "Status",
+  "placeholder": "Select status",
+  "required": true,
+  "options": [
+    { "label": "Active", "value": "active" },
+    { "label": "Inactive", "value": "inactive" },
+    { "label": "Pending", "value": "pending" }
+  ]
+}
+```
+
+**Example - Dynamic Options from API:**
+
+```json
+{
+  "type": "select",
+  "name": "category",
+  "label": "Category",
+  "api": "/api/categories",
+  "optionLabel": "name",
+  "optionValue": "id",
+  "searchable": true
+}
+```
+
+**Example - Dependent Select:**
+
+```json
+{
+  "type": "form",
+  "fields": [
+    {
+      "type": "select",
+      "name": "country",
+      "label": "Country",
+      "api": "/api/countries"
+    },
+    {
+      "type": "select",
+      "name": "state",
+      "label": "State",
+      "api": "/api/states?country=${country}",
+      "dependsOn": "country"
+    }
+  ]
+}
+```
+
+### DatePicker
+
+Date and time selection component.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'datepicker',
+  name: string,
+  label?: string,
+  placeholder?: string,
+  defaultValue?: string | Date,
+  required?: boolean,
+  disabled?: boolean,
+  mode?: 'date' | 'datetime' | 'time' | 'daterange',
+  format?: string,            // Display format (e.g., 'YYYY-MM-DD')
+  minDate?: string | Date,    // Minimum selectable date
+  maxDate?: string | Date,    // Maximum selectable date
+  disabledDates?: string[],   // Array of disabled dates
+  showTime?: boolean,         // Show time picker
+  onChange?: Action,
+}
+```
+
+**Example - Simple Date:**
+
+```json
+{
+  "type": "datepicker",
+  "name": "birthday",
+  "label": "Date of Birth",
+  "mode": "date",
+  "maxDate": "today",
+  "required": true
+}
+```
+
+**Example - DateTime:**
+
+```json
+{
+  "type": "datepicker",
+  "name": "appointment",
+  "label": "Appointment Time",
+  "mode": "datetime",
+  "format": "YYYY-MM-DD HH:mm",
+  "minDate": "today",
+  "showTime": true
+}
+```
+
+**Example - Date Range:**
+
+```json
+{
+  "type": "datepicker",
+  "name": "dateRange",
+  "label": "Select Period",
+  "mode": "daterange",
+  "defaultValue": {
+    "start": "2024-01-01",
+    "end": "2024-12-31"
+  }
+}
+```
+
+### Switch
+
+Toggle switch for boolean values.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'switch',
+  name: string,
+  label?: string,
+  defaultValue?: boolean,
+  disabled?: boolean,
+  checkedText?: string,       // Text when checked
+  uncheckedText?: string,     // Text when unchecked
+  onChange?: Action,
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "switch",
+  "name": "isActive",
+  "label": "Active Status",
+  "defaultValue": true,
+  "checkedText": "Active",
+  "uncheckedText": "Inactive"
+}
+```
+
+## Container Components
+
+Container components organize and structure the UI layout.
+
+### Page
+
+Top-level page container with header and actions.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'page',
+  title: string,
+  description?: string,
+  icon?: string,
+  breadcrumbs?: Array<{
+    label: string,
+    url?: string
+  }>,
+  actions?: Action[],         // Header actions
+  tabs?: Array<{
+    label: string,
+    key: string,
+    body: Component
+  }>,
+  body: Component | Component[],
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "page",
+  "title": "User Management",
+  "description": "Manage system users and permissions",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "Users" }
+  ],
+  "actions": [
+    {
+      "label": "Add User",
+      "type": "dialog",
+      "body": {
+        "type": "form",
+        "api": "/api/users",
+        "fields": [...]
+      }
+    }
+  ],
+  "body": {
+    "type": "table",
+    "api": "/api/users"
+  }
+}
+```
+
+### Grid
+
+Responsive grid layout.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'grid',
+  columns?: number | {        // Column configuration
+    xs?: number,              // Extra small devices
+    sm?: number,              // Small devices
+    md?: number,              // Medium devices
+    lg?: number,              // Large devices
+    xl?: number               // Extra large devices
+  },
+  gap?: number | string,      // Gap between items
+  items: Component[],
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "sm": 2, "lg": 3 },
+  "gap": "20px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Total Users",
+      "body": { "type": "text", "value": "${stats.users}" }
+    },
+    {
+      "type": "card",
+      "title": "Total Orders",
+      "body": { "type": "text", "value": "${stats.orders}" }
+    },
+    {
+      "type": "card",
+      "title": "Revenue",
+      "body": { "type": "text", "value": "$${stats.revenue}" }
+    }
+  ]
+}
+```
+
+### Card
+
+Card container with header, body, and footer.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'card',
+  title?: string,
+  description?: string,
+  cover?: string,             // Cover image URL
+  avatar?: string,            // Avatar image URL
+  actions?: Action[],
+  body: Component | Component[],
+  footer?: Component | Component[],
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "card",
+  "title": "User Profile",
+  "avatar": "${user.avatar}",
+  "body": [
+    { "type": "text", "value": "Name: ${user.name}" },
+    { "type": "text", "value": "Email: ${user.email}" },
+    { "type": "text", "value": "Role: ${user.role}" }
+  ],
+  "actions": [
+    { "label": "Edit", "onClick": { "type": "navigate", "url": "/users/${user.id}/edit" } },
+    { "label": "Delete", "onClick": { "type": "api", "api": "/api/users/${user.id}", "method": "DELETE" } }
+  ]
+}
+```
+
+### Form
+
+Form container with fields and submission handling.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'form',
+  title?: string,
+  api?: string,               // Submit endpoint
+  method?: 'POST' | 'PUT' | 'PATCH',
+  initialValues?: object,     // Initial form values
+  fields: FormField[],
+  layout?: 'horizontal' | 'vertical' | 'inline',
+  columns?: number,           // Multi-column layout
+  submitText?: string,        // Submit button text
+  resetText?: string,         // Reset button text
+  showReset?: boolean,        // Show reset button
+  onSubmit?: Action,
+  onSuccess?: Action,
+  onError?: Action,
+}
+```
+
+**Example - Simple Form:**
+
+```json
+{
+  "type": "form",
+  "title": "Create User",
+  "api": "/api/users",
+  "method": "POST",
+  "fields": [
+    {
+      "type": "input",
+      "name": "name",
+      "label": "Full Name",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "email",
+      "label": "Email",
+      "inputType": "email",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "role",
+      "label": "Role",
+      "options": [
+        { "label": "Admin", "value": "admin" },
+        { "label": "User", "value": "user" }
+      ]
+    }
+  ],
+  "submitText": "Create User",
+  "onSuccess": {
+    "type": "toast",
+    "message": "User created successfully!"
+  }
+}
+```
+
+**Example - Multi-column Form:**
+
+```json
+{
+  "type": "form",
+  "title": "User Registration",
+  "columns": 2,
+  "fields": [
+    { "type": "input", "name": "firstName", "label": "First Name" },
+    { "type": "input", "name": "lastName", "label": "Last Name" },
+    { "type": "input", "name": "email", "label": "Email", "inputType": "email" },
+    { "type": "input", "name": "phone", "label": "Phone", "inputType": "tel" },
+    { "type": "datepicker", "name": "birthday", "label": "Birthday" },
+    { "type": "select", "name": "country", "label": "Country", "api": "/api/countries" }
+  ]
+}
+```
+
+### Table
+
+Data table with sorting, filtering, and pagination.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'table',
+  api?: string,               // Data endpoint
+  data?: any[],               // Static data
+  columns: Array<{
+    name: string,
+    label: string,
+    type?: 'text' | 'number' | 'boolean' | 'date' | 'image',
+    sortable?: boolean,
+    filterable?: boolean,
+    width?: number | string,
+    render?: string,          // Custom render template
+  }>,
+  rowActions?: Action[],      // Actions per row
+  batchActions?: Action[],    // Batch actions
+  pagination?: boolean,
+  pageSize?: number,
+  searchable?: boolean,       // Global search
+  filters?: Array<{
+    name: string,
+    label: string,
+    type: 'input' | 'select' | 'datepicker'
+  }>,
+  selectable?: boolean,       // Row selection
+  expandable?: Component,     // Expandable row content
+}
+```
+
+**Example - Basic Table:**
+
+```json
+{
+  "type": "table",
+  "api": "/api/users",
+  "columns": [
+    { "name": "id", "label": "ID", "width": 80 },
+    { "name": "name", "label": "Name", "sortable": true },
+    { "name": "email", "label": "Email", "sortable": true },
+    { "name": "role", "label": "Role", "filterable": true },
+    { "name": "createdAt", "label": "Created", "type": "date", "sortable": true }
+  ],
+  "rowActions": [
+    { "label": "Edit", "onClick": { "type": "navigate", "url": "/users/${id}/edit" } },
+    { "label": "Delete", "onClick": { "type": "api", "api": "/api/users/${id}", "method": "DELETE", "confirm": "Delete this user?" } }
+  ],
+  "pagination": true,
+  "pageSize": 20,
+  "searchable": true
+}
+```
+
+**Example - CRUD Table:**
+
+```json
+{
+  "type": "table",
+  "api": "/api/products",
+  "columns": [
+    { "name": "name", "label": "Product Name" },
+    { "name": "price", "label": "Price", "type": "number" },
+    { "name": "stock", "label": "Stock", "type": "number" },
+    { "name": "active", "label": "Active", "type": "boolean" }
+  ],
+  "filters": [
+    { "name": "category", "label": "Category", "type": "select", "api": "/api/categories" },
+    { "name": "priceRange", "label": "Price Range", "type": "input" }
+  ],
+  "selectable": true,
+  "batchActions": [
+    { "label": "Delete Selected", "onClick": { "type": "api", "api": "/api/products/batch-delete", "method": "POST" } },
+    { "label": "Export", "onClick": { "type": "download", "url": "/api/products/export" } }
+  ],
+  "rowActions": [
+    { "label": "Edit", "onClick": { "type": "dialog", "title": "Edit Product", "body": { "type": "form", "fields": [...] } } },
+    { "label": "Delete", "onClick": { "type": "api", "api": "/api/products/${id}", "method": "DELETE" } }
+  ]
+}
+```
+
+## Actions
+
+Actions define interactive behaviors in ObjectUI.
+
+### API Request
+
+Make HTTP requests.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'api',
+  api: string,                // API endpoint
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  data?: object | string,     // Request body (template supported)
+  headers?: object,           // Request headers
+  confirm?: string,           // Confirmation message
+  onSuccess?: Action,         // Success handler
+  onError?: Action,           // Error handler
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "button",
+  "label": "Save",
+  "onClick": {
+    "type": "api",
+    "api": "/api/users/${userId}",
+    "method": "PUT",
+    "data": "${formData}",
+    "confirm": "Save changes?",
+    "onSuccess": {
+      "type": "toast",
+      "message": "Saved successfully!"
+    }
+  }
+}
+```
+
+### Navigate
+
+Navigate to a different page.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'navigate',
+  url: string,                // Target URL (template supported)
+  newTab?: boolean,           // Open in new tab
+  replace?: boolean,          // Replace current history entry
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "button",
+  "label": "View Details",
+  "onClick": {
+    "type": "navigate",
+    "url": "/users/${userId}"
+  }
+}
+```
+
+### Dialog
+
+Open a modal dialog.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'dialog',
+  title?: string,
+  width?: number | string,
+  body: Component,
+  footer?: Component[],
+  closable?: boolean,
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "button",
+  "label": "Add User",
+  "onClick": {
+    "type": "dialog",
+    "title": "Create New User",
+    "width": 600,
+    "body": {
+      "type": "form",
+      "api": "/api/users",
+      "fields": [...]
+    }
+  }
+}
+```
+
+### Toast
+
+Show notification message.
+
+**Protocol:**
+
+```typescript
+{
+  type: 'toast',
+  message: string,            // Message text (template supported)
+  variant?: 'success' | 'error' | 'warning' | 'info',
+  duration?: number,          // Auto-close duration (ms)
+}
+```
+
+**Example:**
+
+```json
+{
+  "type": "toast",
+  "message": "Operation completed successfully!",
+  "variant": "success",
+  "duration": 3000
+}
+```
+
+## Complete Examples
+
+### User Management CRUD
+
+```json
+{
+  "type": "page",
+  "title": "User Management",
+  "actions": [
+    {
+      "label": "Add User",
+      "onClick": {
+        "type": "dialog",
+        "title": "Create User",
+        "body": {
+          "type": "form",
+          "api": "/api/users",
+          "method": "POST",
+          "fields": [
+            { "type": "input", "name": "name", "label": "Name", "required": true },
+            { "type": "input", "name": "email", "label": "Email", "inputType": "email", "required": true },
+            { "type": "select", "name": "role", "label": "Role", "options": [
+              { "label": "Admin", "value": "admin" },
+              { "label": "User", "value": "user" }
+            ]}
+          ],
+          "onSuccess": [
+            { "type": "toast", "message": "User created!" },
+            { "type": "reload" }
+          ]
+        }
+      }
+    }
+  ],
+  "body": {
+    "type": "table",
+    "api": "/api/users",
+    "columns": [
+      { "name": "name", "label": "Name", "sortable": true },
+      { "name": "email", "label": "Email" },
+      { "name": "role", "label": "Role" },
+      { "name": "createdAt", "label": "Created", "type": "date" }
+    ],
+    "rowActions": [
+      {
+        "label": "Edit",
+        "onClick": {
+          "type": "dialog",
+          "title": "Edit User",
+          "body": {
+            "type": "form",
+            "api": "/api/users/${id}",
+            "method": "PUT",
+            "initialValues": "${row}",
+            "fields": [
+              { "type": "input", "name": "name", "label": "Name" },
+              { "type": "input", "name": "email", "label": "Email" }
+            ]
+          }
+        }
+      },
+      {
+        "label": "Delete",
+        "onClick": {
+          "type": "api",
+          "api": "/api/users/${id}",
+          "method": "DELETE",
+          "confirm": "Delete this user?",
+          "onSuccess": [
+            { "type": "toast", "message": "User deleted" },
+            { "type": "reload" }
+          ]
+        }
+      }
+    ],
+    "searchable": true,
+    "pagination": true
+  }
+}
+```
+
+## Next Steps
+
+- **[Renderer Usage](./renderer-usage)** - Learn how to integrate these components in your application

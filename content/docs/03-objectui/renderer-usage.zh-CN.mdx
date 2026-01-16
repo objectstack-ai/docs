@@ -1,0 +1,732 @@
+---
+title: 渲染器使用
+description: 在应用中集成 ObjectUI React 渲染器
+---
+
+# 渲染器使用
+
+学习如何将 ObjectUI 渲染器集成到 React 应用中、自定义样式以及实现高级功能。
+
+## 安装
+
+安装 ObjectUI React 渲染器包:
+
+```bash
+npm install @objectstack/react-renderer
+```
+
+或使用 yarn:
+
+```bash
+yarn add @objectstack/react-renderer
+```
+
+或使用 pnpm:
+
+```bash
+pnpm add @objectstack/react-renderer
+```
+
+## 基础用法
+
+### 简单集成
+
+使用 ObjectUI 最简单的方式是直接渲染协议:
+
+```tsx
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+
+const protocol = {
+  type: 'page',
+  title: '我的应用',
+  body: {
+    type: 'card',
+    title: '欢迎',
+    body: {
+      type: 'text',
+      value: '你好, ObjectUI!'
+    }
+  }
+}
+
+function App() {
+  return <ObjectUIRenderer schema={protocol} />
+}
+
+export default App
+```
+
+### 使用数据上下文
+
+通过上下文向渲染器传递数据:
+
+```tsx
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+
+const protocol = {
+  type: 'card',
+  title: '${user.name}',
+  body: [
+    { type: 'text', value: '邮箱: ${user.email}' },
+    { type: 'text', value: '角色: ${user.role}' }
+  ]
+}
+
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null)
+  
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(setUser)
+  }, [userId])
+  
+  if (!user) return <div>加载中...</div>
+  
+  return (
+    <ObjectUIRenderer 
+      schema={protocol} 
+      data={{ user }}
+    />
+  )
+}
+```
+
+### 动态协议
+
+从 API 或数据库动态加载协议:
+
+```tsx
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+
+function DynamicPage({ pageId }) {
+  const [protocol, setProtocol] = useState(null)
+  
+  useEffect(() => {
+    // 从 API 获取协议
+    fetch(`/api/pages/${pageId}`)
+      .then(res => res.json())
+      .then(data => setProtocol(data.protocol))
+  }, [pageId])
+  
+  if (!protocol) return <div>加载中...</div>
+  
+  return <ObjectUIRenderer schema={protocol} />
+}
+```
+
+## 配置
+
+### 全局配置
+
+使用默认设置全局配置渲染器:
+
+```tsx
+import { ObjectUIProvider } from '@objectstack/react-renderer'
+
+function App() {
+  return (
+    <ObjectUIProvider
+      config={{
+        apiBaseUrl: 'https://api.example.com',
+        locale: 'zh-CN',
+        theme: 'light',
+        errorHandler: (error) => {
+          console.error('ObjectUI 错误:', error)
+        }
+      }}
+    >
+      <YourApp />
+    </ObjectUIProvider>
+  )
+}
+```
+
+### 配置选项
+
+```typescript
+interface ObjectUIConfig {
+  // API 配置
+  apiBaseUrl?: string        // API 请求的基础 URL
+  headers?: Record<string, string>  // 请求的默认头部
+  
+  // 本地化
+  locale?: string            // 日期/数字格式化的语言环境
+  messages?: Record<string, string>  // 自定义 i18n 消息
+  
+  // 主题
+  theme?: 'light' | 'dark' | 'auto'
+  
+  // 错误处理
+  errorHandler?: (error: Error) => void
+  
+  // 自定义组件
+  components?: Record<string, React.ComponentType>
+  
+  // 自定义操作
+  actions?: Record<string, ActionHandler>
+}
+```
+
+## 主题和样式
+
+### 使用内置主题
+
+ObjectUI 内置了多个主题:
+
+```tsx
+import { ObjectUIProvider } from '@objectstack/react-renderer'
+import '@objectstack/react-renderer/themes/light.css'
+
+function App() {
+  return (
+    <ObjectUIProvider config={{ theme: 'light' }}>
+      <YourApp />
+    </ObjectUIProvider>
+  )
+}
+```
+
+可用主题:
+- `light` - 浅色主题
+- `dark` - 深色主题
+- `compact` - 紧凑间距
+- `comfortable` - 舒适间距
+
+### 自定义主题
+
+通过覆盖 CSS 变量创建自定义主题:
+
+```css
+/* custom-theme.css */
+:root {
+  /* 主色 */
+  --objectui-primary: #1976d2;
+  --objectui-primary-hover: #1565c0;
+  --objectui-primary-active: #0d47a1;
+  
+  /* 文本颜色 */
+  --objectui-text-primary: #212121;
+  --objectui-text-secondary: #757575;
+  
+  /* 背景颜色 */
+  --objectui-bg-primary: #ffffff;
+  --objectui-bg-secondary: #f5f5f5;
+  
+  /* 边框颜色 */
+  --objectui-border-color: #e0e0e0;
+  --objectui-border-radius: 4px;
+  
+  /* 间距 */
+  --objectui-spacing-xs: 4px;
+  --objectui-spacing-sm: 8px;
+  --objectui-spacing-md: 16px;
+  --objectui-spacing-lg: 24px;
+  --objectui-spacing-xl: 32px;
+  
+  /* 字体 */
+  --objectui-font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --objectui-font-size-sm: 12px;
+  --objectui-font-size-md: 14px;
+  --objectui-font-size-lg: 16px;
+  --objectui-font-size-xl: 20px;
+}
+```
+
+导入自定义主题:
+
+```tsx
+import '@objectstack/react-renderer/dist/style.css'
+import './custom-theme.css'
+```
+
+### 组件级样式
+
+通过协议为单个组件应用样式:
+
+```json
+{
+  "type": "card",
+  "className": "custom-card",
+  "style": {
+    "backgroundColor": "#f5f5f5",
+    "padding": "24px",
+    "borderRadius": "8px"
+  },
+  "body": {
+    "type": "text",
+    "value": "样式化的卡片"
+  }
+}
+```
+
+### CSS 模块
+
+使用 CSS 模块实现作用域样式:
+
+```tsx
+// UserCard.module.css
+.card {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+```
+
+```tsx
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+import styles from './UserCard.module.css'
+
+const protocol = {
+  type: 'card',
+  className: styles.card,
+  title: '用户资料',
+  body: {
+    type: 'text',
+    className: styles.title,
+    value: '${user.name}'
+  }
+}
+
+function UserCard({ user }) {
+  return <ObjectUIRenderer schema={protocol} data={{ user }} />
+}
+```
+
+## 自定义组件
+
+使用自定义组件扩展 ObjectUI:
+
+### 注册自定义组件
+
+```tsx
+import { ObjectUIProvider, registerComponent } from '@objectstack/react-renderer'
+
+// 定义自定义组件
+function CustomBanner({ title, message, variant }) {
+  return (
+    <div className={`banner banner-${variant}`}>
+      <h3>{title}</h3>
+      <p>{message}</p>
+    </div>
+  )
+}
+
+// 注册组件
+registerComponent('customBanner', CustomBanner)
+
+// 在协议中使用
+const protocol = {
+  type: 'page',
+  body: {
+    type: 'customBanner',
+    title: '欢迎',
+    message: '这是一个自定义组件',
+    variant: 'info'
+  }
+}
+```
+
+### 带操作的自定义组件
+
+```tsx
+import { useObjectUIAction } from '@objectstack/react-renderer'
+
+function CustomButton({ label, onClick }) {
+  const executeAction = useObjectUIAction()
+  
+  const handleClick = () => {
+    executeAction(onClick)
+  }
+  
+  return (
+    <button className="custom-button" onClick={handleClick}>
+      {label}
+    </button>
+  )
+}
+
+registerComponent('customButton', CustomButton)
+```
+
+## 自定义操作
+
+实现自定义操作处理器:
+
+```tsx
+import { ObjectUIProvider, registerAction } from '@objectstack/react-renderer'
+
+// 注册自定义操作
+registerAction('sendEmail', async (action, context) => {
+  const { to, subject, body } = action
+  
+  await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, subject, body })
+  })
+  
+  return { success: true }
+})
+
+// 在协议中使用
+const protocol = {
+  type: 'button',
+  label: '发送邮件',
+  onClick: {
+    type: 'sendEmail',
+    to: '${user.email}',
+    subject: '欢迎',
+    body: '欢迎使用我们的平台!'
+  }
+}
+```
+
+## API 集成
+
+### 全局 API 配置
+
+全局配置 API 设置:
+
+```tsx
+import { ObjectUIProvider } from '@objectstack/react-renderer'
+
+function App() {
+  return (
+    <ObjectUIProvider
+      config={{
+        apiBaseUrl: 'https://api.example.com',
+        headers: {
+          'Authorization': `Bearer ${getToken()}`,
+          'Content-Type': 'application/json'
+        },
+        // 发送前转换请求
+        requestTransform: (config) => {
+          // 添加自定义头部、修改 URL 等
+          return config
+        },
+        // 使用前转换响应
+        responseTransform: (response) => {
+          // 提取数据、处理错误等
+          return response.data
+        }
+      }}
+    >
+      <YourApp />
+    </ObjectUIProvider>
+  )
+}
+```
+
+### 自定义 Fetch 处理器
+
+实现自定义 fetch 逻辑:
+
+```tsx
+import { ObjectUIProvider } from '@objectstack/react-renderer'
+
+const customFetch = async (url, options) => {
+  // 添加认证
+  const token = localStorage.getItem('token')
+  const headers = {
+    ...options?.headers,
+    'Authorization': `Bearer ${token}`
+  }
+  
+  // 发起请求
+  const response = await fetch(url, { ...options, headers })
+  
+  // 处理错误
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+  
+  return response.json()
+}
+
+function App() {
+  return (
+    <ObjectUIProvider config={{ fetch: customFetch }}>
+      <YourApp />
+    </ObjectUIProvider>
+  )
+}
+```
+
+## 状态管理
+
+### 本地状态
+
+组件自动管理自己的状态:
+
+```json
+{
+  "type": "form",
+  "fields": [
+    {
+      "type": "input",
+      "name": "search",
+      "placeholder": "搜索...",
+      "onChange": {
+        "type": "setState",
+        "key": "searchQuery",
+        "value": "${value}"
+      }
+    },
+    {
+      "type": "table",
+      "api": "/api/items?search=${searchQuery}",
+      "columns": [...]
+    }
+  ]
+}
+```
+
+### 共享状态
+
+在组件间共享状态:
+
+```tsx
+import { ObjectUIProvider, useObjectUIState } from '@objectstack/react-renderer'
+
+function App() {
+  const [globalState, setGlobalState] = useState({
+    user: null,
+    settings: {}
+  })
+  
+  return (
+    <ObjectUIProvider 
+      config={{ 
+        state: globalState,
+        setState: setGlobalState 
+      }}
+    >
+      <YourApp />
+    </ObjectUIProvider>
+  )
+}
+```
+
+## 错误处理
+
+### 全局错误处理器
+
+全局处理错误:
+
+```tsx
+import { ObjectUIProvider } from '@objectstack/react-renderer'
+
+function App() {
+  const handleError = (error, context) => {
+    console.error('ObjectUI 错误:', error)
+    
+    // 记录到错误跟踪服务
+    errorTracker.log(error, context)
+    
+    // 显示用户友好的消息
+    toast.error('出错了,请重试。')
+  }
+  
+  return (
+    <ObjectUIProvider config={{ errorHandler: handleError }}>
+      <YourApp />
+    </ObjectUIProvider>
+  )
+}
+```
+
+### 组件级错误处理
+
+```json
+{
+  "type": "table",
+  "api": "/api/users",
+  "onError": {
+    "type": "toast",
+    "message": "加载用户失败",
+    "variant": "error"
+  },
+  "fallback": {
+    "type": "text",
+    "value": "无法加载数据,请稍后重试。"
+  }
+}
+```
+
+## 性能优化
+
+### 懒加载
+
+按需加载组件:
+
+```tsx
+import { lazy, Suspense } from 'react'
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+
+const LazyComponent = lazy(() => import('./HeavyComponent'))
+
+const protocol = {
+  type: 'page',
+  body: {
+    type: 'lazy',
+    component: LazyComponent,
+    fallback: { type: 'text', value: '加载中...' }
+  }
+}
+```
+
+### 记忆化
+
+记忆化昂贵的计算:
+
+```tsx
+import { useMemo } from 'react'
+import { ObjectUIRenderer } from '@objectstack/react-renderer'
+
+function OptimizedPage({ data }) {
+  const protocol = useMemo(() => ({
+    type: 'table',
+    data: data,
+    columns: [...]
+  }), [data])
+  
+  return <ObjectUIRenderer schema={protocol} />
+}
+```
+
+## 最佳实践
+
+### 1. 协议组织
+
+保持协议组织有序且易于维护:
+
+```tsx
+// protocols/user-management.ts
+export const userTableProtocol = {
+  type: 'table',
+  api: '/api/users',
+  columns: [...]
+}
+
+export const userFormProtocol = {
+  type: 'form',
+  api: '/api/users',
+  fields: [...]
+}
+
+// pages/UserManagement.tsx
+import { userTableProtocol } from './protocols/user-management'
+```
+
+### 2. 类型安全
+
+使用 TypeScript 实现类型安全的协议:
+
+```typescript
+import { Protocol } from '@objectstack/react-renderer'
+
+const protocol: Protocol = {
+  type: 'page',
+  title: '用户',
+  body: {
+    type: 'table',
+    api: '/api/users'
+  }
+}
+```
+
+### 3. 可复用模板
+
+创建可复用的协议模板:
+
+```typescript
+// templates/crud-page.ts
+export const createCRUDPage = (
+  title: string,
+  api: string,
+  columns: Column[],
+  fields: Field[]
+) => ({
+  type: 'page',
+  title,
+  actions: [
+    {
+      label: `添加${title}`,
+      onClick: {
+        type: 'dialog',
+        title: `创建${title}`,
+        body: {
+          type: 'form',
+          api,
+          fields
+        }
+      }
+    }
+  ],
+  body: {
+    type: 'table',
+    api,
+    columns,
+    rowActions: [
+      { label: '编辑', onClick: {...} },
+      { label: '删除', onClick: {...} }
+    ]
+  }
+})
+
+// 使用
+const userPage = createCRUDPage('用户', '/api/users', userColumns, userFields)
+```
+
+### 4. 环境特定配置
+
+使用环境变量:
+
+```tsx
+import { ObjectUIProvider } from '@objectstack/react-renderer'
+
+const config = {
+  apiBaseUrl: process.env.REACT_APP_API_URL,
+  theme: process.env.REACT_APP_THEME || 'light'
+}
+
+function App() {
+  return (
+    <ObjectUIProvider config={config}>
+      <YourApp />
+    </ObjectUIProvider>
+  )
+}
+```
+
+## 故障排除
+
+### 常见问题
+
+**问题: 组件不渲染**
+- 检查协议语法和结构
+- 验证组件类型已注册
+- 检查控制台错误
+
+**问题: API 请求失败**
+- 验证 `apiBaseUrl` 配置
+- 在开发者工具中检查网络请求
+- 确保认证头部正确
+
+**问题: 样式未应用**
+- 导入 ObjectUI CSS: `import '@objectstack/react-renderer/dist/style.css'`
+- 检查 CSS 优先级
+- 验证主题配置
+
+## 下一步
+
+- 查看[组件规范](./component-spec)了解详细的组件参考
+- 查看[核心概念](./core-concepts)了解架构理解
+- 加入社区获取支持和示例

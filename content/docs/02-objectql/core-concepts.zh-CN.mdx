@@ -1,0 +1,389 @@
+---
+title: 核心概念
+description: 理解 Schema、Virtual City 和 ObjectQL 基础
+---
+
+# 核心概念
+
+本指南解释了驱动 ObjectQL 架构和能力的基本概念。
+
+## 什么是 Schema?
+
+**Schema** 是数据结构的声明式定义。您无需编写 SQL CREATE TABLE 语句,而是将数据模型定义为 JavaScript 对象。
+
+### Schema 结构
+
+Schema 由 **Objects**(类似于表)和 **Fields**(类似于列)组成:
+
+```typescript
+const schema = {
+  objects: {
+    // 对象名称(单数)
+    customer: {
+      label: '客户',
+      fields: {
+        // 字段定义
+        name: { 
+          type: 'text', 
+          label: '全名',
+          required: true 
+        },
+        email: { 
+          type: 'email', 
+          unique: true 
+        },
+        created_at: { 
+          type: 'datetime',
+          defaultValue: () => new Date()
+        }
+      }
+    }
+  }
+}
+```
+
+### 为什么使用 Schema?
+
+**Schema 驱动架构的优势:**
+
+1. **数据库独立** - 定义一次,随处运行
+2. **类型安全** - 自动验证和类型检查
+3. **自动迁移** - Schema 变更自动同步到数据库
+4. **自文档化** - Schema 作为动态文档
+5. **工具支持** - IDE 自动完成、验证和代码生成
+
+### Schema 注册
+
+向 ObjectQL 注册您的 Schema:
+
+```typescript
+import { ObjectQL } from '@objectql/core'
+
+const db = new ObjectQL({ 
+  driver: 'sqlite', 
+  url: './myapp.db' 
+})
+
+// 注册 Schema
+await db.registerSchema(schema)
+
+// 现在可以查询您的对象
+const customers = await db.query('customer', {})
+```
+
+## 字段类型
+
+ObjectQL 支持丰富的字段类型,可映射到适当的数据库类型:
+
+### 基础类型
+
+```typescript
+{
+  // 文本类型
+  short_text: { type: 'text' },              // VARCHAR(255)
+  long_text: { type: 'textarea' },           // TEXT
+  rich_text: { type: 'html' },               // TEXT
+  
+  // 数值类型
+  age: { type: 'number' },                   // INTEGER
+  price: { type: 'currency', scale: 2 },     // DECIMAL(15,2)
+  percentage: { type: 'percent' },           // DECIMAL(5,2)
+  
+  // 日期/时间类型
+  birthday: { type: 'date' },                // DATE
+  created_at: { type: 'datetime' },          // DATETIME
+  
+  // 布尔值
+  is_active: { type: 'boolean' },            // BOOLEAN
+  
+  // 选择(枚举)
+  status: { 
+    type: 'select', 
+    options: ['draft', 'published', 'archived']
+  },
+  
+  // JSON
+  metadata: { type: 'json' }                 // JSON/TEXT
+}
+```
+
+### 关系类型
+
+```typescript
+{
+  // 主从关系(外键)
+  owner: {
+    type: 'master_detail',
+    reference_to: 'user',                    // 引用 user._id
+    required: true
+  },
+  
+  // 查找(可选引用)
+  manager: {
+    type: 'lookup',
+    reference_to: 'user'
+  }
+}
+```
+
+## 字段约束
+
+为字段添加验证和约束:
+
+```typescript
+{
+  fields: {
+    email: {
+      type: 'email',
+      required: true,           // NOT NULL
+      unique: true,             // UNIQUE 约束
+      index: true               // 创建索引
+    },
+    
+    username: {
+      type: 'text',
+      minLength: 3,             // 验证
+      maxLength: 20,
+      pattern: '^[a-zA-Z0-9_]+$' // 正则验证
+    },
+    
+    age: {
+      type: 'number',
+      min: 18,                  // 最小值
+      max: 120                  // 最大值
+    },
+    
+    status: {
+      type: 'select',
+      options: ['active', 'inactive'],
+      defaultValue: 'active'    // 默认值
+    }
+  }
+}
+```
+
+## 什么是 Virtual City?
+
+**Virtual City** 是 ObjectQL 实现**多租户数据隔离**的机制。它在单个数据库中创建逻辑数据分区,实现安全的多租户,而无需复制数据库。
+
+### 概念说明
+
+想象一座城市,每个租户都有自己的"虚拟建筑":
+
+```
+┌─────────────────────────────────────────┐
+│          物理数据库                      │
+│                                         │
+│  ┌──────────────┐  ┌──────────────┐   │
+│  │ Virtual City │  │ Virtual City │   │
+│  │  (租户 A)    │  │  (租户 B)    │   │
+│  │              │  │              │   │
+│  │  ┌────────┐  │  │  ┌────────┐  │   │
+│  │  │  客户  │  │  │  │  客户  │  │   │
+│  │  │  订单  │  │  │  │  订单  │  │   │
+│  │  └────────┘  │  │  └────────┘  │   │
+│  └──────────────┘  └──────────────┘   │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### 工作原理
+
+ObjectQL 自动为每条记录添加 `space` 字段,并按租户过滤查询:
+
+```typescript
+// 初始化主数据库
+const db = new ObjectQL({ 
+  driver: 'mysql',
+  url: 'mysql://localhost/myapp' 
+})
+
+// 为租户创建 Virtual City
+const tenantA = db.virtualCity('tenant_a')
+const tenantB = db.virtualCity('tenant_b')
+
+// 每个租户只能看到自己的数据
+await tenantA.mutation('customer', {
+  action: 'insert',
+  data: { name: '客户 A1' }
+})
+
+await tenantB.mutation('customer', {
+  action: 'insert',
+  data: { name: '客户 B1' }
+})
+
+// 租户 A 只能看到自己的客户
+const customersA = await tenantA.query('customer', {})
+// 返回: [{ name: '客户 A1', space: 'tenant_a' }]
+
+// 租户 B 只能看到自己的客户
+const customersB = await tenantB.query('customer', {})
+// 返回: [{ name: '客户 B1', space: 'tenant_b' }]
+```
+
+### 底层实现
+
+ObjectQL 通过以下方式实现 Virtual City:
+
+1. **自动 Space 字段** - 添加到所有表
+2. **查询过滤** - 自动添加 `WHERE space = ?`
+3. **数据隔离** - 跨租户查询不可能
+4. **索引优化** - 在 `(space, ...)` 上建立复合索引
+
+### Virtual City 使用场景
+
+**多租户 SaaS:**
+
+```typescript
+// 每个客户获得隔离的数据
+const customerDb = db.virtualCity(`customer_${customerId}`)
+```
+
+**部门隔离:**
+
+```typescript
+// 按部门分离数据
+const salesDb = db.virtualCity('dept_sales')
+const hrDb = db.virtualCity('dept_hr')
+```
+
+**环境分离:**
+
+```typescript
+// 在同一数据库中分离 dev/staging/prod 数据
+const devDb = db.virtualCity('env_dev')
+const prodDb = db.virtualCity('env_prod')
+```
+
+## 系统字段
+
+ObjectQL 自动为每个对象添加系统字段:
+
+```typescript
+{
+  _id: string           // 主键 (UUID)
+  space: string         // Virtual City 标识符
+  created: datetime     // 创建时间戳
+  created_by: string    // 创建者用户 ID
+  modified: datetime    // 最后修改时间戳
+  modified_by: string   // 最后修改者用户 ID
+  owner: string         // 记录所有者
+}
+```
+
+这些字段:
+
+- ✅ 由 ObjectQL 自动管理
+- ✅ 已建立索引以提高性能
+- ✅ 在所有查询中可用
+- ✅ 用于审计跟踪
+
+### 使用系统字段
+
+```typescript
+// 按创建者查询
+const myRecords = await db.query('customer', {
+  filters: [['created_by', '=', currentUserId]]
+})
+
+// 按修改时间排序
+const recent = await db.query('customer', {
+  sort: 'modified desc',
+  limit: 10
+})
+
+// 跟踪变更
+const record = await db.query('customer', {
+  filters: [['_id', '=', recordId]]
+})
+
+console.log(`由 ${record.created_by} 创建于 ${record.created}`)
+console.log(`由 ${record.modified_by} 修改于 ${record.modified}`)
+```
+
+## Schema 演进
+
+ObjectQL 自动处理 Schema 变更:
+
+### 添加字段
+
+```typescript
+// 原始 Schema
+{
+  objects: {
+    customer: {
+      fields: {
+        name: { type: 'text' }
+      }
+    }
+  }
+}
+
+// 更新 Schema - 添加 email 字段
+{
+  objects: {
+    customer: {
+      fields: {
+        name: { type: 'text' },
+        email: { type: 'email' }  // 新字段
+      }
+    }
+  }
+}
+
+// 重新注册 Schema
+await db.registerSchema(updatedSchema)
+// ObjectQL 自动运行: ALTER TABLE customer ADD COLUMN email VARCHAR(255)
+```
+
+### 修改字段
+
+```typescript
+// 更改字段类型
+{
+  email: { type: 'text' }  // 之前是 'email'
+}
+
+// ObjectQL 自动处理数据迁移
+```
+
+### 删除字段
+
+```typescript
+// 从 Schema 中删除字段
+// ObjectQL 将字段标记为已弃用但不删除列
+// 这可以防止数据丢失
+```
+
+## 最佳实践
+
+### Schema 设计
+
+1. **使用单数名称** - `customer` 而不是 `customers`
+2. **描述清晰** - 使用清晰的字段名
+3. **添加标签** - 帮助 UI 生成
+4. **设置约束** - 使用 required、unique 等
+5. **规划关系** - 考虑主从关系
+
+### Virtual City
+
+1. **一致的命名** - 使用如 `tenant_{id}` 的约定
+2. **验证租户 ID** - 创建 Virtual City 前确保租户有效
+3. **缓存实例** - 重用 Virtual City 实例
+4. **索引策略** - 确保 space 在复合索引中
+
+### 性能
+
+1. **为频繁查询的字段建立索引**
+2. **使用适当的字段类型**
+3. **限制 JSON 字段使用**
+4. **利用系统字段索引**
+
+## 下一步
+
+现在您已理解核心概念:
+
+- 学习[协议规范](./protocol-spec)了解详细的 Schema 和查询语法
+- 探索[核心功能](./core-features)了解高级优化
+- 掌握[服务端 SDK](./server-sdk) API
