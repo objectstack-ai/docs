@@ -1,4 +1,4 @@
 {
   "title": "Documentation",
-  "pages": ["index", "getting-started", "objectui", "objectql", "objectos", "i18n-guide"]
+  "pages": ["index", "getting-started", "architecture", "objectui", "objectql", "objectos", "i18n-guide"]
 }
