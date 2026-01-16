@@ -12,11 +12,9 @@ The project uses **Next.js (App Router)** and **Fumadocs**.
 ## Content Guidelines
 
 ### File Structure
-- Documentation source is located in `content/docs/`.
-- Files follow the pattern: `filename.[lang].mdx`.
-  - English: `*.en.mdx`
-  - Chinese: `*.zh-CN.mdx`
-- Sidebar navigation is defined in `meta.[lang].json` files within each directory.
+- **English Documentation**: `content/docs/**/*.mdx` (The source of truth)
+- **Chinese Documentation**: `content/docs-zh/**/*.mdx` (Translation)
+- **Navigation**: `meta.json` in each directory defines the sidebar structure.
 
 ### Frontmatter
 Every MDX file MUST have a frontmatter block with `title` and `description`.
@@ -49,23 +47,23 @@ description: Short summary for search engines and preview cards
 - Follow Next.js App Router conventions (`layout.tsx`, `page.tsx`).
 
 ### Internationalization (i18n)
-- When generating content, be aware of the target language based on the file extension.
-- `meta.en.json` defines the sidebar for English.
-- `meta.zh-CN.json` defines the sidebar for Chinese.
-- Ensure translations are accurate and use native terminology (e.g., "对象存储" vs "Object Storage", but for product names like ObjectQL, keep them in English).
+- `content/docs` is for English (default).
+- `content/docs-zh-CN` is for Chinese.
+- Structure in `content/docs-zh-CN` must mirror `content/docs`.
 
 ## Task Specific Instructions
 
 - **Translation Workflow**:
-  - Always write the English documentation (`.en.mdx`) first.
-  - Then translate the content to other languages (e.g., `.zh-CN.mdx`).
+  - Always write the English documentation in `content/docs/` first.
+  - The CI workflow will automatically generate Chinese translations in `content/docs-zh-CN/`.
 
 - **When creating a new page**:
-  1. Create `filename.en.mdx` and `filename.zh-CN.mdx`.
-  2. Add the filename (without extension) to the `pages` array in the corresponding `meta.[lang].json` files.
+  1. Create `filename.mdx` in `content/docs/`.
+  2. Add the filename (without extension) to `meta.json`.
   
 - **When editing content**:
-  - Check if the change applies to both languages. If so, update both files to keep them in sync.
+  - Edit the file in `content/docs/`.
+  - Do not manually edit files in `content/docs-zh-CN/` unless fixing a bad translation.
 
 - **When explaining code**:
   - Provide context about where the code belongs (e.g., "In `source.config.ts`...").

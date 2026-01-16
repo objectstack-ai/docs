@@ -115,14 +115,9 @@ async function main() {
  * You can customize this function to change the directory structure.
  */
 function resolveTranslatedFilePath(enFilePath) {
-  // Strategy 1: Same directory, different extension (Default)
-  // content/docs/intro.en.mdx -> content/docs/intro.zh-CN.mdx
-  // return enFilePath.replace('.en.mdx', '.zh-CN.mdx');
-
-  // Strategy 2: Separate directory tree
-  // content/docs/intro.en.mdx -> content/docs-zh/intro.zh-CN.mdx
+  // Strategy: content/docs/path/to/file.mdx -> content/docs-zh-CN/path/to/file.mdx
   const relativePath = path.relative(path.join(process.cwd(), 'content/docs'), enFilePath);
-  return path.join(process.cwd(), 'content/docs-zh', relativePath.replace('.en.mdx', '.zh-CN.mdx'));
+  return path.join(process.cwd(), 'content/docs-zh-CN', relativePath);
 }
 
 function getAllEnMdxFiles(dir) {
@@ -134,7 +129,7 @@ function getAllEnMdxFiles(dir) {
     if (stat && stat.isDirectory()) {
       results = results.concat(getAllEnMdxFiles(file));
     } else {
-      if (file.endsWith('.en.mdx')) {
+      if (file.endsWith('.mdx')) {
         // Return relative path to process.cwd() to match CHANGED_FILES format
         results.push(path.relative(process.cwd(), file));
       }

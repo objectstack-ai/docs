@@ -9,7 +9,13 @@ const zhSource = toFumadocsSource(docsZh, metaZh);
 export const source = loader({
   baseUrl: '/docs',
   source: {
-    files: [...mainSource.files, ...zhSource.files],
+    files: [
+      ...mainSource.files,
+      ...zhSource.files.map((file) => ({
+        ...file,
+        locale: 'zh-CN',
+      })),
+    ],
   },
   i18n,
 });

@@ -5,7 +5,7 @@ export const { docs, meta } = defineDocs({
 });
 
 export const { docs: docsZh, meta: metaZh } = defineDocs({
-  dir: 'content/docs-zh',
+  dir: 'content/docs-zh-CN',
 });
 
 export default defineConfig();
