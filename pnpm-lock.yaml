@@ -11,6 +11,9 @@ importers:
       client-only:
         specifier: ^0.0.1
         version: 0.0.1
+      next:
+        specifier: ^16.1.2
+        version: 16.1.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -18,9 +21,6 @@ importers:
       '@objectdocs/cli':
         specifier: workspace:*
         version: link:packages/cli
-      next:
-        specifier: ^16.1.2
-        version: 16.1.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
 
   packages/cli:
     dependencies:
