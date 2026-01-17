@@ -43,6 +43,21 @@ export function registerDevCommand(cli) {
       let debounceTimer;
 
       const startServer = () => {
+        // Sync config and assets before starting
+        const userConfigPath = path.resolve(process.cwd(), 'objectdocs.json');
+        if (fs.existsSync(userConfigPath)) {
+          fs.cpSync(userConfigPath, path.join(nextAppDir, 'objectdocs.json'));
+        }
+
+        const userPublicPath = path.resolve(process.cwd(), 'public');
+        if (fs.existsSync(userPublicPath)) {
+          const targetPublicDir = path.join(nextAppDir, 'public');
+          if (!fs.existsSync(targetPublicDir)) {
+            fs.mkdirSync(targetPublicDir, { recursive: true });
+          }
+          fs.cpSync(userPublicPath, targetPublicDir, { recursive: true, force: true });
+        }
+
         child = spawn(nextCmd, args, {
           stdio: 'inherit',
           env,
