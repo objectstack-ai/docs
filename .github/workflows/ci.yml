@@ -33,8 +33,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
-      - name: Generate source files
-        run: pnpm exec fumadocs-mdx
+      # - name: Generate source files
+      #  run: pnpm exec fumadocs-mdx
       
       - name: Type check
         run: pnpm exec tsc --noEmit
