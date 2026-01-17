@@ -1,0 +1,92 @@
+---
+title: 组件规范
+description: 所有 ObjectUI 组件的完整协议参考
+---
+
+# 组件规范
+
+这份全面的参考文档记录了所有 ObjectUI 组件及其 JSON 协议。规范按三个主要类别组织,便于导航。
+
+## 概述
+
+ObjectUI 使用基于 JSON 的协议来声明式地定义用户界面。每个组件都有特定的类型和一组控制其外观和行为的属性。
+
+## 组件分类
+
+### 基础组件
+
+处理用户数据输入的表单和输入组件。
+
+**包括:** Input 输入框、Select 下拉选择、DatePicker 日期选择器、Switch 开关
+
+→ **[查看基础组件](/docs/objectui/basic-components)**
+
+### 容器组件
+
+组织 UI 的布局和结构组件。
+
+**包括:** Page 页面、Grid 网格、Card 卡片、Form 表单、Table 表格
+
+→ **[查看容器组件](/docs/objectui/container-components)**
+
+### 操作(Actions)
+
+交互行为和事件处理器。
+
+**包括:** API 请求、导航、对话框、提示消息
+
+→ **[查看操作](/docs/objectui/actions)**
+
+## 快速示例
+
+以下是结合不同组件类型的简单示例:
+
+```json
+{
+  "type": "page",
+  "title": "用户资料",
+  "body": {
+    "type": "form",
+    "api": "/api/users",
+    "fields": [
+      {
+        "type": "input",
+        "name": "name",
+        "label": "全名",
+        "required": true
+      },
+      {
+        "type": "select",
+        "name": "role",
+        "label": "角色",
+        "options": [
+          { "label": "管理员", "value": "admin" },
+          { "label": "用户", "value": "user" }
+        ]
+      }
+    ],
+    "onSuccess": {
+      "type": "toast",
+      "message": "资料已更新!"
+    }
+  }
+}
+```
+
+## 组件特性
+
+所有 ObjectUI 组件支持:
+
+- **协议驱动**: 纯 JSON 配置
+- **类型安全**: 提供 TypeScript 定义
+- **模板支持**: 使用 `${variable}` 语法的动态值
+- **事件处理**: 灵活的操作系统
+- **验证**: 内置表单验证
+- **API 集成**: 原生支持 REST API
+
+## 下一步
+
+- **[基础组件](/docs/objectui/basic-components)** - 了解表单和输入组件
+- **[容器组件](/docs/objectui/container-components)** - 探索布局组件
+- **[操作](/docs/objectui/actions)** - 了解交互行为
+- **[渲染器使用](/docs/objectui/renderer-usage)** - 了解如何在应用中集成这些组件

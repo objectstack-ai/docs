@@ -1,9 +1,10 @@
 {
   "title": "Documentation",
   "pages": [
-    "00-framework",
-    "02-objectql",
-    "03-objectui",
-    "04-objectos"
+    "index",
+    "framework",
+    "objectql",
+    "objectui",
+    "objectos"
   ]
 }
