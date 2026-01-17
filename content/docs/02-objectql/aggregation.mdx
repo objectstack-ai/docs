@@ -1,0 +1,145 @@
+---
+title: Aggregation Operations
+description: Complete reference for grouping and aggregating data in ObjectQL
+---
+
+# Aggregation Operations
+
+This document provides the complete specification for ObjectQL's Aggregation operations.
+
+## GroupBy
+
+```typescript
+db.aggregate(objectName: string, options: AggregateOptions)
+
+interface AggregateOptions {
+  group_by: string[]
+  having?: Filter[]
+  fields?: AggregateField[]
+  sort?: string | Sort[]
+  limit?: number
+}
+```
+
+### Basic GroupBy
+
+```typescript
+// Count by category
+await db.aggregate('product', {
+  group_by: ['category'],
+  fields: [
+    { field: '_id', function: 'count', alias: 'total' }
+  ]
+})
+
+// Result: [
+//   { category: 'Electronics', total: 45 },
+//   { category: 'Books', total: 123 }
+// ]
+```
+
+### Multiple Groupings
+
+```typescript
+// Sales by year and quarter
+await db.aggregate('order', {
+  group_by: ['YEAR(created)', 'QUARTER(created)'],
+  fields: [
+    { field: 'amount', function: 'sum', alias: 'total_sales' },
+    { field: '_id', function: 'count', alias: 'order_count' }
+  ],
+  sort: 'YEAR(created) desc, QUARTER(created) desc'
+})
+```
+
+## Aggregate Functions
+
+```typescript
+// Count
+{ field: '_id', function: 'count' }
+
+// Sum
+{ field: 'amount', function: 'sum' }
+
+// Average
+{ field: 'price', function: 'avg' }
+
+// Min
+{ field: 'price', function: 'min' }
+
+// Max
+{ field: 'price', function: 'max' }
+
+// Distinct count
+{ field: 'customer_id', function: 'count_distinct' }
+```
+
+## Having Clause
+
+Filter aggregated results:
+
+```typescript
+await db.aggregate('order', {
+  group_by: ['customer_id'],
+  fields: [
+    { field: 'amount', function: 'sum', alias: 'total_spent' },
+    { field: '_id', function: 'count', alias: 'order_count' }
+  ],
+  having: [
+    ['total_spent', '>', 1000]    // Only customers who spent > 1000
+  ]
+})
+```
+
+## Complete Aggregation Example
+
+```typescript
+// Monthly sales report with filters
+const monthlySales = await db.aggregate('invoice', {
+  // Pre-aggregation filters (WHERE clause)
+  filters: [
+    ['status', '=', 'paid'],
+    ['created', '>=', '2024-01-01']
+  ],
+  
+  // Group by
+  group_by: ['YEAR(created)', 'MONTH(created)'],
+  
+  // Aggregate calculations
+  fields: [
+    { field: 'amount', function: 'sum', alias: 'revenue' },
+    { field: '_id', function: 'count', alias: 'invoice_count' },
+    { field: 'amount', function: 'avg', alias: 'avg_invoice' },
+    { field: 'customer_id', function: 'count_distinct', alias: 'unique_customers' }
+  ],
+  
+  // Post-aggregation filters (HAVING clause)
+  having: [
+    ['revenue', '>', 50000]  // Only months with revenue > 50k
+  ],
+  
+  // Sort results
+  sort: 'YEAR(created) desc, MONTH(created) desc',
+  
+  // Limit results
+  limit: 12  // Last 12 months
+})
+
+// Result: [
+//   {
+//     year: 2024,
+//     month: 3,
+//     revenue: 125000,
+//     invoice_count: 45,
+//     avg_invoice: 2777.78,
+//     unique_customers: 32
+//   },
+//   ...
+// ]
+```
+
+## Next Steps
+
+- Learn [Query DSL](/docs/02-objectql/query-dsl) for basic queries
+- Master [Mutation Operations](/docs/02-objectql/mutation) for data modification
+- Review [Schema Definition](/docs/02-objectql/schema-definition) for data modeling

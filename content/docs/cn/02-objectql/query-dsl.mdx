@@ -1,0 +1,220 @@
+---
+title: 查询 DSL
+description: 使用过滤器、排序和分页查询数据的完整参考
+---
+
+# 查询 DSL
+
+本文档提供 ObjectQL 查询 DSL(领域特定语言)的完整规范。
+
+## 基本查询
+
+```typescript
+db.query(objectName: string, options: QueryOptions): Promise<Record[]>
+
+interface QueryOptions {
+  fields?: string[]           // 要返回的字段
+  filters?: Filter[]          // WHERE 条件
+  sort?: string | Sort[]      // ORDER BY
+  limit?: number              // LIMIT
+  skip?: number               // OFFSET
+  top?: number                // 替代 limit
+}
+```
+
+## 过滤器
+
+过滤器语法: `[field, operator, value]`
+
+### 比较运算符
+
+```typescript
+// 等于
+['status', '=', 'active']
+['status', 'eq', 'active']
+
+// 不等于
+['status', '!=', 'archived']
+['status', 'ne', 'archived']
+
+// 大于
+['age', '>', 18]
+['age', 'gt', 18]
+
+// 大于或等于
+['age', '>=', 18]
+['age', 'gte', 18]
+
+// 小于
+['price', '<', 100]
+['price', 'lt', 100]
+
+// 小于或等于
+['price', '<=', 100]
+['price', 'lte', 100]
+```
+
+### 字符串运算符
+
+```typescript
+// 包含(不区分大小写)
+['name', 'contains', 'john']
+['name', 'like', '%john%']
+
+// 以...开始
+['email', 'startswith', 'admin']
+['email', 'like', 'admin%']
+
+// 以...结束
+['domain', 'endswith', '.com']
+['domain', 'like', '%.com']
+
+// 不包含
+['name', 'notcontains', 'test']
+['name', 'not like', '%test%']
+```
+
+### 列表运算符
+
+```typescript
+// 在列表中
+['status', 'in', ['draft', 'published']]
+
+// 不在列表中
+['status', 'notin', ['archived', 'deleted']]
+
+// 在范围内
+['age', 'between', [18, 65]]
+```
+
+### 空值运算符
+
+```typescript
+// 是空值
+['description', '=', null]
+['description', 'is null']
+
+// 不是空值
+['description', '!=', null]
+['description', 'is not null']
+```
+
+### 复合过滤器
+
+```typescript
+// AND(默认)
+filters: [
+  ['status', '=', 'active'],
+  ['age', '>', 18]
+]
+// WHERE status = 'active' AND age > 18
+
+// OR
+filters: [
+  'or',
+  ['status', '=', 'active'],
+  ['status', '=', 'pending']
+]
+// WHERE status = 'active' OR status = 'pending'
+
+// 复杂组合
+filters: [
+  'and',
+  ['category', '=', 'electronics'],
+  [
+    'or',
+    ['price', '<', 100],
+    ['on_sale', '=', true]
+  ]
+]
+// WHERE category = 'electronics' AND (price < 100 OR on_sale = true)
+```
+
+## 排序
+
+```typescript
+// 简单字符串
+sort: 'name'              // 默认 ASC
+sort: 'name asc'
+sort: 'price desc'
+
+// 多个字段
+sort: 'category asc, price desc'
+
+// 数组语法
+sort: [
+  { field: 'category', order: 'asc' },
+  { field: 'price', order: 'desc' }
+]
+```
+
+## 分页
+
+```typescript
+// Limit 和 skip
+{
+  limit: 10,
+  skip: 20    // 跳过前 20 条记录
+}
+
+// 基于页面
+{
+  top: 10,              // 每页记录数
+  skip: pageNumber * 10
+}
+
+// 示例: 获取第 3 页,每页 25 条记录
+{
+  limit: 25,
+  skip: 2 * 25  // 跳过前 50 条(第 1 页和第 2 页)
+}
+```
+
+## 字段选择
+
+```typescript
+// 选择特定字段
+{
+  fields: ['name', 'email', 'created']
+}
+
+// 选择相关字段
+{
+  fields: ['name', 'owner.name', 'owner.email']
+}
+
+// 所有字段(默认)
+{
+  fields: ['*']
+}
+```
+
+## 完整查询示例
+
+```typescript
+const results = await db.query('opportunity', {
+  fields: ['name', 'amount', 'stage', 'account.name'],
+  filters: [
+    'and',
+    ['stage', 'in', ['prospecting', 'qualification']],
+    ['amount', '>', 10000],
+    [
+      'or',
+      ['owner', '=', currentUserId],
+      ['team', 'contains', currentUserId]
+    ]
+  ],
+  sort: [
+    { field: 'amount', order: 'desc' },
+    { field: 'created', order: 'asc' }
+  ],
+  limit: 50,
+  skip: 0
+})
+```
+
+## 下一步
+
+- 掌握[聚合操作](/docs/02-objectql/aggregation)进行数据分析
+- 学习[变更操作](/docs/02-objectql/mutation)修改数据
+- 查看[Schema 定义](/docs/02-objectql/schema-definition)了解数据建模

@@ -1,682 +1,101 @@
 ---
 title: 协议规范
-description: Schema 定义、查询 DSL 和聚合操作的完整参考
+description: ObjectQL 协议规范概述和参考指南
 ---
 
 # 协议规范
 
-本文档提供 ObjectQL 的 Schema 定义语言、查询 DSL 和聚合操作的完整规范。
+ObjectQL 使用协议驱动的架构,提供涵盖数据建模、查询、聚合和变更操作的综合规范。该规范确保实现之间的一致性,并为开发人员提供清晰的契约。
 
-## Schema 定义
+## 核心组件
 
-### 对象定义
+ObjectQL 协议规范分为四个主要组件:
 
-对象表示数据库表:
+### [Schema 定义](/docs/02-objectql/schema-definition)
+
+定义数据模型:
+- **对象定义** - 带有元数据的数据库表
+- **字段类型** - 文本、数值、日期/时间、布尔、选择、关系和特殊字段
+- **字段约束** - 验证、索引和依赖关系
+
+### [查询 DSL](/docs/02-objectql/query-dsl)
+
+查询数据:
+- **过滤器** - 比较、字符串、列表、空值和复合运算符
+- **排序** - 单字段或多字段排序
+- **分页** - 使用 limit 和 skip 实现高效的数据检索
+- **字段选择** - 选择特定字段,包括相关数据
+
+### [聚合操作](/docs/02-objectql/aggregation)
+
+分析数据:
+- **GroupBy** - 按一个或多个字段对记录分组
+- **聚合函数** - 计数、求和、平均值、最小值、最大值、去重计数
+- **Having 子句** - 过滤聚合结果
+- **聚合前后过滤** - WHERE 和 HAVING 子句
+
+### [变更操作](/docs/02-objectql/mutation)
+
+修改数据:
+- **插入** - 创建新记录
+- **更新** - 修改现有记录
+- **删除** - 删除记录
+- **批量操作** - 高效的批量操作
+
+## 协议原则
+
+ObjectQL 协议遵循以下关键原则:
+
+1. **声明式** - 描述你想要什么,而不是如何获取
+2. **类型安全** - 强类型保证可靠性
+3. **可组合** - 从简单的构建块构建复杂的操作
+4. **高效** - 针对大规模性能优化
+5. **一致性** - 所有操作采用统一的模式
+
+## 快速开始
+
+这是一个使用所有协议组件的完整示例:
 
 ```typescript
-{
+// 1. 定义 schema
+const schema = {
   objects: {
-    [objectName: string]: {
-      label?: string              // 显示名称
-      icon?: string               // UI 图标
-      enable_files?: boolean      // 启用文件附件
-      enable_search?: boolean     // 启用全文搜索
-      enable_tasks?: boolean      // 启用任务跟踪
-      enable_notes?: boolean      // 启用笔记
-      enable_api?: boolean        // 通过 API 公开(默认: true)
-      enable_share?: boolean      // 启用记录共享
-      fields: { /* 字段定义 */ }
-      list_views?: { /* 视图定义 */ }
-      triggers?: { /* 触发器定义 */ }
-      actions?: { /* 操作定义 */ }
-      permissions?: { /* 权限定义 */ }
+    customer: {
+      label: '客户',
+      fields: {
+        name: { type: 'text', required: true },
+        email: { type: 'email', unique: true },
+        status: { type: 'select', options: ['active', 'inactive'] }
+      }
     }
   }
 }
-```
 
-### 字段类型参考
-
-#### 文本字段
-
-```typescript
-{
-  // 短文本 (VARCHAR)
-  field_name: {
-    type: 'text',
-    label?: string,
-    defaultValue?: string,
-    required?: boolean,
-    unique?: boolean,
-    index?: boolean,
-    minLength?: number,
-    maxLength?: number,
-    pattern?: string        // 正则表达式
-  },
-  
-  // 长文本 (TEXT)
-  description: {
-    type: 'textarea',
-    rows?: number           // UI 行数提示
-  },
-  
-  // 富文本 HTML
-  content: {
-    type: 'html'
-  },
-  
-  // 带验证的邮箱
-  email: {
-    type: 'email',
-    unique?: boolean
-  },
-  
-  // 带验证的 URL
-  website: {
-    type: 'url'
-  }
-}
-```
-
-#### 数值字段
-
-```typescript
-{
-  // 整数
-  quantity: {
-    type: 'number',
-    scale: 0,               // 无小数位
-    min?: number,
-    max?: number,
-    defaultValue?: number
-  },
-  
-  // 小数
-  price: {
-    type: 'currency',
-    scale: 2,               // 2 位小数
-    precision?: number      // 总位数(默认: 15)
-  },
-  
-  // 百分比
-  discount: {
-    type: 'percent',
-    scale: 2
-  },
-  
-  // 自动编号(序列)
-  invoice_number: {
-    type: 'autonumber',
-    formula: 'INV-{0000}'   // 格式模式
-  }
-}
-```
-
-#### 日期和时间字段
-
-```typescript
-{
-  // 仅日期 (YYYY-MM-DD)
-  birth_date: {
-    type: 'date',
-    min?: string,           // '1900-01-01'
-    max?: string            // '2100-12-31'
-  },
-  
-  // 日期和时间
-  created_at: {
-    type: 'datetime',
-    defaultValue?: string | (() => Date)
-  },
-  
-  // 仅时间
-  start_time: {
-    type: 'time'
-  }
-}
-```
-
-#### 布尔和选择字段
-
-```typescript
-{
-  // 布尔复选框
-  is_active: {
-    type: 'boolean',
-    defaultValue?: boolean
-  },
-  
-  // 单选(下拉菜单)
-  status: {
-    type: 'select',
-    options: [
-      { label: '草稿', value: 'draft' },
-      { label: '已发布', value: 'published' }
-    ],
-    // 或简单数组
-    // options: ['draft', 'published', 'archived']
-    defaultValue?: string
-  },
-  
-  // 多选
-  tags: {
-    type: 'multiSelect',
-    options: ['urgent', 'important', 'low-priority']
-  }
-}
-```
-
-#### 关系字段
-
-```typescript
-{
-  // 主从关系(必需的外键)
-  // 删除父记录时删除子记录
-  account: {
-    type: 'master_detail',
-    reference_to: 'account',
-    required: true,
-    on_delete?: 'cascade' | 'restrict'  // 默认: cascade
-  },
-  
-  // 查找(可选的外键)
-  // 删除父记录时保留关系
-  manager: {
-    type: 'lookup',
-    reference_to: 'user',
-    reference_to_field?: '_id'  // 默认: _id
-  },
-  
-  // 公式字段(计算)
-  full_name: {
-    type: 'formula',
-    formula: '{first_name} {last_name}',
-    data_type: 'text'
-  },
-  
-  // 汇总(从相关记录汇总)
-  total_opportunities: {
-    type: 'summary',
-    summary_object: 'opportunity',
-    summary_type: 'count',
-    summary_field: '_id',
-    summary_filters: [['stage', '=', 'closed_won']]
-  }
-}
-```
-
-#### 特殊字段
-
-```typescript
-{
-  // 文件附件
-  avatar: {
-    type: 'image',
-    accept?: string         // 'image/*'
-  },
-  
-  // 多个文件
-  attachments: {
-    type: 'filesize',
-    multiple?: boolean      // 允许多个文件
-  },
-  
-  // JSON 数据
-  metadata: {
-    type: 'json',
-    schema?: object         // 用于验证的 JSON Schema
-  },
-  
-  // 地理位置
-  location: {
-    type: 'location'        // 存储 { lat, lng, address }
-  },
-  
-  // Markdown 内容
-  notes: {
-    type: 'markdown'
-  }
-}
-```
-
-### 字段约束
-
-```typescript
-{
-  field_name: {
-    type: 'text',
-    
-    // 验证
-    required: boolean,      // NOT NULL
-    unique: boolean,        // UNIQUE 约束
-    index: boolean,         // 创建索引
-    
-    // 文本约束
-    minLength: number,
-    maxLength: number,
-    pattern: string,        // 正则表达式
-    
-    // 数值约束
-    min: number,
-    max: number,
-    scale: number,          // 小数位数
-    precision: number,      // 总位数
-    
-    // 默认值
-    defaultValue: any | (() => any),
-    
-    // 可见性
-    hidden: boolean,        // 从 UI 隐藏
-    readonly: boolean,      // 只读
-    
-    // 依赖关系
-    depends_on: string[],   // 字段依赖
-    visible_on: string      // 条件可见性
-  }
-}
-```
-
-## 查询 DSL
-
-### 基本查询
-
-```typescript
-db.query(objectName: string, options: QueryOptions): Promise<Record[]>
-
-interface QueryOptions {
-  fields?: string[]           // 要返回的字段
-  filters?: Filter[]          // WHERE 条件
-  sort?: string | Sort[]      // ORDER BY
-  limit?: number              // LIMIT
-  skip?: number               // OFFSET
-  top?: number                // 替代 limit
-}
-```
-
-### 过滤器
-
-过滤器语法: `[field, operator, value]`
-
-#### 比较运算符
-
-```typescript
-// 等于
-['status', '=', 'active']
-['status', 'eq', 'active']
-
-// 不等于
-['status', '!=', 'archived']
-['status', 'ne', 'archived']
-
-// 大于
-['age', '>', 18]
-['age', 'gt', 18]
-
-// 大于或等于
-['age', '>=', 18]
-['age', 'gte', 18]
-
-// 小于
-['price', '<', 100]
-['price', 'lt', 100]
-
-// 小于或等于
-['price', '<=', 100]
-['price', 'lte', 100]
-```
-
-#### 字符串运算符
-
-```typescript
-// 包含(不区分大小写)
-['name', 'contains', 'john']
-['name', 'like', '%john%']
-
-// 以...开始
-['email', 'startswith', 'admin']
-['email', 'like', 'admin%']
-
-// 以...结束
-['domain', 'endswith', '.com']
-['domain', 'like', '%.com']
-
-// 不包含
-['name', 'notcontains', 'test']
-['name', 'not like', '%test%']
-```
-
-#### 列表运算符
-
-```typescript
-// 在列表中
-['status', 'in', ['draft', 'published']]
-
-// 不在列表中
-['status', 'notin', ['archived', 'deleted']]
-
-// 在范围内
-['age', 'between', [18, 65]]
-```
-
-#### 空值运算符
-
-```typescript
-// 是空值
-['description', '=', null]
-['description', 'is null']
-
-// 不是空值
-['description', '!=', null]
-['description', 'is not null']
-```
-
-#### 复合过滤器
-
-```typescript
-// AND(默认)
-filters: [
-  ['status', '=', 'active'],
-  ['age', '>', 18]
-]
-// WHERE status = 'active' AND age > 18
-
-// OR
-filters: [
-  'or',
-  ['status', '=', 'active'],
-  ['status', '=', 'pending']
-]
-// WHERE status = 'active' OR status = 'pending'
-
-// 复杂组合
-filters: [
-  'and',
-  ['category', '=', 'electronics'],
-  [
-    'or',
-    ['price', '<', 100],
-    ['on_sale', '=', true]
-  ]
-]
-// WHERE category = 'electronics' AND (price < 100 OR on_sale = true)
-```
-
-### 排序
-
-```typescript
-// 简单字符串
-sort: 'name'              // 默认 ASC
-sort: 'name asc'
-sort: 'price desc'
-
-// 多个字段
-sort: 'category asc, price desc'
-
-// 数组语法
-sort: [
-  { field: 'category', order: 'asc' },
-  { field: 'price', order: 'desc' }
-]
-```
-
-### 分页
-
-```typescript
-// Limit 和 skip
-{
-  limit: 10,
-  skip: 20    // 跳过前 20 条记录
-}
-
-// 基于页面
-{
-  top: 10,              // 每页记录数
-  skip: pageNumber * 10
-}
-
-// 示例: 获取第 3 页,每页 25 条记录
-{
-  limit: 25,
-  skip: 2 * 25  // 跳过前 50 条(第 1 页和第 2 页)
-}
-```
-
-### 字段选择
-
-```typescript
-// 选择特定字段
-{
-  fields: ['name', 'email', 'created']
-}
-
-// 选择相关字段
-{
-  fields: ['name', 'owner.name', 'owner.email']
-}
-
-// 所有字段(默认)
-{
-  fields: ['*']
-}
-```
-
-### 完整查询示例
-
-```typescript
-const results = await db.query('opportunity', {
-  fields: ['name', 'amount', 'stage', 'account.name'],
-  filters: [
-    'and',
-    ['stage', 'in', ['prospecting', 'qualification']],
-    ['amount', '>', 10000],
-    [
-      'or',
-      ['owner', '=', currentUserId],
-      ['team', 'contains', currentUserId]
-    ]
-  ],
-  sort: [
-    { field: 'amount', order: 'desc' },
-    { field: 'created', order: 'asc' }
-  ],
-  limit: 50,
-  skip: 0
-})
-```
-
-## 聚合操作
-
-### GroupBy
-
-```typescript
-db.aggregate(objectName: string, options: AggregateOptions)
-
-interface AggregateOptions {
-  group_by: string[]
-  having?: Filter[]
-  fields?: AggregateField[]
-  sort?: string | Sort[]
-  limit?: number
-}
-```
-
-#### 基本 GroupBy
-
-```typescript
-// 按类别计数
-await db.aggregate('product', {
-  group_by: ['category'],
-  fields: [
-    { field: '_id', function: 'count', alias: 'total' }
-  ]
-})
-
-// 结果: [
-//   { category: 'Electronics', total: 45 },
-//   { category: 'Books', total: 123 }
-// ]
-```
-
-#### 多重分组
-
-```typescript
-// 按年份和季度统计销售额
-await db.aggregate('order', {
-  group_by: ['YEAR(created)', 'QUARTER(created)'],
-  fields: [
-    { field: 'amount', function: 'sum', alias: 'total_sales' },
-    { field: '_id', function: 'count', alias: 'order_count' }
-  ],
-  sort: 'YEAR(created) desc, QUARTER(created) desc'
-})
-```
-
-### 聚合函数
-
-```typescript
-// 计数
-{ field: '_id', function: 'count' }
-
-// 求和
-{ field: 'amount', function: 'sum' }
-
-// 平均值
-{ field: 'price', function: 'avg' }
-
-// 最小值
-{ field: 'price', function: 'min' }
-
-// 最大值
-{ field: 'price', function: 'max' }
-
-// 去重计数
-{ field: 'customer_id', function: 'count_distinct' }
-```
-
-### Having 子句
-
-过滤聚合结果:
-
-```typescript
-await db.aggregate('order', {
-  group_by: ['customer_id'],
-  fields: [
-    { field: 'amount', function: 'sum', alias: 'total_spent' },
-    { field: '_id', function: 'count', alias: 'order_count' }
-  ],
-  having: [
-    ['total_spent', '>', 1000]    // 仅消费 > 1000 的客户
-  ]
-})
-```
-
-### 完整聚合示例
-
-```typescript
-// 带过滤器的月度销售报告
-const monthlySales = await db.aggregate('invoice', {
-  // 聚合前过滤(WHERE 子句)
-  filters: [
-    ['status', '=', 'paid'],
-    ['created', '>=', '2024-01-01']
-  ],
-  
-  // 分组依据
-  group_by: ['YEAR(created)', 'MONTH(created)'],
-  
-  // 聚合计算
-  fields: [
-    { field: 'amount', function: 'sum', alias: 'revenue' },
-    { field: '_id', function: 'count', alias: 'invoice_count' },
-    { field: 'amount', function: 'avg', alias: 'avg_invoice' },
-    { field: 'customer_id', function: 'count_distinct', alias: 'unique_customers' }
-  ],
-  
-  // 聚合后过滤(HAVING 子句)
-  having: [
-    ['revenue', '>', 50000]  // 仅收入 > 5 万的月份
-  ],
-  
-  // 排序结果
-  sort: 'YEAR(created) desc, MONTH(created) desc',
-  
-  // 限制结果
-  limit: 12  // 最近 12 个月
-})
-
-// 结果: [
-//   {
-//     year: 2024,
-//     month: 3,
-//     revenue: 125000,
-//     invoice_count: 45,
-//     avg_invoice: 2777.78,
-//     unique_customers: 32
-//   },
-//   ...
-// ]
-```
-
-## 变更操作
-
-### 插入
-
-```typescript
+// 2. 插入数据
 await db.mutation('customer', {
   action: 'insert',
-  data: {
-    name: 'Acme Corp',
-    email: 'contact@acme.com',
-    status: 'active'
-  }
-})
-```
-
-### 更新
-
-```typescript
-await db.mutation('customer', {
-  action: 'update',
-  filters: [['_id', '=', customerId]],
-  data: {
-    status: 'inactive',
-    modified: new Date()
-  }
-})
-```
-
-### 删除
-
-```typescript
-await db.mutation('customer', {
-  action: 'delete',
-  filters: [['status', '=', 'archived']]
-})
-```
-
-### 批量操作
-
-```typescript
-// 批量插入
-await db.mutation('product', {
-  action: 'insert',
-  data: [
-    { name: '产品 1', price: 10 },
-    { name: '产品 2', price: 20 },
-    { name: '产品 3', price: 30 }
-  ]
+  data: { name: 'Acme Corp', email: 'contact@acme.com', status: 'active' }
 })
 
-// 批量更新
-await db.mutation('task', {
-  action: 'update',
-  filters: [['project_id', '=', projectId]],
-  data: { status: 'cancelled' }
+// 3. 查询数据
+const customers = await db.query('customer', {
+  filters: [['status', '=', 'active']],
+  sort: 'name asc',
+  limit: 10
+})
+
+// 4. 聚合数据
+const stats = await db.aggregate('customer', {
+  group_by: ['status'],
+  fields: [{ field: '_id', function: 'count', alias: 'total' }]
 })
 ```
 
 ## 下一步
 
-- 探索[核心功能](/docs/02-objectql/core-features)了解性能优化
-- 掌握[服务端 SDK](/docs/02-objectql/server-sdk) API 参考
+- 从[Schema 定义](/docs/02-objectql/schema-definition)开始建模数据
+- 学习[查询 DSL](/docs/02-objectql/query-dsl)检索数据
+- 掌握[聚合操作](/docs/02-objectql/aggregation)进行数据分析
+- 理解[变更操作](/docs/02-objectql/mutation)修改数据
+- 探索[核心功能](/docs/02-objectql/core-features)了解高级功能
 - 查看[核心概念](/docs/02-objectql/core-concepts)了解基础知识

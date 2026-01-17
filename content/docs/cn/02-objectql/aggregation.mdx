@@ -1,0 +1,145 @@
+---
+title: 聚合操作
+description: ObjectQL 中分组和聚合数据的完整参考
+---
+
+# 聚合操作
+
+本文档提供 ObjectQL 聚合操作的完整规范。
+
+## GroupBy
+
+```typescript
+db.aggregate(objectName: string, options: AggregateOptions)
+
+interface AggregateOptions {
+  group_by: string[]
+  having?: Filter[]
+  fields?: AggregateField[]
+  sort?: string | Sort[]
+  limit?: number
+}
+```
+
+### 基本 GroupBy
+
+```typescript
+// 按类别计数
+await db.aggregate('product', {
+  group_by: ['category'],
+  fields: [
+    { field: '_id', function: 'count', alias: 'total' }
+  ]
+})
+
+// 结果: [
+//   { category: 'Electronics', total: 45 },
+//   { category: 'Books', total: 123 }
+// ]
+```
+
+### 多重分组
+
+```typescript
+// 按年份和季度统计销售额
+await db.aggregate('order', {
+  group_by: ['YEAR(created)', 'QUARTER(created)'],
+  fields: [
+    { field: 'amount', function: 'sum', alias: 'total_sales' },
+    { field: '_id', function: 'count', alias: 'order_count' }
+  ],
+  sort: 'YEAR(created) desc, QUARTER(created) desc'
+})
+```
+
+## 聚合函数
+
+```typescript
+// 计数
+{ field: '_id', function: 'count' }
+
+// 求和
+{ field: 'amount', function: 'sum' }
+
+// 平均值
+{ field: 'price', function: 'avg' }
+
+// 最小值
+{ field: 'price', function: 'min' }
+
+// 最大值
+{ field: 'price', function: 'max' }
+
+// 去重计数
+{ field: 'customer_id', function: 'count_distinct' }
+```
+
+## Having 子句
+
+过滤聚合结果:
+
+```typescript
+await db.aggregate('order', {
+  group_by: ['customer_id'],
+  fields: [
+    { field: 'amount', function: 'sum', alias: 'total_spent' },
+    { field: '_id', function: 'count', alias: 'order_count' }
+  ],
+  having: [
+    ['total_spent', '>', 1000]    // 仅消费 > 1000 的客户
+  ]
+})
+```
+
+## 完整聚合示例
+
+```typescript
+// 带过滤器的月度销售报告
+const monthlySales = await db.aggregate('invoice', {
+  // 聚合前过滤(WHERE 子句)
+  filters: [
+    ['status', '=', 'paid'],
+    ['created', '>=', '2024-01-01']
+  ],
+  
+  // 分组依据
+  group_by: ['YEAR(created)', 'MONTH(created)'],
+  
+  // 聚合计算
+  fields: [
+    { field: 'amount', function: 'sum', alias: 'revenue' },
+    { field: '_id', function: 'count', alias: 'invoice_count' },
+    { field: 'amount', function: 'avg', alias: 'avg_invoice' },
+    { field: 'customer_id', function: 'count_distinct', alias: 'unique_customers' }
+  ],
+  
+  // 聚合后过滤(HAVING 子句)
+  having: [
+    ['revenue', '>', 50000]  // 仅收入 > 5 万的月份
+  ],
+  
+  // 排序结果
+  sort: 'YEAR(created) desc, MONTH(created) desc',
+  
+  // 限制结果
+  limit: 12  // 最近 12 个月
+})
+
+// 结果: [
+//   {
+//     year: 2024,
+//     month: 3,
+//     revenue: 125000,
+//     invoice_count: 45,
+//     avg_invoice: 2777.78,
+//     unique_customers: 32
+//   },
+//   ...
+// ]
+```
+
+## 下一步
+
+- 学习[查询 DSL](/docs/02-objectql/query-dsl)进行基本查询
+- 掌握[变更操作](/docs/02-objectql/mutation)修改数据
+- 查看[Schema 定义](/docs/02-objectql/schema-definition)了解数据建模

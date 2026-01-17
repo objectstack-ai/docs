@@ -5,6 +5,10 @@
     "index",
     "core-concepts",
     "protocol-spec",
+    "schema-definition",
+    "query-dsl",
+    "aggregation",
+    "mutation",
     "core-features",
     "server-sdk"
   ]
