@@ -1,0 +1,324 @@
+---
+title: 容器组件
+description: ObjectUI 中的布局和结构组件
+---
+
+# 容器组件
+
+容器组件用于组织和构建 UI 布局。
+
+## Page 页面
+
+顶级页面容器,带有标题和操作。
+
+**协议:**
+
+```typescript
+{
+  type: 'page',
+  title: string,
+  description?: string,
+  icon?: string,
+  breadcrumbs?: Array<{
+    label: string,
+    url?: string
+  }>,
+  actions?: Action[],         // 页头操作
+  tabs?: Array<{
+    label: string,
+    key: string,
+    body: Component
+  }>,
+  body: Component | Component[],
+}
+```
+
+**示例:**
+
+```json
+{
+  "type": "page",
+  "title": "用户管理",
+  "description": "管理系统用户和权限",
+  "breadcrumbs": [
+    { "label": "首页", "url": "/" },
+    { "label": "用户" }
+  ],
+  "actions": [
+    {
+      "label": "添加用户",
+      "type": "dialog",
+      "body": {
+        "type": "form",
+        "api": "/api/users",
+        "fields": [...]
+      }
+    }
+  ],
+  "body": {
+    "type": "table",
+    "api": "/api/users"
+  }
+}
+```
+
+## Grid 网格
+
+响应式网格布局。
+
+**协议:**
+
+```typescript
+{
+  type: 'grid',
+  columns?: number | {        // 列配置
+    xs?: number,              // 超小设备
+    sm?: number,              // 小设备
+    md?: number,              // 中等设备
+    lg?: number,              // 大设备
+    xl?: number               // 超大设备
+  },
+  gap?: number | string,      // 项目间距
+  items: Component[],
+}
+```
+
+**示例:**
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "sm": 2, "lg": 3 },
+  "gap": "20px",
+  "items": [
+    {
+      "type": "card",
+      "title": "总用户数",
+      "body": { "type": "text", "value": "${stats.users}" }
+    },
+    {
+      "type": "card",
+      "title": "总订单数",
+      "body": { "type": "text", "value": "${stats.orders}" }
+    },
+    {
+      "type": "card",
+      "title": "收入",
+      "body": { "type": "text", "value": "¥${stats.revenue}" }
+    }
+  ]
+}
+```
+
+## Card 卡片
+
+带有标题、主体和页脚的卡片容器。
+
+**协议:**
+
+```typescript
+{
+  type: 'card',
+  title?: string,
+  description?: string,
+  cover?: string,             // 封面图片 URL
+  avatar?: string,            // 头像图片 URL
+  actions?: Action[],
+  body: Component | Component[],
+  footer?: Component | Component[],
+}
+```
+
+**示例:**
+
+```json
+{
+  "type": "card",
+  "title": "用户资料",
+  "avatar": "${user.avatar}",
+  "body": [
+    { "type": "text", "value": "姓名: ${user.name}" },
+    { "type": "text", "value": "邮箱: ${user.email}" },
+    { "type": "text", "value": "角色: ${user.role}" }
+  ],
+  "actions": [
+    { "label": "编辑", "onClick": { "type": "navigate", "url": "/users/${user.id}/edit" } },
+    { "label": "删除", "onClick": { "type": "api", "api": "/api/users/${user.id}", "method": "DELETE" } }
+  ]
+}
+```
+
+## Form 表单
+
+带有字段和提交处理的表单容器。
+
+**协议:**
+
+```typescript
+{
+  type: 'form',
+  title?: string,
+  api?: string,               // 提交端点
+  method?: 'POST' | 'PUT' | 'PATCH',
+  initialValues?: object,     // 初始表单值
+  fields: FormField[],
+  layout?: 'horizontal' | 'vertical' | 'inline',
+  columns?: number,           // 多列布局
+  submitText?: string,        // 提交按钮文本
+  resetText?: string,         // 重置按钮文本
+  showReset?: boolean,        // 显示重置按钮
+  onSubmit?: Action,
+  onSuccess?: Action,
+  onError?: Action,
+}
+```
+
+**示例 - 简单表单:**
+
+```json
+{
+  "type": "form",
+  "title": "创建用户",
+  "api": "/api/users",
+  "method": "POST",
+  "fields": [
+    {
+      "type": "input",
+      "name": "name",
+      "label": "全名",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "email",
+      "label": "邮箱",
+      "inputType": "email",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "role",
+      "label": "角色",
+      "options": [
+        { "label": "管理员", "value": "admin" },
+        { "label": "用户", "value": "user" }
+      ]
+    }
+  ],
+  "submitText": "创建用户",
+  "onSuccess": {
+    "type": "toast",
+    "message": "用户创建成功!"
+  }
+}
+```
+
+**示例 - 多列表单:**
+
+```json
+{
+  "type": "form",
+  "title": "用户注册",
+  "columns": 2,
+  "fields": [
+    { "type": "input", "name": "firstName", "label": "名" },
+    { "type": "input", "name": "lastName", "label": "姓" },
+    { "type": "input", "name": "email", "label": "邮箱", "inputType": "email" },
+    { "type": "input", "name": "phone", "label": "电话", "inputType": "tel" },
+    { "type": "datepicker", "name": "birthday", "label": "生日" },
+    { "type": "select", "name": "country", "label": "国家", "api": "/api/countries" }
+  ]
+}
+```
+
+## Table 表格
+
+带有排序、筛选和分页的数据表格。
+
+**协议:**
+
+```typescript
+{
+  type: 'table',
+  api?: string,               // 数据端点
+  data?: any[],               // 静态数据
+  columns: Array<{
+    name: string,
+    label: string,
+    type?: 'text' | 'number' | 'boolean' | 'date' | 'image',
+    sortable?: boolean,
+    filterable?: boolean,
+    width?: number | string,
+    render?: string,          // 自定义渲染模板
+  }>,
+  rowActions?: Action[],      // 每行操作
+  batchActions?: Action[],    // 批量操作
+  pagination?: boolean,
+  pageSize?: number,
+  searchable?: boolean,       // 全局搜索
+  filters?: Array<{
+    name: string,
+    label: string,
+    type: 'input' | 'select' | 'datepicker'
+  }>,
+  selectable?: boolean,       // 行选择
+  expandable?: Component,     // 可展开行内容
+}
+```
+
+**示例 - 基础表格:**
+
+```json
+{
+  "type": "table",
+  "api": "/api/users",
+  "columns": [
+    { "name": "id", "label": "ID", "width": 80 },
+    { "name": "name", "label": "姓名", "sortable": true },
+    { "name": "email", "label": "邮箱", "sortable": true },
+    { "name": "role", "label": "角色", "filterable": true },
+    { "name": "createdAt", "label": "创建时间", "type": "date", "sortable": true }
+  ],
+  "rowActions": [
+    { "label": "编辑", "onClick": { "type": "navigate", "url": "/users/${id}/edit" } },
+    { "label": "删除", "onClick": { "type": "api", "api": "/api/users/${id}", "method": "DELETE", "confirm": "删除此用户?" } }
+  ],
+  "pagination": true,
+  "pageSize": 20,
+  "searchable": true
+}
+```
+
+**示例 - CRUD 表格:**
+
+```json
+{
+  "type": "table",
+  "api": "/api/products",
+  "columns": [
+    { "name": "name", "label": "产品名称" },
+    { "name": "price", "label": "价格", "type": "number" },
+    { "name": "stock", "label": "库存", "type": "number" },
+    { "name": "active", "label": "激活", "type": "boolean" }
+  ],
+  "filters": [
+    { "name": "category", "label": "分类", "type": "select", "api": "/api/categories" },
+    { "name": "priceRange", "label": "价格区间", "type": "input" }
+  ],
+  "selectable": true,
+  "batchActions": [
+    { "label": "批量删除", "onClick": { "type": "api", "api": "/api/products/batch-delete", "method": "POST" } },
+    { "label": "导出", "onClick": { "type": "download", "url": "/api/products/export" } }
+  ],
+  "rowActions": [
+    { "label": "编辑", "onClick": { "type": "dialog", "title": "编辑产品", "body": { "type": "form", "fields": [...] } } },
+    { "label": "删除", "onClick": { "type": "api", "api": "/api/products/${id}", "method": "DELETE" } }
+  ]
+}
+```
+
+## 下一步
+
+- **[基础组件](/docs/03-objectui/basic-components)** - 了解表单和输入组件
+- **[操作](/docs/03-objectui/actions)** - 了解交互行为
+- **[组件规范](/docs/03-objectui/component-spec)** - 完整的组件参考
