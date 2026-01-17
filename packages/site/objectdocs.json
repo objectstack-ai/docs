@@ -31,10 +31,32 @@
           "text": "Home",
           "url": "https://www.objectstack.ai",
           "external": true
+        },
+        {
+          "text": "Framework",
+          "url": "/docs/framework",
+          "active": "nested-url"
+        },
+        {
+          "text": "ObjectQL",
+          "url": "/docs/objectql",
+          "active": "nested-url"
+        },
+        {
+          "text": "ObjectUI",
+          "url": "/docs/objectui",
+          "active": "nested-url"
+        },
+        {
+          "text": "ObjectOS",
+          "url": "/docs/objectos",
+          "active": "nested-url"
         }
       ],
       "socials": [
-        { "platform": "github", "url": "https://github.com/objectstack-ai/" }
+        { "platform": "github", "url": "https://github.com/objectstack-ai/" },
+        { "platform": "discord", "url": "https://discord.gg/objectstack" },
+        { "platform": "twitter", "url": "https://twitter.com/objectstack" }
       ]
     },
     "sidebar": {
