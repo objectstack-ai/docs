@@ -1,0 +1,157 @@
+---
+title: Table
+description: Data table with sorting, filtering, and pagination
+---
+
+# Table
+
+Data table with sorting, filtering, and pagination.
+
+## Protocol
+
+```typescript
+{
+  type: 'table',
+  api?: string,               // Data endpoint
+  data?: any[],               // Static data
+  columns: Array<{
+    name: string,
+    label: string,
+    type?: 'text' | 'number' | 'boolean' | 'date' | 'image',
+    sortable?: boolean,
+    filterable?: boolean,
+    width?: number | string,
+    render?: string,          // Custom render template
+  }>,
+  rowActions?: Action[],      // Actions per row
+  batchActions?: Action[],    // Batch actions
+  pagination?: boolean,
+  pageSize?: number,
+  searchable?: boolean,       // Global search
+  filters?: Array<{
+    name: string,
+    label: string,
+    type: 'input' | 'select' | 'datepicker'
+  }>,
+  selectable?: boolean,       // Row selection
+  expandable?: Component,     // Expandable row content
+}
+```
+
+## Examples
+
+### Basic Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/users",
+  "columns": [
+    { "name": "id", "label": "ID", "width": 80 },
+    { "name": "name", "label": "Name", "sortable": true },
+    { "name": "email", "label": "Email", "sortable": true },
+    { "name": "role", "label": "Role", "filterable": true },
+    { "name": "createdAt", "label": "Created", "type": "date", "sortable": true }
+  ],
+  "rowActions": [
+    { "label": "Edit", "onClick": { "type": "navigate", "url": "/users/${id}/edit" } },
+    { "label": "Delete", "onClick": { "type": "api", "api": "/api/users/${id}", "method": "DELETE", "confirm": "Delete this user?" } }
+  ],
+  "pagination": true,
+  "pageSize": 20,
+  "searchable": true
+}
+```
+
+### CRUD Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/products",
+  "columns": [
+    { "name": "name", "label": "Product Name" },
+    { "name": "price", "label": "Price", "type": "number" },
+    { "name": "stock", "label": "Stock", "type": "number" },
+    { "name": "active", "label": "Active", "type": "boolean" }
+  ],
+  "filters": [
+    { "name": "category", "label": "Category", "type": "select", "api": "/api/categories" },
+    { "name": "priceRange", "label": "Price Range", "type": "input" }
+  ],
+  "selectable": true,
+  "batchActions": [
+    { "label": "Delete Selected", "onClick": { "type": "api", "api": "/api/products/batch-delete", "method": "POST" } },
+    { "label": "Export", "onClick": { "type": "download", "url": "/api/products/export" } }
+  ],
+  "rowActions": [
+    { "label": "Edit", "onClick": { "type": "dialog", "title": "Edit Product", "body": { "type": "form", "fields": [...] } } },
+    { "label": "Delete", "onClick": { "type": "api", "api": "/api/products/${id}", "method": "DELETE" } }
+  ]
+}
+```
+
+### Static Data Table
+
+```json
+{
+  "type": "table",
+  "data": [
+    { "id": 1, "name": "Alice", "role": "Admin" },
+    { "id": 2, "name": "Bob", "role": "User" }
+  ],
+  "columns": [
+    { "name": "id", "label": "ID" },
+    { "name": "name", "label": "Name" },
+    { "name": "role", "label": "Role" }
+  ]
+}
+```
+
+## Features
+
+### Columns
+
+Each column can specify:
+
+- **type** - Data type for rendering (text, number, boolean, date, image)
+- **sortable** - Enable sorting for this column
+- **filterable** - Enable filtering for this column
+- **width** - Fixed column width
+
+### Sorting
+
+Enable sorting on columns with `sortable: true`. Users can click column headers to sort.
+
+### Filtering
+
+Add filters for specific columns or use global search with `searchable: true`.
+
+### Pagination
+
+Enable pagination with `pagination: true` and set items per page with `pageSize`.
+
+### Row Actions
+
+Actions that apply to individual rows (edit, delete, view details, etc.).
+
+### Batch Actions
+
+Actions that apply to selected rows when `selectable: true`.
+
+### Expandable Rows
+
+Show additional details by setting `expandable` to a component definition.
+
+## Column Types
+
+- **text** - Plain text (default)
+- **number** - Numeric values with proper alignment
+- **boolean** - Checkmark or yes/no indicator
+- **date** - Formatted date display
+- **image** - Image thumbnail
+
+## Related Components
+
+- **[Page](/docs/03-objectui/container-components/page)** - Page container
+- **[Form](/docs/03-objectui/container-components/form)** - Edit forms

@@ -1,0 +1,105 @@
+---
+title: Navigate
+description: Navigate to different pages
+---
+
+# Navigate
+
+Navigate to a different page or URL.
+
+## Protocol
+
+```typescript
+{
+  type: 'navigate',
+  url: string,                // Target URL (template supported)
+  newTab?: boolean,           // Open in new tab
+  replace?: boolean,          // Replace current history entry
+}
+```
+
+## Examples
+
+### Basic Navigation
+
+```json
+{
+  "type": "button",
+  "label": "View Details",
+  "onClick": {
+    "type": "navigate",
+    "url": "/users/${userId}"
+  }
+}
+```
+
+### Open in New Tab
+
+```json
+{
+  "type": "button",
+  "label": "External Link",
+  "onClick": {
+    "type": "navigate",
+    "url": "https://example.com",
+    "newTab": true
+  }
+}
+```
+
+### Replace History
+
+```json
+{
+  "type": "navigate",
+  "url": "/login",
+  "replace": true
+}
+```
+
+### Navigate After API Call
+
+```json
+{
+  "type": "api",
+  "api": "/api/users",
+  "method": "POST",
+  "data": "${formData}",
+  "onSuccess": {
+    "type": "navigate",
+    "url": "/users/${response.id}"
+  }
+}
+```
+
+## Features
+
+### Template URLs
+
+Use template variables in the URL:
+
+```json
+{
+  "url": "/users/${userId}/posts/${postId}"
+}
+```
+
+### New Tab
+
+Open links in a new browser tab with `newTab: true`.
+
+### History Management
+
+Use `replace: true` to replace the current history entry instead of adding a new one. Useful for login redirects.
+
+## Use Cases
+
+- Navigate to detail pages
+- Redirect after form submission
+- Open external links
+- Navigate back/forward in history
+
+## Related
+
+- **[API Request](/docs/03-objectui/actions/api-request)** - Navigate after API calls
+- **[Page](/docs/03-objectui/container-components/page)** - Page component

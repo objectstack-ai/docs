@@ -1,0 +1,10 @@
+{
+  "title": "Basic Components",
+  "pages": [
+    "index",
+    "input",
+    "select",
+    "datepicker",
+    "switch"
+  ]
+}

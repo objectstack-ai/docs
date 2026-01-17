@@ -1,0 +1,128 @@
+---
+title: Select
+description: Dropdown selection field
+---
+
+# Select
+
+Dropdown selection field.
+
+## Protocol
+
+```typescript
+{
+  type: 'select',
+  name: string,
+  label?: string,
+  placeholder?: string,
+  defaultValue?: string | number,
+  required?: boolean,
+  disabled?: boolean,
+  multiple?: boolean,         // Allow multiple selections
+  searchable?: boolean,       // Enable search/filter
+  clearable?: boolean,        // Show clear button
+  options?: Array<{           // Static options
+    label: string,
+    value: string | number,
+    disabled?: boolean
+  }>,
+  api?: string,               // API endpoint for dynamic options
+  optionLabel?: string,       // Field name for option label
+  optionValue?: string,       // Field name for option value
+  dependsOn?: string,         // Field dependency
+  onChange?: Action,
+}
+```
+
+## Examples
+
+### Static Options
+
+```json
+{
+  "type": "select",
+  "name": "status",
+  "label": "Status",
+  "placeholder": "Select status",
+  "required": true,
+  "options": [
+    { "label": "Active", "value": "active" },
+    { "label": "Inactive", "value": "inactive" },
+    { "label": "Pending", "value": "pending" }
+  ]
+}
+```
+
+### Dynamic Options from API
+
+```json
+{
+  "type": "select",
+  "name": "category",
+  "label": "Category",
+  "api": "/api/categories",
+  "optionLabel": "name",
+  "optionValue": "id",
+  "searchable": true
+}
+```
+
+### Dependent Select
+
+```json
+{
+  "type": "form",
+  "fields": [
+    {
+      "type": "select",
+      "name": "country",
+      "label": "Country",
+      "api": "/api/countries"
+    },
+    {
+      "type": "select",
+      "name": "state",
+      "label": "State",
+      "api": "/api/states?country=${country}",
+      "dependsOn": "country"
+    }
+  ]
+}
+```
+
+### Multiple Selection
+
+```json
+{
+  "type": "select",
+  "name": "tags",
+  "label": "Tags",
+  "multiple": true,
+  "searchable": true,
+  "options": [
+    { "label": "Important", "value": "important" },
+    { "label": "Urgent", "value": "urgent" },
+    { "label": "Review", "value": "review" }
+  ]
+}
+```
+
+## Features
+
+### Static vs Dynamic Options
+
+- **Static options** - Use the `options` array for predefined choices
+- **Dynamic options** - Use `api` to fetch options from a backend endpoint
+
+### Search and Filter
+
+Enable `searchable: true` to allow users to filter options by typing.
+
+### Dependent Fields
+
+Use `dependsOn` to create cascading selects where one field's options depend on another field's value.
+
+## Related Components
+
+- **[Input](/docs/03-objectui/basic-components/input)** - For text entry
+- **[Form](/docs/03-objectui/container-components/form)** - Form container

@@ -5,6 +5,9 @@
     "index",
     "core-concepts",
     "component-spec",
+    "basic-components",
+    "container-components",
+    "actions",
     "renderer-usage"
   ]
 }
