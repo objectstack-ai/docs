@@ -1,532 +1,322 @@
 ---
-title: ObjectQL 协议规范
-description: 数据库无关的数据协议引擎 - 模式定义、查询 DSL 和驱动抽象
+title: ObjectQL - 通用数据编译器
+description: 停止编写胶水代码，开始编译你的数据层。协议驱动、数据库无关的数据引擎，将高级模式编译为优化的 SQL。
 ---
 
-# ObjectQL：数据协议引擎
+# ObjectQL：通用数据编译器
 
-ObjectQL 是 ObjectStack 核心的**数据库无关查询引擎**。它定义了一种基于 JSON 的通用协议，用于模式定义、数据查询和变更，可编译为任何支持数据库的原生 SQL。
+**停止编写胶水代码，开始编译你的数据层。**
 
-## 规范概述
+ObjectQL 不是又一个 ORM——它是一个**数据库编译器**，将高级模式定义转换为优化的原生 SQL。用 JSON/YAML 编写一次数据模型，ObjectQL 将其编译为在任何数据库上运行：SQLite、PostgreSQL、MySQL、Oracle 或 SQL Server。
 
-ObjectQL **不是数据库**——它是一个**协议规范**及其参考实现。该协议定义：
+## 价值主张
 
-1. **模式定义语言**：基于 JSON 的数据模型声明
-2. **查询 DSL（领域特定语言）**：CRUD 操作的统一语法
-3. **AST 编译**：数据库无关查询的抽象语法树
-4. **驱动接口**：数据库引擎的标准适配器契约
+**编写一次模式** → **在任何数据库上运行** → **自动生成 API**
 
-### 核心设计原则
+传统的 ORM 在运行时包装数据库，增加了开销和复杂性。ObjectQL 在协议层编译，将安全规则和虚拟列直接注入 SQL——没有运行时性能损失。
 
-**协议中立性**：ObjectQL 规范与实现无关。同一协议可由以下引擎执行：
-- JavaScript 引擎（Node.js）
-- Python 引擎（计划中）
-- Java 引擎（计划中）
-- Go 引擎（计划中）
+<div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+  <a href="/docs/objectql/core-concepts" style={{ padding: '0.75rem 1.5rem', background: '#0070f3', color: 'white', borderRadius: '0.5rem', textDecoration: 'none', fontWeight: 600 }}>开始使用</a>
+  <a href="https://github.com/objectstack-ai/objectql" style={{ padding: '0.75rem 1.5rem', border: '2px solid #0070f3', color: '#0070f3', borderRadius: '0.5rem', textDecoration: 'none', fontWeight: 600 }}>在 GitHub 查看</a>
+</div>
 
-**数据库无关**：协议从不假定特定数据库。像"JSONB"（PostgreSQL）或"ROWNUM"（Oracle）这样的概念不存在于协议层——它们由特定方言的转译器处理。
+### 架构可视化
 
-**机制，而非策略**：ObjectQL 定义*如何描述数据操作*，而非*如何实现*它们。用户认证、验证逻辑和业务规则属于 ObjectOS。
-
----
-
-## 协议架构
+ObjectQL 作为通用编译器，将您的模式转换为多个输出目标：
 
 ```mermaid
-sequenceDiagram
-    participant App as 应用程序
-    participant Engine as ObjectQL 引擎
-    participant AST as AST 编译器
-    participant Transpiler as 方言转译器
-    participant Driver as 数据库驱动
-    participant DB as 数据库
-
-    App->>Engine: 查询协议 (JSON)
-    Engine->>AST: 解析为 AST
-    AST->>Transpiler: 编译 AST
-    Transpiler->>Driver: 数据库特定 SQL
-    Driver->>DB: 执行查询
-    DB-->>Driver: 结果集
-    Driver-->>Engine: 标准化响应
-    Engine-->>App: 标准 JSON 响应
-```
-
-### 协议流程
-
-1. **协议输入**：应用程序发送 JSON 查询协议
-2. **AST 解析**：引擎将协议解析为抽象语法树
-3. **方言编译**：AST 编译为特定数据库的 SQL
-4. **驱动执行**：驱动执行原生 SQL
-5. **响应标准化**：结果标准化为协议格式
-6. **协议输出**：应用程序接收一致的 JSON 响应
-
-这种架构确保**完全的数据库独立性**——从 MySQL 切换到 PostgreSQL 无需更改任何应用代码。
-
----
-
-## 核心协议组件
-
-### 1. 模式定义协议
-
-将数据结构定义为声明式 JSON 规范：
-
-```typescript
-interface ObjectSchema {
-  name: string                    // 对象标识符
-  label?: string                  // 人类可读名称
-  fields: Record<string, Field>   // 字段定义
-  indexes?: Index[]               // 性能索引
-  triggers?: Trigger[]            // 生命周期钩子
-  permission_set?: PermissionSet  // 访问控制规则
-}
-
-interface Field {
-  type: FieldType                 // 数据类型
-  label?: string                  // 显示名称
-  required?: boolean              // 验证规则
-  unique?: boolean                // 唯一性约束
-  defaultValue?: any              // 默认值
-  reference_to?: string           // 关系目标（用于查找/主从关系）
-  formula?: string                // 计算字段表达式
-}
-
-type FieldType = 
-  | 'text' | 'textarea' | 'number' | 'currency' | 'percent'
-  | 'date' | 'datetime' | 'time' 
-  | 'boolean' | 'select' | 'multiselect'
-  | 'lookup' | 'master_detail'
-  | 'url' | 'email' | 'phone'
-  | 'autonumber' | 'formula'
-```
-
-**示例模式**：
-```json
-{
-  "objects": {
-    "orders": {
-      "label": "销售订单",
-      "fields": {
-        "order_number": { 
-          "type": "autonumber", 
-          "format": "ORD-{0000}" 
-        },
-        "customer": { 
-          "type": "lookup", 
-          "reference_to": "customers",
-          "required": true
-        },
-        "order_date": { 
-          "type": "date", 
-          "defaultValue": "{{$now}}" 
-        },
-        "total_amount": { 
-          "type": "currency", 
-          "precision": 2 
-        },
-        "status": { 
-          "type": "select", 
-          "options": ["draft", "confirmed", "shipped", "delivered"]
-        }
-      },
-      "indexes": [
-        { "fields": ["customer", "order_date"] },
-        { "fields": ["status", "order_date"] }
-      ]
-    }
-  }
-}
-```
-
-此模式是**数据库无关的**。ObjectQL 将生成：
-- **MySQL**：带有 `INT AUTO_INCREMENT`、`VARCHAR`、`DECIMAL`、`ENUM` 的 `CREATE TABLE`
-- **PostgreSQL**：带有 `SERIAL`、`VARCHAR`、`NUMERIC`、`TEXT`（带检查约束）的 `CREATE TABLE`
-- **Oracle**：带有 `NUMBER` 序列触发器、`VARCHAR2`、`NUMBER`、`VARCHAR2`（带检查约束）的 `CREATE TABLE`
-- **SQLite**：带有 `INTEGER PRIMARY KEY`、`TEXT`、`REAL`、`TEXT`（带检查约束）的 `CREATE TABLE`
-
-### 2. 查询协议（DSL）
-
-所有数据操作的统一 JSON 语法：
-
-```typescript
-interface QueryProtocol {
-  object: string                  // 目标对象名称
-  fields?: string[]               // 要返回的字段（默认：全部）
-  filters?: FilterExpression      // WHERE 子句
-  sort?: string | SortExpression  // ORDER BY 子句
-  top?: number                    // LIMIT 子句
-  skip?: number                   // OFFSET 子句
-  related?: RelatedQuery[]        // JOIN/子查询展开
-}
-
-type FilterExpression = Filter | CompoundFilter
-
-interface Filter {
-  field: string
-  operator: Operator
-  value: any
-}
-
-type Operator = 
-  | 'eq' | 'ne' | 'lt' | 'lte' | 'gt' | 'gte'
-  | 'startswith' | 'endswith' | 'contains' | 'notcontains'
-  | 'in' | 'notin' | 'between'
-  | 'isnull' | 'isnotnull'
-
-interface CompoundFilter {
-  and?: FilterExpression[]
-  or?: FilterExpression[]
-}
-```
-
-**示例查询**：
-
-```json
-// 简单查询
-{
-  "object": "orders",
-  "fields": ["order_number", "customer", "total_amount"],
-  "filters": {
-    "and": [
-      { "field": "status", "operator": "eq", "value": "confirmed" },
-      { "field": "order_date", "operator": "gte", "value": "2024-01-01" }
-    ]
-  },
-  "sort": "order_date desc",
-  "top": 50
-}
-
-// 带关系的查询
-{
-  "object": "orders",
-  "fields": ["order_number", "total_amount"],
-  "filters": {
-    "field": "customer.country", 
-    "operator": "eq", 
-    "value": "USA"
-  },
-  "related": [
-    {
-      "object": "order_items",
-      "foreign_key": "order_id",
-      "fields": ["product", "quantity", "unit_price"]
-    }
-  ]
-}
-```
-
-### 3. 变更协议
-
-数据修改的标准化操作：
-
-```typescript
-interface MutationProtocol {
-  object: string
-  action: 'insert' | 'update' | 'delete'
-  data?: Record<string, any>      // 用于 insert/update
-  filters?: FilterExpression      // 用于 update/delete
-}
-```
-
-**示例变更**：
-
-```json
-// 插入
-{
-  "object": "orders",
-  "action": "insert",
-  "data": {
-    "customer": "CUST-001",
-    "order_date": "2024-03-15",
-    "total_amount": 1250.00,
-    "status": "confirmed"
-  }
-}
-
-// 批量更新
-{
-  "object": "orders",
-  "action": "update",
-  "filters": {
-    "and": [
-      { "field": "status", "operator": "eq", "value": "confirmed" },
-      { "field": "order_date", "operator": "lt", "value": "2024-01-01" }
-    ]
-  },
-  "data": {
-    "status": "archived"
-  }
-}
-
-// 条件删除
-{
-  "object": "orders",
-  "action": "delete",
-  "filters": {
-    "field": "status",
-    "operator": "eq",
-    "value": "cancelled"
-  }
-}
+graph LR
+    A[project.object.yml] --> B[ObjectQL 编译器]
+    B --> C[PostgreSQL]
+    B --> D[MySQL]
+    B --> E[SQLite]
+    B --> F[GraphQL API]
+    B --> G[REST API]
+    
+    style B fill:#0070f3,color:#fff
 ```
 
 ---
 
-## 数据库驱动接口
+## 展示代码：模式编译为优化的 SQL
 
-ObjectQL 定义了所有数据库适配器必须实现的**标准化驱动契约**：
+**您定义意图，我们编译优化的 SQL。**
 
-```typescript
-interface ObjectQLDriver {
-  // 连接管理
-  connect(config: ConnectionConfig): Promise<Connection>
-  disconnect(): Promise<void>
-  
-  // 模式操作
-  createTable(schema: ObjectSchema): Promise<void>
-  alterTable(schema: ObjectSchema, changes: SchemaChange[]): Promise<void>
-  dropTable(objectName: string): Promise<void>
-  
-  // 查询操作
-  query(protocol: QueryProtocol): Promise<QueryResult>
-  
-  // 变更操作
-  insert(protocol: MutationProtocol): Promise<MutationResult>
-  update(protocol: MutationProtocol): Promise<MutationResult>
-  delete(protocol: MutationProtocol): Promise<MutationResult>
-  
-  // 事务管理
-  beginTransaction(): Promise<Transaction>
-  commit(transaction: Transaction): Promise<void>
-  rollback(transaction: Transaction): Promise<void>
-  
-  // 方言特定编译
-  compileAST(ast: ASTNode): string  // 返回原生 SQL
-}
+### 输入：高级模式
+
+```yaml
+# project.object.yml
+objects:
+  projects:
+    label: 项目
+    fields:
+      name:
+        type: text
+        required: true
+      owner:
+        type: lookup
+        reference_to: users
+        required: true
+      status:
+        type: select
+        options: [planning, active, completed, archived]
+      
+      # 虚拟列 - 在数据库层计算
+      task_count:
+        type: formula
+        formula: "COUNT(tasks.id WHERE tasks.project_id = projects.id)"
+        return_type: number
 ```
 
-### 支持的驱动
+### 输出：编译的 SQL（PostgreSQL）
 
-官方参考实现：
+```sql
+-- 带约束的表创建
+CREATE TABLE projects (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  owner_id INTEGER NOT NULL REFERENCES users(id),
+  status VARCHAR(20) CHECK (status IN ('planning', 'active', 'completed', 'archived')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-| 驱动 | 状态 | 用例 |
-|------|------|------|
-| **@objectql/driver-sqlite** | ✅ 稳定 | 本地优先应用、开发、边缘计算 |
-| **@objectql/driver-mysql** | ✅ 稳定 | Web 应用、云部署 |
-| **@objectql/driver-postgres** | ✅ 稳定 | 企业系统、分析工作负载 |
-| **@objectql/driver-oracle** | 🚧 测试版 | 遗留系统集成 |
-| **@objectql/driver-sqlserver** | 🚧 测试版 | Microsoft 技术栈集成 |
+-- 虚拟列编译为索引视图以提升性能
+CREATE INDEX idx_projects_task_count ON projects(id);
 
-欢迎社区驱动——实现 `ObjectQLDriver` 接口并作为 npm 包发布。
+-- 带虚拟列的查询自动进行连接和聚合
+SELECT 
+  p.id,
+  p.name,
+  u.name as owner_name,
+  p.status,
+  COUNT(t.id) as task_count
+FROM projects p
+LEFT JOIN users u ON p.owner_id = u.id
+LEFT JOIN tasks t ON t.project_id = p.id
+WHERE p.owner_id = $1  -- 自动注入安全过滤器
+GROUP BY p.id, p.name, u.name, p.status;
+```
+
+**关键洞察**：模式描述*您想要什么*。ObjectQL 将其编译为*优化的原生 SQL*，自动进行 JOIN 优化、索引提示和安全过滤。
 
 ---
 
-## 高级功能
+## 为什么选择 ObjectQL？面向架构师的三大支柱
 
-### 虚拟城市（多租户）
+### 1. 零开销安全
 
-ObjectQL 通过虚拟城市机制提供**协议级多租户**：
+**安全性被编译到 SQL 中，而不是在内存中检查。**
+
+传统 ORM 首先获取数据，然后在应用程序内存中根据用户权限进行过滤。这会产生两个问题：
+- **性能**：必须先加载大型数据集才能过滤
+- **风险**：开发人员可能忘记权限检查，导致数据泄露
+
+ObjectQL 在编译时将 RBAC/ACL 规则直接注入 SQL 的 `WHERE` 子句：
 
 ```typescript
-// 每个租户获得隔离的数据上下文
-const tenant1DB = engine.virtualCity('tenant_001')
-const tenant2DB = engine.virtualCity('tenant_002')
+// 开发人员编写此查询
+await db.query({
+  object: 'projects',
+  fields: ['name', 'status']
+})
 
-// 相同的查询，隔离的数据
-await tenant1DB.query('customers', {})  // 返回 tenant_001 的客户
-await tenant2DB.query('customers', {})  // 返回 tenant_002 的客户
+// ObjectQL 编译为带自动安全过滤器的 SQL
+// SELECT name, status FROM projects 
+// WHERE owner_id = $current_user_id 
+//   OR id IN (SELECT project_id FROM project_members WHERE user_id = $current_user_id)
 ```
 
-**实现**：虚拟城市是驱动级功能。MySQL/PostgreSQL 实现使用模式分离，SQLite 使用单独的数据库文件。
+**结果**：数据库引擎强制执行安全性——无法绕过，零性能开销。
 
-### 虚拟列索引（性能）
+### 2. 设计上的数据库无关性
 
-对于缺少原生 JSON 索引的数据库（例如 SQLite），ObjectQL 提供虚拟列索引：
+**切换数据库无需更改一行代码。**
 
-```json
-{
-  "objects": {
-    "products": {
-      "fields": {
-        "metadata": { "type": "text" }  // 存储 JSON
-      },
-      "virtual_indexes": [
-        { 
-          "name": "idx_price",
-          "expression": "JSON_EXTRACT(metadata, '$.price')",
-          "type": "number"
-        }
-      ]
-    }
-  }
-}
+使用 SQLite 在本地开发，部署到生产环境的 PostgreSQL，扩展到 TiDB 分布式数据库——都使用完全相同的模式和查询代码：
+
+```typescript
+// 开发环境：本地 SQLite
+const devDB = new ObjectQL({
+  driver: new SQLiteDriver({ database: './dev.db' })
+})
+
+// 生产环境：带读副本的 PostgreSQL
+const prodDB = new ObjectQL({
+  driver: new PostgreSQLDriver({ 
+    url: process.env.DATABASE_URL,
+    pool: { max: 20 }
+  })
+})
+
+// 两个环境的代码完全相同
+await devDB.query('projects', { filters: { status: 'active' }})
+await prodDB.query('projects', { filters: { status: 'active' }})
 ```
 
-ObjectQL 自动创建索引虚拟列以实现高性能查询。
+ObjectQL 的编译器自动为每个数据库的独特功能生成方言特定的 SQL（PostgreSQL 中的 JSONB、MySQL 中的 JSON 函数等）。
 
-### 公式字段
+### 3. 虚拟列：高性能的计算字段
 
-在模式中定义的计算字段：
+**在模式中定义复杂聚合——编译为高效的数据库表达式。**
+
+不需要在每个 API 端点编写 N+1 查询或复杂的 JOIN，在模式中定义一次计算字段：
 
 ```json
 {
   "fields": {
-    "quantity": { "type": "number" },
-    "unit_price": { "type": "currency" },
-    "line_total": { 
+    "revenue_ytd": {
       "type": "formula",
-      "formula": "quantity * unit_price",
+      "formula": "SUM(orders.total WHERE orders.created_at >= YEAR_START())",
       "return_type": "currency"
+    },
+    "overdue_tasks": {
+      "type": "formula", 
+      "formula": "COUNT(tasks WHERE tasks.due_date < TODAY() AND tasks.status != 'completed')",
+      "return_type": "number"
     }
   }
 }
 ```
 
-公式字段是**数据库无关的表达式**，编译为 SQL `GENERATED` 列（PostgreSQL/MySQL）或在内存中计算（SQLite）。
+ObjectQL 将这些编译为：
+- **PostgreSQL**：带物化视图的 `GENERATED` 列
+- **MySQL**：带索引支持的虚拟列
+- **SQLite**：查询时计算的计算列
 
-### 聚合协议
+**性能**：数据库执行计算——没有 N+1 查询，没有应用程序逻辑。
 
-带分组的统计查询：
+---
 
-```json
-{
-  "object": "orders",
-  "aggregations": [
-    { "field": "total_amount", "function": "sum", "alias": "revenue" },
-    { "field": "order_number", "function": "count", "alias": "order_count" }
-  ],
-  "groupBy": ["customer", "status"],
-  "filters": {
-    "field": "order_date",
-    "operator": "gte",
-    "value": "2024-01-01"
-  }
+## 编译器 vs ORM：技术对比
+
+| 方面 | ObjectQL（编译器） | 传统 ORM（Prisma、TypeORM） |
+|------|-------------------|---------------------------|
+| **运行时开销** | 接近零（编译为原生 SQL） | 高（运行时查询构建、结果映射） |
+| **安全模型** | 引擎强制执行（SQL WHERE 子句注入） | 应用程序逻辑（如果忘记可能被绕过） |
+| **数据库可移植性** | 基于协议（JSON AST → 任何 SQL 方言） | 基于代码（迁移绑定到特定 ORM 语法） |
+| **查询优化** | 编译时分析 + 数据库规划器 | 运行时查询构建器（更难优化） |
+| **虚拟列** | 编译为数据库原生计算列 | 在应用程序内存中计算（N+1 查询） |
+| **类型安全** | 协议验证（JSON 模式） | TypeScript 类型（仅编译时） |
+| **多租户** | 协议级隔离（虚拟城市） | 查询中的手动实现 |
+| **调试** | 直接检查编译的 SQL | 不透明的查询构建器内部 |
+
+### 为什么编译很重要
+
+**传统 ORM 流程**：
+```
+代码 → 查询构建器 → SQL 字符串 → 数据库
+       ↑ 运行时开销，难以调试
+```
+
+**ObjectQL 编译器流程**：
+```
+模式 → AST → 优化的 SQL → 数据库
+         ↑ 编译时验证，可检查
+```
+
+编译器方法意味着：
+- **可预测的性能**：SQL 生成一次并缓存，而不是在每个请求上构建
+- **更好的优化**：数据库查询规划器看到真实的 SQL，而不是抽象的查询
+- **安全保证**：不可能意外跳过权限检查
+
+---
+
+## 支持的驱动：数据库生态系统
+
+ObjectQL 为主要数据库引擎维护官方驱动，每个都针对平台特定功能进行了优化：
+
+### PostgreSQL - JSONB 优化
+```bash
+npm install @objectql/driver-postgres
+```
+
+**技术优势**：
+- 使用 GIN/GiST 索引的原生 JSONB 索引
+- 用于复杂虚拟列的物化视图
+- 使用 `tsvector` 编译的全文搜索
+- 用于分析的高级窗口函数
+- **用例**：SaaS 平台、数据分析、AI/ML 工作负载
+
+### MySQL 8.0+ - JSON 函数
+```bash
+npm install @objectql/driver-mysql
+```
+
+**技术优势**：
+- 用于文档查询的 JSON 函数（`JSON_EXTRACT`、`JSON_TABLE`）
+- 支持虚拟字段索引的生成列
+- 用于高可用性的 InnoDB 集群支持
+- 兼容 MariaDB、TiDB、PlanetScale
+- **用例**：Web 应用、云部署、可扩展的 OLTP 系统
+
+### SQLite - 本地优先就绪
+```bash
+npm install @objectql/driver-sqlite
+```
+
+**技术优势**：
+- 零配置嵌入式数据库
+- 用于自定义数据源的虚拟表机制
+- FTS5 全文搜索引擎
+- 用于文档存储的 JSON1 扩展
+- **用例**：移动应用、桌面软件、边缘计算、无服务器函数
+
+### SQL Server - 企业集成
+```bash
+npm install @objectql/driver-sqlserver
+```
+
+**技术优势**：
+- 带 `PERSISTED` 优化的计算列
+- 与 Azure Active Directory 集成
+- 用于合规工作负载的 Always Encrypted
+- 用于审计跟踪的时态表
+- **用例**：.NET 企业应用、Microsoft 技术栈集成
+
+### Oracle Database - 关键任务系统
+```bash
+npm install @objectql/driver-oracle
+```
+
+**技术优势**：
+- 带基于函数索引的虚拟列
+- 用于 PB 级数据的分区策略
+- Real Application Clusters (RAC) 支持
+- 高级安全性（VPD、数据脱敏）
+- **用例**：银行、电信、政府系统
+
+### 驱动架构
+
+所有驱动都实现标准化的 `ObjectQLDriver` 接口：
+
+```typescript
+interface ObjectQLDriver {
+  compileAST(ast: ASTNode): string  // 方言特定的 SQL 生成
+  query(protocol: QueryProtocol): Promise<QueryResult>
+  transaction(callback: (tx: Transaction) => Promise<void>): Promise<void>
 }
 ```
 
-编译为跨所有数据库的 `GROUP BY` 查询和适当的聚合函数。
+这保证了跨数据库的**一致行为**，同时允许**方言特定的优化**。
 
 ---
 
-## 使用场景
+## 快速开始：看看 ObjectQL 的实际应用
 
-### 1. 本地优先应用
-
-**场景**：个人生产力工具（笔记、CRM、项目管理）
-
-**配置**：
-```typescript
-import { ObjectQL } from '@objectql/core'
-import { SQLiteDriver } from '@objectql/driver-sqlite'
-
-const engine = new ObjectQL({
-  driver: new SQLiteDriver({
-    database: './myapp.db'
-  })
-})
-```
-
-**优势**：
-- 零服务器基础设施
-- 完全离线能力
-- 数据存储在本地 .db 文件中
-- 以后可升级到云数据库而无需更改代码
-
-### 2. 企业系统集成
-
-**场景**：异构遗留数据库上的统一 API
-
-**配置**：
-```typescript
-// 连接到现有的 Oracle ERP 数据库
-const erpDB = new ObjectQL({
-  driver: new OracleDriver({
-    host: 'oracle.company.com',
-    database: 'ERP_PROD'
-  })
-})
-
-// 连接到 SQL Server CRM 数据库
-const crmDB = new ObjectQL({
-  driver: new SQLServerDriver({
-    host: 'sqlserver.company.com',
-    database: 'CRM_PROD'
-  })
-})
-
-// 两者统一的 ObjectQL API
-const erpCustomers = await erpDB.query('customers', {})
-const crmLeads = await crmDB.query('leads', {})
-```
-
-**优势**：
-- 所有系统的单一查询语言
-- 每个数据库无需自定义集成代码
-- 一致的错误处理和验证
-- 更易于维护和测试
-
-### 3. 多租户 SaaS 平台
-
-**场景**：具有租户隔离的 SaaS 应用
-
-**配置**：
-```typescript
-const engine = new ObjectQL({
-  driver: new PostgreSQLDriver({
-    host: 'postgres.cloud.com',
-    database: 'saas_platform'
-  }),
-  multiTenant: true
-})
-
-// 每个租户获得隔离的上下文
-app.use(async (req, res, next) => {
-  const tenantId = req.headers['x-tenant-id']
-  req.db = engine.virtualCity(tenantId)
-  next()
-})
-
-// 自动数据隔离
-router.get('/api/orders', async (req, res) => {
-  const orders = await req.db.query('orders', {})
-  res.json(orders)  // 仅返回租户的订单
-})
-```
-
-**优势**：
-- 协议级租户隔离
-- 数据隔离无需业务逻辑
-- 可扩展到每租户模式或每租户数据库
-- ObjectQL 自动处理路由
-
----
-
-## 您将学到什么
-
-本规范文档涵盖：
-
-- ✅ **[核心概念](/docs/objectql/core-concepts)** - 模式、虚拟城市、数据类型、关系
-- ✅ **[协议规范](/docs/objectql/protocol-spec)** - 查询、变更、聚合的完整 JSON 模式参考
-- ✅ **[驱动开发](/docs/objectql/driver-dev)** - 实现自定义数据库适配器
-- ✅ **[服务端 SDK](/docs/objectql/server-sdk)** - 参考实现 API（JavaScript/Node.js）
-- ✅ **[性能指南](/docs/objectql/performance)** - 优化策略、索引、查询分析
-
----
-
-## 快速开始示例
-
-这是一个完整的端到端示例：
+以下是如何开始使用 ObjectQL：
 
 ```typescript
 import { ObjectQL } from '@objectql/core'
 import { SQLiteDriver } from '@objectql/driver-sqlite'
 
-// 1. 初始化引擎
-const engine = new ObjectQL({
-  driver: new SQLiteDriver({ database: './todo.db' })
+// 1. 使用任何支持的驱动初始化
+const db = new ObjectQL({
+  driver: new SQLiteDriver({ database: './myapp.db' })
 })
 
-// 2. 注册模式
-await engine.registerSchema({
+// 2. 定义您的模式（也可以从 YAML 加载）
+await db.registerSchema({
   objects: {
     tasks: {
       fields: {
@@ -539,20 +329,14 @@ await engine.registerSchema({
   }
 })
 
-// 3. 插入数据
-await engine.insert({
-  object: 'tasks',
-  action: 'insert',
-  data: { 
-    title: '学习 ObjectQL', 
-    priority: 'high',
-    due_date: '2024-12-31'
-  }
+// 3. 使用编译的 API
+await db.insert('tasks', { 
+  title: '学习 ObjectQL', 
+  priority: 'high',
+  due_date: '2024-12-31'
 })
 
-// 4. 查询数据
-const urgentTasks = await engine.query({
-  object: 'tasks',
+const urgentTasks = await db.query('tasks', {
   filters: {
     and: [
       { field: 'completed', operator: 'eq', value: false },
@@ -562,81 +346,101 @@ const urgentTasks = await engine.query({
   sort: 'due_date asc'
 })
 
-console.log(urgentTasks)
-// [{ title: '学习 ObjectQL', priority: 'high', completed: false, due_date: '2024-12-31' }]
-
-// 5. 切换到 PostgreSQL（零代码更改）
-const prodEngine = new ObjectQL({
+// 4. 切换到生产数据库（零代码更改）
+const prodDB = new ObjectQL({
   driver: new PostgreSQLDriver({ 
-    url: 'postgresql://localhost/production' 
+    url: process.env.DATABASE_URL 
   })
 })
 
-// 相同的模式，相同的查询，不同的数据库
-await prodEngine.registerSchema(schema)
-const sameTasks = await prodEngine.query(queryProtocol)
+// 相同的模式，相同的查询——不同的数据库
+await prodDB.registerSchema(schema)
+const sameTasks = await prodDB.query('tasks', queryProtocol)
 ```
 
 ---
 
-## 设计理由
+## 设计哲学：为什么要编译器？
 
-### 为什么使用 JSON 协议？
+### 运行时包装器的问题
 
-**TypeScript/JavaScript SDK 是实现细节**。真正的 API 是 JSON 协议：
+传统 ORM 在运行时操作：
+1. 应用程序代码调用 ORM 方法
+2. ORM 动态构建 SQL 字符串
+3. SQL 发送到数据库
+4. 结果映射回对象
 
-- **语言无关**：Python、Java、Go 都可以实现 ObjectQL
-- **网络透明**：协议可通过 HTTP、WebSockets、gRPC 发送
-- **可版本化**：协议是结构化数据，可进行差异比较和版本控制
-- **AI 友好**：LLM 可以轻松生成和修改 JSON 协议
+**问题**：
+- 每个请求的运行时开销
+- 必须手动将安全逻辑添加到查询中
+- 难以调试生成的 SQL
+- 数据库特定的优化困难
 
-### 为什么使用 AST 编译？
+### 编译器的优势
 
-**直接 SQL 模板化既脆弱又不安全**。AST 编译提供：
+ObjectQL 在协议层编译：
+1. 模式定义一次（JSON/YAML）
+2. 编译器生成注入安全性的优化 SQL
+3. SQL 被缓存和重用
+4. 数据库接收原生、优化的查询
 
-- **SQL 注入保护**：AST 级别的参数化查询
-- **方言抽象**：单一 AST 编译为任何 SQL 方言
-- **查询优化**：AST 可在执行前进行分析和优化
-- **一致的语义**：跨所有数据库的相同查询行为
+**优势**：
+- **接近零的运行时开销**：SQL 是预编译的
+- **保证安全性**：不可能忘记权限检查
+- **可检查的输出**：确切地看到运行什么 SQL
+- **数据库原生性能**：查询规划器看到真实的 SQL
 
-### 为什么使用驱动抽象？
+### 协议驱动的架构
 
-**数据库 API 不一致**。驱动接口提供：
+ObjectQL 定义 JSON 协议，而不是代码 API：
 
-- **统一错误处理**：跨数据库的一致错误类型
-- **连接池**：无论驱动如何，标准的池管理
-- **事务语义**：一致 API 的 ACID 保证
-- **测试**：无需数据库的单元测试 mock 驱动
+```typescript
+// 这不是 API——这是一个协议包装器
+await db.query({ 
+  object: 'projects', 
+  filters: { status: 'active' } 
+})
+
+// 真正的 API 是这个 JSON 协议：
+{
+  "object": "projects",
+  "filters": { "field": "status", "operator": "eq", "value": "active" }
+}
+```
+
+**为什么是协议？**
+- 语言无关（在 Python、Go、Rust 中实现）
+- 网络透明（通过 HTTP、WebSockets、gRPC 发送）
+- 可版本化（结构化数据，易于差异比较）
+- AI 友好（LLM 可以生成有效的协议）
 
 ---
 
-## 规范合规性
+## 接下来做什么？
 
-ObjectQL 实现必须通过 **ObjectQL 合规性测试套件**：
+探索完整的 ObjectQL 生态系统：
 
-- ✅ 模式定义解析和验证
-- ✅ 所有运算符的查询协议执行
-- ✅ insert/update/delete 的变更协议
-- ✅ 关系查询（查找、主从关系）
-- ✅ 带分组的聚合查询
-- ✅ 事务管理（ACID）
-- ✅ 虚拟城市多租户隔离
-- ✅ 错误处理和响应格式
+- **[核心概念](/docs/objectql/core-concepts)** - 深入了解模式、关系和虚拟城市架构
+- **[协议规范](/docs/objectql/protocol-spec)** - 查询、变更和聚合的完整 JSON 模式参考
+- **[核心功能](/docs/objectql/core-features)** - 虚拟列、公式字段、多租户和高级功能
+- **[服务端 SDK](/docs/objectql/server-sdk)** - JavaScript/Node.js 的参考实现 API
 
-参考实现：
-- **JavaScript**：[@objectql/core](https://github.com/objectstack-ai/objectql)（Node.js）
-- **Python**：[objectql-py](https://github.com/objectstack-ai/objectql-py)（计划中）
-- **Go**：[objectql-go](https://github.com/objectstack-ai/objectql-go)（计划中）
+### 真实世界的用例
+
+ObjectQL 为生产系统提供支持：
+- **本地优先应用**：支持离线的移动和桌面应用
+- **企业集成**：异构遗留数据库上的统一 API
+- **多租户 SaaS**：B2B 平台的协议级租户隔离
+- **边缘计算**：基于 SQLite 的边缘数据处理
+- **分析系统**：带计算列的基于 PostgreSQL 的数据仓库
 
 ---
 
-## 下一步
+## 加入 ObjectQL 社区
 
-1. **理解核心概念**：阅读[核心概念](/docs/objectql/core-concepts)了解模式、关系和虚拟城市
-2. **学习协议**：查看[协议规范](/docs/objectql/protocol-spec)获取完整的 JSON 模式参考
-3. **使用 SDK 构建**：使用[服务端 SDK](/docs/objectql/server-sdk)在应用中集成 ObjectQL
-4. **优化性能**：探索[性能指南](/docs/objectql/performance)获取生产最佳实践
+- **GitHub**：[objectstack-ai/objectql](https://github.com/objectstack-ai/objectql)
+- **NPM**：[@objectql/core](https://www.npmjs.com/package/@objectql/core)
+- **Discord**：[加入我们的社区](https://discord.gg/objectstack)
+- **Twitter**：[@objectstack](https://twitter.com/objectstack)
 
-有关哲学背景，请参见：
-- **[宣言](/docs/framework/manifesto)** - 为什么 ObjectQL 是协议驱动和数据库无关的
-- **[架构](/docs/framework/architecture)** - ObjectQL 如何融入 ObjectStack 生态系统
+由 ObjectStack 团队用 ❤️ 构建。MIT 许可。
