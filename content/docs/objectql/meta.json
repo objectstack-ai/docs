@@ -3,11 +3,6 @@
   "root": true,
   "pages": [
     "index",
-    "schema-definition",
-    "advanced-types",
-    "ast-structure",
-    "analytics-protocol",
-    "transaction-model",
-    "ire-protocol"
+    "specifications"
   ]
 }

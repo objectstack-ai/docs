@@ -1,0 +1,11 @@
+{
+  "title": "Specifications",
+  "pages": [
+    "schema-definition",
+    "advanced-types",
+    "ast-structure",
+    "analytics-protocol",
+    "transaction-model",
+    "wire-protocol"
+  ]
+}
