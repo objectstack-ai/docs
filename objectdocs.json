@@ -13,7 +13,9 @@
   },
   "branding": {
     "logo": {
-      "text": "ObjectStack"
+      "text": "ObjectStack",
+      "light": "/logo.svg",
+      "dark": "/logo.svg"
     },
     "theme": {
       "accentColor": "blue", 
