@@ -24,6 +24,12 @@ export function registerBuildCommand(cli) {
          nextAppDir = path.resolve(__dirname, '../../../site');
       }
 
+      
+      const userPublicPath = path.resolve(process.cwd(), 'public');
+      if (fs.existsSync(userPublicPath)) {
+        fs.cpSync(userPublicPath, path.join(nextAppDir, 'public'), { recursive: true });
+      }
+
       console.log(`Building docs site...`);
       console.log(`  Engine: ${nextAppDir}`);
       console.log(`  Content: ${docsDir}`);
