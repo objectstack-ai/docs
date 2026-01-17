@@ -1,0 +1,157 @@
+---
+title: 核心 AST
+description: 理解驱动 ObjectQL 协议的抽象语法树（AST）。
+---
+
+# 抽象语法树（AST）
+
+ObjectQL 不仅仅是一个 URL 查询参数解析器。它是一个**数据库编译器**。
+
+当您向 ObjectQL 发送请求（通过 REST、GraphQL 或 SDK）时，引擎做的第一件事是将您的请求解析为一个标准化的**抽象语法树（AST）**。
+
+此 AST 充当**中间表示（IR）**。它将*意图*（您想要什么数据）与*执行*（数据库如何检索它）解耦。
+
+## 1. 根节点（`QueryAST`）
+
+ObjectQL 中的每个数据检索操作都解析为一个 `QueryAST` 对象。这是每个驱动程序（Postgres、Mongo、SQLite）必须实现的协议。
+
+### TypeScript 定义
+
+```typescript
+// @objectql/types
+export interface QueryAST {
+  /** The target object (table) to query */
+  objectName: string;
+
+  /** Columns to retrieve. Strings for primitives, Objects for joins. */
+  fields: Array<string | QueryField>;
+
+  /** The recursive filtering tree */
+  filters?: FilterNode;
+
+  /** Sorting instructions */
+  sort?: SortNode[];
+
+  /** Pagination */
+  top?: number;
+  skip?: number;
+}
+
+```
+
+## 2. 字段选择（图）
+
+ObjectQL 允许"类似图"的字段选择。您可以在单个请求中检索原始字段或遍历关系（Join）。
+
+### JSON 结构
+
+```json
+{
+  "fields": [
+    "name",
+    "status",
+    { 
+      "field": "owner", 
+      "fields": ["name", "email"] 
+    },
+    {
+      "field": "tasks",
+      "fields": ["subject", "due_date"]
+    }
+  ]
+}
+
+```
+
+### 编译器行为
+
+* **原始字段（`name`）**：编译为 `SELECT "name"`。
+* **查询字段（`owner`）**：编译为 `LEFT JOIN "users" ON ...`（关系型）或 `$lookup`（文档型）。
+* **虚拟字段**：如果选定的字段是 `公式`，编译器会注入 SQL 表达式。
+
+## 3. 过滤（逻辑树）
+
+ObjectQL 中的过滤器不是简单的键值对。它们是能够表达复杂布尔逻辑（`AND`、`OR`、`NOT`）的递归树。
+
+### 过滤节点
+
+过滤器是一个数组元组：`[field, operator, value]`。
+
+| 索引 | 类型 | 描述 |
+| --- | --- | --- |
+| 0 | `string` | 字段名称（或点分路径 `owner.name`） |
+| 1 | `string` | 操作符（`=`、`<>`、`>`、`contains`、`in`） |
+| 2 | `any` | 要比较的值 |
+
+### 复杂逻辑（分组）
+
+要创建分组，只需嵌套数组。默认连接符是 `AND`。使用 `"or"` 字符串来切换逻辑。
+
+**示例意图：**
+
+> *"查找状态为'活跃' AND （由'Alice'拥有 OR 预算 > 10000）的项目"*
+
+**AST JSON：**
+
+```json
+[
+  ["status", "=", "active"],
+  "or",
+  [
+    ["owner.name", "=", "Alice"],
+    ["budget", ">", 10000]
+  ]
+]
+
+```
+
+## 4. 编译管道
+
+这个 JSON 如何变成数据库查询？ObjectOS 内核运行一个严格有序的管道。
+
+### 步骤 A：清理和扩展
+
+内核基于安全上下文注入**隐式过滤器**。
+
+* *输入：* `SELECT * FROM projects`
+* *上下文：* 用户在'地区 A'。
+* *输出 AST：* `SELECT * FROM projects WHERE region = 'A'`（修改的 AST）。
+
+### 步骤 B：驱动程序编译
+
+驱动程序接收*最终 AST*并将其转换为方言。
+
+**驱动程序输入（AST）：**
+
+```json
+{
+  "objectName": "project",
+  "filters": [["owner.name", "=", "Alice"]]
+}
+
+```
+
+**驱动程序输出（PostgreSQL）：**
+
+```sql
+SELECT t1.* FROM projects t1 
+LEFT JOIN users t2 ON t1.owner = t2.id
+WHERE t2.name = 'Alice'
+
+```
+
+## 5. 为什么是 AST？（vs. 原始 SQL）
+
+为什么我们通过这种复杂性而不是直接写 SQL？
+
+1. **安全性：** 通过 AST 执行 SQL 注入在数学上是不可能的。编译器对每个值节点都使用参数化查询。
+2. **可移植性：** 相同的 AST 在 SQLite（本地）和 Oracle（企业）上运行。
+3. **治理：** 您可以编写"中间件"来检查 AST。
+* *示例：* "阻止任何尝试下载超过 1000 行 PII 数据的查询。"（您无法从原始 SQL 字符串轻松解析此内容，但用 AST 很简单）。
+
+
+
+:::tip 开发者说明
+如果您正在构建自定义 UI 组件，请不要手动构造这些 JSON。使用 `@objectql/sdk`，它提供流利的构建器：
+`const q = objectql("project").select(["name"]).where("status", "=", "active");`
+:::

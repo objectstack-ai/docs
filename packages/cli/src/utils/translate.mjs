@@ -2,6 +2,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import OpenAI from 'openai';
 
+// Supported language suffixes for i18n
+const LANGUAGE_SUFFIXES = ['.cn.mdx', '.en.mdx'];
+const TARGET_LANGUAGE_SUFFIX = '.cn.mdx';
+
+/**
+ * Check if a file has a language suffix
+ * @param {string} filePath - The file path to check
+ * @returns {boolean} - True if file has a language suffix
+ */
+function hasLanguageSuffix(filePath) {
+  return LANGUAGE_SUFFIXES.some(suffix => filePath.endsWith(suffix));
+}
+
 export function getAllMdxFiles(dir) {
   let results = [];
   if (!fs.existsSync(dir)) return results;
@@ -13,7 +26,8 @@ export function getAllMdxFiles(dir) {
     if (stat && stat.isDirectory()) {
       results = results.concat(getAllMdxFiles(file));
     } else {
-      if (file.endsWith('.mdx')) {
+      // Only include .mdx files that don't have language suffix
+      if (file.endsWith('.mdx') && !hasLanguageSuffix(file)) {
         results.push(path.relative(process.cwd(), file));
       }
     }
@@ -22,19 +36,22 @@ export function getAllMdxFiles(dir) {
 }
 
 export function resolveTranslatedFilePath(enFilePath) {
-  // Strategy: content/docs/path/to/file.mdx -> content/docs-cn/path/to/file.mdx
-  const docsRoot = path.join(process.cwd(), 'content/docs');
-  
-  // If input path is relative, make it absolute first to check
+  // Strategy: Use dot parser convention
+  // content/docs/path/to/file.mdx -> content/docs/path/to/file.cn.mdx
+  // Skip files that already have language suffix
   const absPath = path.resolve(enFilePath);
   
-  if (!absPath.startsWith(docsRoot)) {
-     // Fallback or specific logic if file is not in content/docs
-     return enFilePath.replace('content/docs', 'content/docs-cn');
+  // Skip if already has a language suffix
+  if (hasLanguageSuffix(absPath)) {
+    return absPath;
   }
-
-  const relativePath = path.relative(docsRoot, enFilePath);
-  return path.join(process.cwd(), 'content/docs-cn', relativePath);
+  
+  // Replace .mdx with target language suffix
+  if (absPath.endsWith('.mdx')) {
+    return absPath.replace(/\.mdx$/, TARGET_LANGUAGE_SUFFIX);
+  }
+  
+  return absPath;
 }
 
 export async function translateContent(content, openai, model) {

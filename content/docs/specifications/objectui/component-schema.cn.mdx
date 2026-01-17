@@ -1,0 +1,219 @@
+---
+title: 基础组件
+description: "原子表单元素的 JSON Schema 规范：Input、Select 和 DatePicker。"
+---
+
+# 基础组件 Schema
+
+在 ObjectUI 中，每个表单元素都是渲染树中的**叶节点**。这些节点直接映射到 **Shadcn UI** 原语，确保可访问性和现代美观。
+
+与传统 React 开发不同，在 React 中你编写 `<Input value={val} onChange={setVal} />`，而在 ObjectUI 中你定义**结构**和**数据绑定**，引擎处理状态管理。
+
+## 1. 通用约定
+
+所有表单组件（输入框、下拉框、复选框）都继承自基础 `FieldComponent` 接口。
+
+### 基础属性
+
+| 属性 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `type` | `string` | 组件标识符（例如，`input.text`）。 |
+| `bind` | `string` | **关键。** 数据字段的路径（例如，`order.customer_name`）。引擎使用它进行双向绑定。 |
+| `label` | `string` | 输入框上方显示的文本标签。 |
+| `description` | `string` | 输入框下方显示的辅助文本（灰显颜色）。 |
+| `placeholder` | `string` | 占位符文本。 |
+| `disabled` | `boolean` | 静态禁用状态（或使用动态表达式）。 |
+| `className` | `string` | **Tailwind** 类用于覆盖样式（例如，`w-1/2 bg-gray-50`）。 |
+
+---
+
+## 2. 文本输入框 (`input.text`)
+
+任何表单的主要元素。它处理字符串、数字和密码输入。
+
+### Schema 定义
+
+```json
+{
+  "type": "input.text",
+  "bind": "contact.email",
+  "props": {
+    "label": "Email Address",
+    "placeholder": "john@example.com",
+    "inputType": "email",  // text, password, email, url, tel
+    "autoFocus": true,
+    "startIcon": "mail"    // Lucide 图标名称
+  }
+}
+
+```
+
+### Shadcn 映射
+
+* 呈现一个 `<Label>` 组件。
+* 呈现一个 `<Input>` 组件，封装在格式化 div 中。
+* 如果上下文中存在验证错误，呈现通用 `<p className="text-destructive">`。
+
+---
+
+## 3. 数字输入框 (`input.number`)
+
+虽然 `input.text` 可以处理数字，但 `input.number` 为数值数据类型（Int/Float/Currency）提供特定行为。
+
+### Schema 定义
+
+```json
+{
+  "type": "input.number",
+  "bind": "order.quantity",
+  "props": {
+    "label": "Quantity",
+    "min": 1,
+    "max": 100,
+    "step": 1,
+    "showStepper": true // 显示 +/- 按钮
+  }
+}
+
+```
+
+### 百分比和货币支持
+
+渲染器从 **ObjectQL** 检测元数据。如果基础字段是 `type: currency`，组件自动格式化显示（例如，添加 `$` 前缀），同时将原始值保持为数字。
+
+---
+
+## 4. 下拉框 (`input.select`)
+
+处理单选场景。对于多选或复杂关系查找，请参见*高级组件*。
+
+### 静态选项
+
+在 JSON 中显式定义的选项。
+
+```json
+{
+  "type": "input.select",
+  "bind": "project.priority",
+  "props": {
+    "label": "Priority",
+    "options": [
+      { "label": "High", "value": "high", "icon": "flame" },
+      { "label": "Medium", "value": "medium" },
+      { "label": "Low", "value": "low" }
+    ]
+  }
+}
+
+```
+
+### 动态选项（表达式）
+
+从当前数据上下文或全局配置派生的选项。
+
+```json
+{
+  "type": "input.select",
+  "bind": "user.department",
+  "props": {
+    "label": "Department",
+    "options_expression": "root.settings.available_departments"
+  }
+}
+
+```
+
+---
+
+## 5. 日期选择器 (`input.date`)
+
+处理日期 (`YYYY-MM-DD`) 和日期时间 (`ISO 8601`)。
+
+### Schema 定义
+
+```json
+{
+  "type": "input.date",
+  "bind": "task.due_date",
+  "props": {
+    "label": "Due Date",
+    "mode": "single",      // single, range
+    "withTime": false,     // 如果为 true，显示时间选择器
+    "disablePast": true
+  }
+}
+
+```
+
+### Shadcn 映射
+
+* 呈现包含 `<Calendar>` 组件的 `<Popover>`。
+* 原始值始终标准化为 UTC 字符串 (`2023-10-01T00:00:00Z`) 后保存。
+
+---
+
+## 6. 开关和复选框 (`input.boolean`)
+
+用于布尔值。
+
+```json
+{
+  "type": "input.switch", // 或 "input.checkbox"
+  "bind": "user.is_active",
+  "props": {
+    "label": "Active User",
+    "description": "If disabled, user cannot log in."
+  }
+}
+
+```
+
+---
+
+## 7. 处理验证
+
+ObjectUI 最大的优势之一是**统一验证**。你不需要在 JSON schema 中为基本约束编写验证逻辑。
+
+1. **来源：** 验证规则来自 **ObjectQL**（例如，`required: true`、`max: 50`）。
+2. **传播：** 当用户点击"保存"时，引擎运行验证。
+3. **显示：** 如果错误返回 `{ field: "contact.email", message: "Invalid format" }`，引擎自动将此错误状态注入到绑定到 `contact.email` 的 `input.text` 组件。
+
+**你定义 UI 结构，后端定义规则。**
+
+## 示例：完整表单
+
+以下是这些原子元素如何在布局中协调工作：
+
+```json
+{
+  "type": "layout.stack",
+  "props": { "gap": 4 },
+  "children": [
+    { 
+      "type": "input.text", 
+      "bind": "title", 
+      "props": { "label": "Task Title", "required": true } 
+    },
+    {
+      "type": "layout.grid",
+      "props": { "columns": 2, "gap": 4 },
+      "children": [
+        { 
+          "type": "input.select", 
+          "bind": "priority", 
+          "props": { 
+            "label": "Priority", 
+            "options": [{ "label": "High", "value": "H" }, { "label": "Low", "value": "L" }] 
+          } 
+        },
+        { 
+          "type": "input.date", 
+          "bind": "due_date", 
+          "props": { "label": "Due Date" } 
+        }
+      ]
+    }
+  ]
+}
+
+```

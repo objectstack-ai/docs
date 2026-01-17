@@ -1,0 +1,171 @@
+---
+title: Wire 协议
+description: HTTP/WebSocket 传输规范。请求信封、响应格式和错误处理标准。
+---
+
+# Wire 协议
+
+**Wire 协议**定义了 ObjectQL AST 和变更如何在网络上序列化和传输。
+
+虽然大多数开发者使用官方 SDK（`@objectql/sdk`），但理解 Wire 协议对以下方面至关重要：
+1.  在其他语言（Rust、Go、Swift）中构建自定义驱动程序或 SDK。
+2.  调试原始 API 流量。
+3.  实现低级代理或网关。
+
+ObjectQL 主要使用**JSON over HTTP**，但结构设计为与传输无关（兼容 WebSocket 或 gRPC）。
+
+## 1. 端点
+
+ObjectQL 遵循**单一入口点**模式（类似于 GraphQL 或 RPC）。您没有针对不同对象的不同 URL。
+
+* **URL：** `POST /api/objectql/v1`
+* **方法：** `POST`（对读和写都优先使用，以避免复杂过滤器的 URL 长度限制）。
+* **Content-Type：** `application/json`
+
+### 头部
+
+| 头部 | 描述 |
+| :--- | :--- |
+| `Authorization` | `Bearer <token>`（标准 OIDC/JWT） |
+| `X-Space-Id` | （可选）多租户上下文隔离。 |
+| `X-ObjectQL-Version` | 协议版本（例如 `1.0`）。 |
+
+## 2. 请求信封
+
+请求体是包装操作的 JSON 对象。
+
+### A. 查询请求（读取）
+
+要获取数据，您发送一个包含 [Query AST](./ast-structure) 的 `query` 操作。
+
+```json
+// POST /api/objectql/v1
+{
+  "op": "query",
+  "payload": {
+    "object": "deal",
+    "fields": ["name", "amount", "stage"],
+    "filters": [["stage", "=", "negotiation"]],
+    "sort": [["amount", "desc"]],
+    "top": 10,
+    "skip": 0
+  }
+}
+
+```
+
+### B. 变更请求（写入）
+
+要修改数据，您发送一个 `mutation` 操作。
+
+```json
+// POST /api/objectql/v1
+{
+  "op": "mutation",
+  "payload": {
+    "object": "deal",
+    "method": "create", // create, update, delete
+    "data": {
+      "name": "Big Enterprise Deal",
+      "amount": 50000,
+      "owner": "usr_001"
+    }
+    // For Update: "id": "deal_123"
+  }
+}
+
+```
+
+## 3. 响应信封
+
+ObjectQL 保证一致的响应形状。它**从不**返回原始数组或原始错误字符串。每个响应都包装在一个 `StandardResponse` 信封中。
+
+### 成功响应
+
+```json
+{
+  "data": [ ... ],       // The Result Array or Object
+  "error": null,         // Null indicates success
+  "meta": {              // Metadata
+    "count": 150,        // Total record count (if requested)
+    "debug_id": "req_xyz"
+  }
+}
+
+```
+
+### 错误响应
+
+如果操作失败（验证、权限或系统错误），HTTP 状态代码将是 `200 OK`（软错误）或 `4xx/5xx`（硬错误），但正文始终包含错误详细信息。
+
+```json
+{
+  "data": null,
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Field 'amount' cannot be negative.",
+    "details": [
+      { "field": "amount", "issue": "min_value", "expected": 0 }
+    ]
+  },
+  "meta": { ... }
+}
+
+```
+
+## 4. 标准错误代码
+
+ObjectQL 定义了一组不可变的错误代码。客户端应该根据 `error.code` 以编程方式切换，而不是 `error.message`。
+
+| 代码 | HTTP 状态 | 含义 |
+| --- | --- | --- |
+| `AUTH_REQUIRED` | 401 | 缺少或无效令牌。 |
+| `PERMISSION_DENIED` | 403 | RBAC 检查失败（对象或字段级别）。 |
+| `record_NOT_FOUND` | 404 | ID 不存在（用于更新/删除）。 |
+| `VALIDATION_FAILED` | 400 | 数据违反模式规则。 |
+| `VERSION_CONFLICT` | 409 | 乐观锁定失败（数据过时）。 |
+| `INTERNAL_ERROR` | 500 | 数据库连接失败或未处理的异常。 |
+
+## 5. 流协议（NDJSON）
+
+对于大型数据集（例如，导出 100 万行），标准 JSON 响应消耗太多内存。ObjectQL 支持 **Newline Delimited JSON (NDJSON)**。
+
+* **头部：** `Accept: application/x-ndjson`
+* **行为：** 服务器在从数据库游标读取时每行刷新一个 JSON 对象。
+
+**响应流：**
+
+```json
+{"type": "meta", "count": 1000000}
+{"type": "record", "id": "1", "name": "A"}
+{"type": "record", "id": "2", "name": "B"}
+...
+{"type": "done"}
+
+```
+
+## 6. 多部分协议（文件上传）
+
+由于 JSON 无法有效处理二进制文件，ObjectQL 使用 `multipart/form-data` 进行文件操作。
+
+**请求：**
+
+* **部分 1（`operations`）：** 描述变更的 JSON 字符串。
+```json
+{ "op": "mutation", "object": "attachment", "method": "create", "data": { "file": null } }
+
+```
+
+
+* **部分 2（`map`）：** 将文件输入映射到 JSON 路径。
+```json
+{ "0": ["data.file"] }
+
+```
+
+
+* **部分 3（`0`）：** 实际的二进制文件流。
+
+:::info 实现说明
+这与 **GraphQL 多部分请求规范**非常相似。针对该规范定制的标准库通常对 ObjectQL 上传的工作方式相似，只需进行少量调整。
+:::

@@ -1,0 +1,207 @@
+---
+title: 动作触发器
+description: 客户端交互协议。通过 JSON 事件处理点击、导航和 API 调用。
+---
+
+# 动作触发器
+
+在 ObjectUI 中，交互性由**动作**而非函数定义。
+
+由于 UI 定义必须严格序列化（JSON），我们不能传递 JavaScript 函数如 `onClick={() => alert('Hello')}`。相反，我们声明**动作对象**，由 ObjectUI 运行时引擎解释和执行。
+
+## 1. 动作协议
+
+动作是一个 JSON 对象，描述*应该发生什么*。事件如 `onClick` 或 `onSuccess` 接受单个动作或**动作链**（数组）。
+
+### 基础结构
+
+```typescript
+interface ActionDef {
+  /** 操作标识符 */
+  action: string;
+  
+  /** 操作的参数 */
+  params?: Record<string, any>;
+  
+  /** 在执行前要求用户确认 */
+  confirm?: {
+    title: string;
+    message: string;
+    variant?: 'danger' | 'info';
+  };
+  
+  /** 执行条件（表达式） */
+  when?: string;
+}
+
+```
+
+### 示例：删除按钮
+
+```json
+{
+  "type": "button",
+  "props": {
+    "label": "Delete Project",
+    "variant": "destructive",
+    "onClick": [
+      {
+        "action": "api.mutation",
+        "confirm": {
+          "title": "Are you sure?",
+          "message": "This action cannot be undone.",
+          "variant": "danger"
+        },
+        "params": {
+          "object": "project",
+          "method": "delete",
+          "id": "${record._id}"
+        }
+      },
+      {
+        "action": "toast.success",
+        "params": { "message": "Project deleted successfully." }
+      },
+      {
+        "action": "navigate",
+        "params": { "url": "/projects" }
+      }
+    ]
+  }
+}
+
+```
+
+## 2. 标准动作库
+
+ObjectUI 运行时带有内置的标准动作库。你无需为这些动作编写代码。
+
+### UI 和导航
+
+| 动作 | 参数 | 说明 |
+| --- | --- | --- |
+| `navigate` | `url`、`target` | 转到 URL 或 ObjectUI 路由。 |
+| `toast.success` | `message`、`duration` | 显示绿色成功通知。 |
+| `toast.error` | `message` | 显示红色错误通知。 |
+| `modal.open` | `layout`、`title` | 在对话框中打开 JSON 布局。 |
+| `modal.close` | - | 关闭最上层的对话框。 |
+| `drawer.open` | `layout`、`width` | 打开幻灯片面板。 |
+| `copy` | `text` | 将文本复制到剪贴板。 |
+
+### 数据和 API
+
+| 动作 | 参数 | 说明 |
+| --- | --- | --- |
+| `api.query` | `query`、`bind` | 运行 ObjectQL 查询并将结果绑定到变量。 |
+| `api.mutation` | `object`、`method`、`data` | 执行创建/更新/删除。 |
+| `form.submit` | `formId` | 触发特定表单的验证和提交。 |
+| `form.reset` | `formId` | 将表单字段重置为默认值。 |
+| `record.refresh` | - | 从服务器重新获取当前记录。 |
+
+## 3. 动作上下文和变量
+
+动作在**上下文**中运行。你可以使用 `${variable}` 语法访问动态数据。
+
+* **`${record}`**: 显示的当前数据记录（行）。
+* **`${user}`**: 当前登录用户会话。
+* **`${scope}`**: 从父组件传递的临时变量。
+* **`${result}`**: 链中*前一个*动作的返回值。
+
+### 示例：使用上一个结果
+
+```json
+[
+  // 步骤 1：创建记录
+  {
+    "action": "api.mutation",
+    "params": { "object": "task", "method": "create", "data": {...} }
+  },
+  // 步骤 2：导航到新 ID
+  {
+    "action": "navigate",
+    "params": { "url": "/tasks/${result.id}" }
+  }
+]
+
+```
+
+## 4. 客户端逻辑 (`action.script`)
+
+有时标准动作不够。你需要自定义计算或逻辑。
+ObjectUI 提供**沙箱化脚本动作**。
+
+> **警告：** 这*不是* `eval()`。这是一个安全、有限的表达式解析器。它无法访问 `window`、`document` 或发出任意网络请求。
+
+```json
+{
+  "action": "script",
+  "params": {
+    "code": "if (record.amount > 1000) { return 'high_value'; } return 'standard';"
+  },
+  "output_to": "temp.category"
+}
+
+```
+
+## 5. 动作容器
+
+通常，动作被分组到通用"工具栏"或"菜单"中。
+
+### Toolbar (`layout.toolbar`)
+
+```json
+{
+  "type": "layout.toolbar",
+  "children": [
+    {
+      "type": "button",
+      "props": { "label": "Edit", "icon": "edit" },
+      "events": { "onClick": { "action": "modal.open", "params": { "layout": "edit_form" } } }
+    },
+    {
+      "type": "button",
+      "props": { "label": "More", "icon": "more_horizontal" },
+      "children": [
+        // 下拉菜单项
+        { "label": "Duplicate", "action": "api.mutation", ... },
+        { "label": "Archive", "action": "api.mutation", ... }
+      ]
+    }
+  ]
+}
+
+```
+
+## 6. 扩展动作
+
+你可以在前端应用程序代码中注册自定义动作。这允许你在 JSON 协议和特定 React 功能之间架起桥梁。
+
+```typescript
+// src/app.tsx
+import { registerAction } from '@objectui/runtime';
+
+registerAction('custom.printLabel', async (context, params) => {
+  const zpl = generateZPL(context.record);
+  await sendToBluetoothPrinter(zpl);
+});
+
+```
+
+**JSON 中的使用：**
+
+```json
+{
+  "action": "custom.printLabel",
+  "params": { "format": "4x6" }
+}
+
+```
+
+## 总结
+
+动作协议将命令式行为转变为声明式配置。
+
+1. **链接：** 动作按顺序执行。
+2. **上下文感知：** 它们可以读取当前记录状态。
+3. **安全：** 无原始 JavaScript 注入；仅白名单动作。
+4. **确认：** 针对危险操作的内置 UI 模式。

@@ -1,0 +1,185 @@
+---
+title: 模式定义
+description: ObjectQL 的核心。如何使用声明式 YAML 协议定义对象、字段和关系。
+---
+
+# 模式定义
+
+在 ObjectQL 中，您不需要编写 `CREATE TABLE` 语句，也不需要定义 Mongoose Schema 或 TypeORM 类。相反，您使用标准 YAML（或 JSON）协议定义**对象**。
+
+此模式是**单一信息源**。它不仅驱动数据库结构，还驱动 API 验证、UI 生成和权限检查。
+
+## 1. 对象协议
+
+ObjectQL 中的`对象`表示业务实体（例如`项目`、`发票`、`员工`）。它大致映射到关系数据库中的表或文档数据库中的集合。
+
+### 基本结构
+
+```yaml
+# src/objects/project.object.yml
+name: project               # Unique API identifier (snake_case)
+label: Project              # Human-readable label
+table_name: projects        # (Optional) Physical table name override
+icon: standard:account      # Icon for ObjectUI
+description: A high-level container for tasks and resources.
+hidden: false               # If true, hidden from the API discovery
+
+```
+
+## 2. 字段
+
+字段定义对象的列和属性。ObjectQL 开箱即用地支持**企业数据类型**，确保在不同的底层数据库中保持一致性。
+
+### 核心数据类型
+
+| 类型 | 描述 | 映射到（Postgres） | 映射到（Mongo） |
+| --- | --- | --- | --- |
+| `text` | 单行字符串 | `VARCHAR` | `String` |
+| `textarea` | 多行文本 | `TEXT` | `String` |
+| `html` | 富文本 | `TEXT` | `String` |
+| `number` | 双精度 | `NUMERIC` | `Number` |
+| `currency` | 高精度货币 | `DECIMAL(18, 2)` | `Decimal128` |
+| `boolean` | 真/假 | `BOOLEAN` | `Boolean` |
+| `date` | 仅日期 | `DATE` | `Date` |
+| `datetime` | 日期和时间 | `TIMESTAMP` | `Date` |
+| `select` | 枚举/下拉列表 | `VARCHAR` | `String` |
+
+### 字段配置
+
+```yaml
+fields:
+  name:
+    type: text
+    label: Project Name
+    required: true
+    searchable: true        # Creates a database index automatically
+    index: true
+
+  status:
+    type: select
+    options:
+      - label: Planning
+        value: planning
+      - label: In Progress
+        value: in_progress
+      - label: Completed
+        value: completed
+    default: planning
+
+  budget:
+    type: currency
+    scale: 2
+    precision: 18
+
+```
+
+## 3. 关系
+
+ObjectQL 通过将关系视为**字段类型**来处理关系。编译器自动生成必要的外键和 JOIN 逻辑。
+
+### 查询（多对一）
+
+最常见的关系。一个任务属于一个项目。
+
+```yaml
+# src/objects/task.object.yml
+fields:
+  project:
+    type: lookup
+    reference_to: project   # Points to the 'name' of the target Object
+    required: true
+
+```
+
+* **数据库效果：** 在 `tasks` 表中创建 `project` 列（FK）。
+* **UI 效果：** 呈现可搜索的下拉列表或模态选择器。
+
+### 主-从关系（强所有权）
+
+类似于查询，但暗示**所有权**。如果删除主记录，则删除详细记录（级联删除）。
+
+```yaml
+# src/objects/invoice_line.object.yml
+fields:
+  invoice:
+    type: master_detail
+    reference_to: invoice
+    write_requires_master_read: true # Security inheritance
+
+```
+
+### 分层（自引用）
+
+一个对象链接到自身（例如，组织结构图或文件夹树）。
+
+```yaml
+fields:
+  parent_task:
+    type: lookup
+    reference_to: task
+
+```
+
+## 4. 虚拟字段（计算）
+
+这是 ObjectQL 作为**编译器**的闪光点。您可以定义在数据库中不存在但在查询期间动态计算的字段。
+
+### 公式字段
+
+编译为注入到 `SELECT` 子句中的 SQL 表达式。
+
+```yaml
+fields:
+  # Logic: (Total - Cost) / Total
+  margin_percentage:
+    type: formula
+    data_type: number
+    formula: "({amount} - {cost}) / {amount}"
+    scale: 2
+
+```
+
+### 汇总字段（汇总）
+
+编译为 SQL 子查询或聚合。
+
+```yaml
+# src/objects/project.object.yml
+fields:
+  # Counts all tasks linked to this project where status = 'closed'
+  closed_task_count:
+    type: summary
+    summary_object: task
+    summary_type: count
+    summary_field: _id
+    filters: [["status", "=", "closed"]]
+
+```
+
+## 5. 编译过程
+
+当您启动 ObjectOS 引擎时，它读取这些 YAML 文件并执行**模式差异**：
+
+1. **解析：** 将 YAML 转换为 AST。
+2. **比较：** 对照当前数据库信息模式检查 AST。
+3. **迁移：** 生成 SQL DDL（`CREATE`、`ALTER`）以同步数据库。
+
+### 示例输出
+
+对于上面的 YAML，Postgres 驱动程序可能执行：
+
+```sql
+CREATE TABLE projects (
+    _id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    status VARCHAR(50) DEFAULT 'planning',
+    budget DECIMAL(18, 2)
+);
+
+CREATE INDEX idx_projects_name ON projects(name);
+
+```
+
+:::info 与数据库无关
+因为定义在 YAML 中，从 PostgreSQL 切换到 MySQL 只需**零更改**模式文件。您只需更改驱动程序配置。
+:::
