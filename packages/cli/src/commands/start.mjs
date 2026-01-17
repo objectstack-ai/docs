@@ -22,7 +22,7 @@ export function registerStartCommand(cli) {
       // 2. Check config
       let isStatic = false;
       try {
-        const configPath = path.resolve(process.cwd(), 'objectdocs.json');
+        const configPath = path.resolve(process.cwd(), 'content/objectdocs.json');
         if (fs.existsSync(configPath)) {
           const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
           if (config.build?.output === 'export') {

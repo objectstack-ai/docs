@@ -25,7 +25,7 @@ export function registerBuildCommand(cli) {
       }
 
       // Copy user config and assets to nextAppDir
-      const userConfigPath = path.resolve(process.cwd(), 'objectdocs.json');
+      const userConfigPath = path.resolve(process.cwd(), 'content/objectdocs.json');
       if (fs.existsSync(userConfigPath)) {
         console.log(`  Copying config from ${userConfigPath}`);
         fs.cpSync(userConfigPath, path.join(nextAppDir, 'objectdocs.json'));
