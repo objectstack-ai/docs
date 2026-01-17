@@ -1,4 +1,5 @@
 {
+  "baseUrl": "/",
   "meta": {
     "title": "ObjectStack Docs",
     "description": "Enterprise-grade low-code platform documentation",
