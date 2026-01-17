@@ -1,0 +1,158 @@
+---
+title: 高级类型
+description: "深入研究企业数据类型：货币、查询、公式和汇总。"
+---
+
+# 高级企业类型
+
+虽然基本类型（如 `text` 和 `boolean`）可以处理标准数据，但企业应用程序需要专用类型来处理金钱、关系和动态计算。
+
+ObjectQL 开箱即用地提供这些"智能类型"。它们不仅仅是存储定义；它们携带**逻辑**和**编译规则**，引擎会自动强制执行。
+
+## 1. 货币（高精度货币）
+
+在财务系统中，浮点数学（例如 `0.1 + 0.2`）由于舍入误差而很危险。ObjectQL 的 `currency` 类型确保数学精确性。
+
+### 定义
+
+```yaml
+fields:
+  amount:
+    type: currency
+    label: Invoice Amount
+    precision: 18  # Total digits
+    scale: 2       # Decimal places
+    required: true
+
+```
+
+### 协议行为
+
+* **存储：** 编译为 SQL 中的 `DECIMAL(18,2)` 或 MongoDB 中的 `Decimal128`。它永远不会使用 `FLOAT` 或 `DOUBLE`。
+* **运行时：** 在 TypeScript 运行时中，值被视为**字符串**或 **BigInt** 包装器，以防止 JavaScript 的 `number` 类型在 API 序列化期间引入精度丢失。
+* **格式化：** ObjectUI 根据系统配置自动使用正确的区域设置符号呈现此内容（例如 `$1,000.00`）。
+
+## 2. 查询（外键关系）
+
+`lookup` 类型定义多对一关系。与简单的 SQL 外键不同，ObjectQL 查询支持**多态性**和**虚拟扩展**。
+
+### 定义
+
+```yaml
+fields:
+  owner:
+    type: lookup
+    reference_to: users
+    label: Project Owner
+    index: true
+
+```
+
+### 高级：多态查询
+
+ObjectQL 允许字段指向*多个*对象类型。这对于 CRM 功能（如任务上的"相关"）很重要，该功能可以链接到潜在客户、客户或机会。
+
+```yaml
+fields:
+  related_to:
+    type: lookup
+    reference_to: [lead, account, opportunity] # Polymorphic Array
+
+```
+
+### 工作原理
+
+* **编译器：** 当您查询查询字段时，引擎不仅返回 ID。它允许**图扩展**：
+```json
+// Query Intent
+{ "expand": ["owner"] }
+
+```
+
+
+编译器将其转换为高度优化的 `LEFT JOIN users ON ...`。
+
+## 3. 公式（数据库编译逻辑）
+
+公式字段是**只读虚拟列**。它们允许您在模式中定义业务逻辑，该逻辑被编译到数据库查询执行计划中。
+
+### 为什么不使用 JavaScript？
+
+如果您在 JavaScript（Node.js）中计算 `Total = Price * Qty`，您无法在数据库中按 `Total` 排序或过滤。通过使用公式字段，计算发生在数据库引擎内部，允许对数百万行进行高性能排序和过滤。
+
+### 定义
+
+使用 `${field_name}` 语法引用其他字段。
+
+```yaml
+fields:
+  price: { type: currency }
+  quantity: { type: number }
+  
+  # The Magic Field
+  subtotal:
+    type: formula
+    data_type: currency
+    formula: "${price} * ${quantity}"
+
+```
+
+### 编译器输出（PostgreSQL 示例）
+
+当 ObjectQL 为此对象生成 SQL 时，它将逻辑注入到 `SELECT` 列表中：
+
+```sql
+SELECT 
+  t1.price, 
+  t1.quantity, 
+  (t1.price * t1.quantity) AS subtotal 
+FROM order_lines t1
+
+```
+
+## 4. 汇总（汇总聚合）
+
+汇总字段允许父对象从其子记录计算指标（一对多）。
+
+### 挑战
+
+在传统开发中，计算"客户的开放订单总价值"需要编写复杂的 SQL 查询或触发器。
+
+### ObjectQL 解决方案
+
+以声明方式定义聚合。引擎处理子查询或物化视图。
+
+### 定义
+
+```yaml
+# Object: account
+fields:
+  # Metric: How much has this customer spent?
+  total_lifetime_value:
+    type: summary
+    summary_object: order        # The child object
+    summary_type: sum            # Operation: count, sum, min, max
+    summary_field: grand_total   # The field on child to aggregate
+    filters:                     # Conditional Aggregation
+      - ["status", "=", "paid"]
+
+```
+
+### 用例
+
+* **CRM：** 客户资料上的"开放罚单数"。
+* **项目管理：** 项目中所有任务的"最大到期日期"。
+* **库存：** 库存移动的"数量总和"。
+
+## 功能总结
+
+| 类型 | 数据位置 | 计算时间 | 主要用途 |
+| --- | --- | --- | --- |
+| **货币** | 物理列 | 不适用 | 财务交易、价格。 |
+| **查询** | 物理列（FK） | 不适用 | 链接记录、多态关系。 |
+| **公式** | **虚拟** | 读取时间（查询） | 行级数学、字符串连接。 |
+| **汇总** | **虚拟** | 读取时间（查询） | 父级聚合（求和/计数）。 |
+
+:::tip 性能说明
+虚拟字段（公式和汇总）很强大，但在大型数据集上依赖它们进行复杂排序可能会影响数据库性能。对于超过 1000 万行的数据集，考虑使用 ObjectOS 触发器将这些值物化到物理列中。
+:::
