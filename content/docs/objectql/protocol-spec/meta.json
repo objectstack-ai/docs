@@ -1,9 +1,0 @@
-{
-  "title": "Protocol Specification",
-  "pages": [
-    "schema-definition",
-    "query-dsl",
-    "aggregation",
-    "mutation"
-  ]
-}

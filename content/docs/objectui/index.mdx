@@ -14,7 +14,7 @@ ObjectUI is **not a component library**—it is a **protocol specification** wit
 1. **Component Protocol**: JSON schemas for UI elements (forms, tables, grids, pages)
 2. **Action Protocol**: Declarative event handlers (API calls, navigation, dialogs)
 3. **Data Binding Protocol**: Automatic synchronization with ObjectQL data layer
-4. **Renderer Interface**: Standardized contract for framework implementations
+4. **Renderer Interface**: Standardized contract for concepts implementations
 
 ### Core Design Principles
 
@@ -28,7 +28,7 @@ ObjectUI is **not a component library**—it is a **protocol specification** wit
 
 **Data-Driven**: UI components are bound to ObjectQL data sources. State management, validation, and updates are handled automatically by the renderer.
 
-**Framework Agnostic**: The protocol never assumes React, Vue, or any specific framework. Renderers translate protocols to framework-specific implementations.
+**Concepts Agnostic**: The protocol never assumes React, Vue, or any specific concepts. Renderers translate protocols to concepts-specific implementations.
 ---
 
 ## Protocol Architecture
@@ -60,13 +60,13 @@ sequenceDiagram
 
 1. **Protocol Input**: Application provides JSON UI protocol
 2. **Protocol Parsing**: Renderer parses and validates protocol structure
-3. **Component Resolution**: Maps protocol types to framework components
+3. **Component Resolution**: Maps protocol types to concepts components
 4. **Data Binding**: Connects components to ObjectQL data sources
-5. **Rendering**: Framework-specific components rendered
+5. **Rendering**: Concepts-specific components rendered
 6. **Action Handling**: User interactions trigger protocol-defined actions
 7. **State Update**: Data changes trigger automatic re-rendering
 
-This architecture ensures **complete framework independence**—changing from React to Vue requires zero protocol changes.
+This architecture ensures **complete concepts independence**—changing from React to Vue requires zero protocol changes.
 
 ---
 
@@ -536,7 +536,7 @@ type Expression = string  // Format: {{expression}}
 
 ## Renderer Interface
 
-ObjectUI defines a **standardized renderer contract** that all framework implementations must support:
+ObjectUI defines a **standardized renderer contract** that all concepts implementations must support:
 
 ```typescript
 interface ObjectUIRenderer {
@@ -567,7 +567,7 @@ interface ObjectUIRenderer {
 
 Official reference implementations:
 
-| Renderer | Status | Framework |
+| Renderer | Status | Concepts |
 |----------|--------|-----------|
 | **@objectui/react-renderer** | ✅ Stable | React 18+ |
 | **@objectui/vue-renderer** | 🚧 Planned | Vue 3+ |
@@ -948,7 +948,7 @@ This creates a fully functional todo application with:
 
 **React/Vue components are implementation details**. The real UI is the JSON protocol:
 
-- **Framework Agnostic**: Same protocol renders in React, Vue, Flutter
+- **Concepts Agnostic**: Same protocol renders in React, Vue, Flutter
 - **Versionable**: UI stored as structured data in database
 - **AI-Friendly**: LLMs excel at generating JSON structures
 - **Portable**: Export/import UI definitions between projects
@@ -1002,5 +1002,5 @@ Reference implementations:
 4. **Customize Appearance**: Explore [Theming](/docs/objectui/theming) for styling and customization
 
 For philosophical context, see:
-- **[The Manifesto](/docs/framework/manifesto)** - Why ObjectUI is protocol-driven and framework-agnostic
-- **[Architecture](/docs/framework/architecture)** - How ObjectUI fits into the ObjectStack ecosystem
+- **[The Manifesto](/docs/concepts/manifesto)** - Why ObjectUI is protocol-driven and concepts-agnostic
+- **[Architecture](/docs/concepts/architecture)** - How ObjectUI fits into the ObjectStack ecosystem

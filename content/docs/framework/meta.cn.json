@@ -1,5 +1,0 @@
-{
-  "title": "Framework",
-  "root": true,
-  "pages": ["index", "welcome", "manifesto", "architecture", "ai-codex", "quick-start"]
-}

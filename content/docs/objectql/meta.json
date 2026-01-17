@@ -3,9 +3,11 @@
   "root": true,
   "pages": [
     "index",
-    "core-concepts",
-    "protocol-spec",
-    "core-features",
-    "server-sdk"
+    "schema-definition",
+    "advanced-types",
+    "ast-structure",
+    "analytics-protocol",
+    "transaction-model",
+    "ire-protocol"
   ]
 }

@@ -8,7 +8,7 @@ This package provides the actual Next.js application structure, configuration, a
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
+- **Concepts**: Next.js 16 (App Router)
 - **Documentation**: Fumadocs
 - **Styling**: Tailwind CSS
 - **Deployment**: Static Export (`output: 'export'`)

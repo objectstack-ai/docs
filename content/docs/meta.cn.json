@@ -2,7 +2,7 @@
   "title": "文档",
   "pages": [
     "index",
-    "framework",
+    "concepts",
     "objectql",
     "objectui",
     "objectos"
