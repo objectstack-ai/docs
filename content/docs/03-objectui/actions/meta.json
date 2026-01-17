@@ -1,0 +1,10 @@
+{
+  "title": "Actions",
+  "pages": [
+    "index",
+    "api-request",
+    "navigate",
+    "dialog",
+    "toast"
+  ]
+}

@@ -1,0 +1,108 @@
+---
+title: Grid
+description: Responsive grid layout
+---
+
+# Grid
+
+Responsive grid layout.
+
+## Protocol
+
+```typescript
+{
+  type: 'grid',
+  columns?: number | {        // Column configuration
+    xs?: number,              // Extra small devices
+    sm?: number,              // Small devices
+    md?: number,              // Medium devices
+    lg?: number,              // Large devices
+    xl?: number               // Extra large devices
+  },
+  gap?: number | string,      // Gap between items
+  items: Component[],
+}
+```
+
+## Examples
+
+### Responsive Grid
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "sm": 2, "lg": 3 },
+  "gap": "20px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Total Users",
+      "body": { "type": "text", "value": "${stats.users}" }
+    },
+    {
+      "type": "card",
+      "title": "Total Orders",
+      "body": { "type": "text", "value": "${stats.orders}" }
+    },
+    {
+      "type": "card",
+      "title": "Revenue",
+      "body": { "type": "text", "value": "$${stats.revenue}" }
+    }
+  ]
+}
+```
+
+### Fixed Columns
+
+```json
+{
+  "type": "grid",
+  "columns": 4,
+  "gap": "16px",
+  "items": [...]
+}
+```
+
+## Responsive Breakpoints
+
+The grid supports five breakpoint sizes:
+
+- **xs** - Extra small (&lt;576px) - Mobile portrait
+- **sm** - Small (≥576px) - Mobile landscape
+- **md** - Medium (≥768px) - Tablet
+- **lg** - Large (≥992px) - Desktop
+- **xl** - Extra large (≥1200px) - Large desktop
+
+## Layout Patterns
+
+### Dashboard Cards
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "md": 2, "xl": 4 },
+  "items": [
+    { "type": "card", "title": "Metric 1", "body": {...} },
+    { "type": "card", "title": "Metric 2", "body": {...} },
+    { "type": "card", "title": "Metric 3", "body": {...} },
+    { "type": "card", "title": "Metric 4", "body": {...} }
+  ]
+}
+```
+
+### Product Gallery
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 2, "sm": 3, "lg": 4 },
+  "gap": "24px",
+  "items": [...]
+}
+```
+
+## Related Components
+
+- **[Card](/docs/03-objectui/container-components/card)** - Grid items
+- **[Page](/docs/03-objectui/container-components/page)** - Page container

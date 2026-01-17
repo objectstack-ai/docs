@@ -1,0 +1,117 @@
+---
+title: DatePicker
+description: Date and time selection component
+---
+
+# DatePicker
+
+Date and time selection component.
+
+## Protocol
+
+```typescript
+{
+  type: 'datepicker',
+  name: string,
+  label?: string,
+  placeholder?: string,
+  defaultValue?: string | Date,
+  required?: boolean,
+  disabled?: boolean,
+  mode?: 'date' | 'datetime' | 'time' | 'daterange',
+  format?: string,            // Display format (e.g., 'YYYY-MM-DD')
+  minDate?: string | Date,    // Minimum selectable date
+  maxDate?: string | Date,    // Maximum selectable date
+  disabledDates?: string[],   // Array of disabled dates
+  showTime?: boolean,         // Show time picker
+  onChange?: Action,
+}
+```
+
+## Examples
+
+### Simple Date
+
+```json
+{
+  "type": "datepicker",
+  "name": "birthday",
+  "label": "Date of Birth",
+  "mode": "date",
+  "maxDate": "today",
+  "required": true
+}
+```
+
+### DateTime
+
+```json
+{
+  "type": "datepicker",
+  "name": "appointment",
+  "label": "Appointment Time",
+  "mode": "datetime",
+  "format": "YYYY-MM-DD HH:mm",
+  "minDate": "today",
+  "showTime": true
+}
+```
+
+### Date Range
+
+```json
+{
+  "type": "datepicker",
+  "name": "dateRange",
+  "label": "Select Period",
+  "mode": "daterange",
+  "defaultValue": {
+    "start": "2024-01-01",
+    "end": "2024-12-31"
+  }
+}
+```
+
+### Time Only
+
+```json
+{
+  "type": "datepicker",
+  "name": "meetingTime",
+  "label": "Meeting Time",
+  "mode": "time",
+  "format": "HH:mm"
+}
+```
+
+## Modes
+
+The DatePicker supports four modes:
+
+- **date** - Date selection only
+- **datetime** - Date and time selection
+- **time** - Time selection only
+- **daterange** - Select a date range (start and end dates)
+
+## Date Constraints
+
+Control which dates users can select:
+
+- **minDate** - Earliest selectable date (use "today" for current date)
+- **maxDate** - Latest selectable date
+- **disabledDates** - Array of specific dates to disable
+
+## Format Strings
+
+Common format patterns:
+
+- `YYYY-MM-DD` - 2024-01-15
+- `YYYY/MM/DD` - 2024/01/15
+- `DD/MM/YYYY` - 15/01/2024
+- `YYYY-MM-DD HH:mm` - 2024-01-15 14:30
+- `HH:mm` - 14:30
+
+## Related Components
+
+- **[Input](/docs/03-objectui/basic-components/input)** - For text entry
+- **[Form](/docs/03-objectui/container-components/form)** - Form container

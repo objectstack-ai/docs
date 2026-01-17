@@ -1,0 +1,122 @@
+---
+title: Dialog
+description: Open modal dialogs
+---
+
+# Dialog
+
+Open a modal dialog with custom content.
+
+## Protocol
+
+```typescript
+{
+  type: 'dialog',
+  title?: string,
+  width?: number | string,
+  body: Component,
+  footer?: Component[],
+  closable?: boolean,
+}
+```
+
+## Examples
+
+### Form Dialog
+
+```json
+{
+  "type": "button",
+  "label": "Add User",
+  "onClick": {
+    "type": "dialog",
+    "title": "Create New User",
+    "width": 600,
+    "body": {
+      "type": "form",
+      "api": "/api/users",
+      "fields": [
+        { "type": "input", "name": "name", "label": "Name", "required": true },
+        { "type": "input", "name": "email", "label": "Email", "inputType": "email", "required": true }
+      ]
+    }
+  }
+}
+```
+
+### Confirmation Dialog
+
+```json
+{
+  "type": "dialog",
+  "title": "Confirm Action",
+  "body": {
+    "type": "text",
+    "value": "Are you sure you want to proceed?"
+  },
+  "footer": [
+    { "type": "button", "label": "Cancel", "onClick": { "type": "close" } },
+    { "type": "button", "label": "Confirm", "onClick": { "type": "api", "api": "/api/confirm" } }
+  ]
+}
+```
+
+### Content Dialog
+
+```json
+{
+  "type": "button",
+  "label": "View Details",
+  "onClick": {
+    "type": "dialog",
+    "title": "User Details",
+    "width": "80%",
+    "body": {
+      "type": "card",
+      "body": [
+        { "type": "text", "value": "Name: ${user.name}" },
+        { "type": "text", "value": "Email: ${user.email}" },
+        { "type": "text", "value": "Role: ${user.role}" }
+      ]
+    }
+  }
+}
+```
+
+## Features
+
+### Width
+
+Control dialog width with:
+- Fixed pixel values: `600`
+- Percentage: `"80%"`
+- Preset sizes: `"sm"`, `"md"`, `"lg"`, `"xl"`
+
+### Closable
+
+Set `closable: false` to prevent users from closing the dialog via the close button or ESC key.
+
+### Body Content
+
+The dialog body can contain any component:
+- Forms for data entry
+- Cards for content display
+- Tables for data selection
+- Custom component compositions
+
+### Footer
+
+Add custom footer buttons for actions like Cancel, Confirm, Save, etc.
+
+## Use Cases
+
+- Create/edit forms
+- Confirmation prompts
+- Detail views
+- Multi-step wizards
+- Image galleries
+
+## Related
+
+- **[Form](/docs/03-objectui/container-components/form)** - Forms in dialogs
+- **[API Request](/docs/03-objectui/actions/api-request)** - Submit from dialog
