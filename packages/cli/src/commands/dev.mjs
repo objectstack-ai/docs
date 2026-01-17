@@ -44,9 +44,9 @@ export function registerDevCommand(cli) {
 
       const startServer = () => {
         // Sync config and assets before starting
-        const userConfigPath = path.resolve(process.cwd(), 'content/objectdocs.json');
+        const userConfigPath = path.resolve(process.cwd(), 'content/docs.site.json');
         if (fs.existsSync(userConfigPath)) {
-          fs.cpSync(userConfigPath, path.join(nextAppDir, 'objectdocs.json'));
+          fs.cpSync(userConfigPath, path.join(nextAppDir, 'docs.site.json'));
         }
 
         const userPublicPath = path.resolve(process.cwd(), 'public');
@@ -79,7 +79,7 @@ export function registerDevCommand(cli) {
       startServer();
 
       // Watch for config changes
-      const configFile = path.resolve(process.cwd(), 'content/objectdocs.json');
+      const configFile = path.resolve(process.cwd(), 'content/docs.site.json');
       if (fs.existsSync(configFile)) {
         console.log(`Watching config: ${configFile}`);
         fs.watch(configFile, (eventType) => {
