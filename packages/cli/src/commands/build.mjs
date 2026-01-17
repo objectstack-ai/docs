@@ -24,10 +24,21 @@ export function registerBuildCommand(cli) {
          nextAppDir = path.resolve(__dirname, '../../../site');
       }
 
+      // Copy user config and assets to nextAppDir
+      const userConfigPath = path.resolve(process.cwd(), 'objectdocs.json');
+      if (fs.existsSync(userConfigPath)) {
+        console.log(`  Copying config from ${userConfigPath}`);
+        fs.cpSync(userConfigPath, path.join(nextAppDir, 'objectdocs.json'));
+      }
       
       const userPublicPath = path.resolve(process.cwd(), 'public');
       if (fs.existsSync(userPublicPath)) {
-        fs.cpSync(userPublicPath, path.join(nextAppDir, 'public'), { recursive: true });
+        console.log(`  Copying public assets from ${userPublicPath}`);
+        const targetPublicDir = path.join(nextAppDir, 'public');
+        if (!fs.existsSync(targetPublicDir)) {
+          fs.mkdirSync(targetPublicDir, { recursive: true });
+        }
+        fs.cpSync(userPublicPath, targetPublicDir, { recursive: true, force: true });
       }
 
       console.log(`Building docs site...`);
