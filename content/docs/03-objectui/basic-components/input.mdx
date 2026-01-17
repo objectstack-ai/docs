@@ -98,6 +98,109 @@ Input supports multiple validation options:
 - **minLength** - Minimum character length
 - **pattern** - Regular expression pattern for custom validation
 
+## Enterprise Use Cases
+
+### Employee ID Input
+
+```json
+{
+  "type": "input",
+  "name": "employeeId",
+  "label": "Employee ID",
+  "placeholder": "EMP-0000",
+  "required": true,
+  "pattern": "^EMP-\\d{4}$",
+  "maxLength": 8
+}
+```
+
+### Tax ID / VAT Number
+
+```json
+{
+  "type": "input",
+  "name": "taxId",
+  "label": "Tax ID / VAT Number",
+  "placeholder": "XX-XXXXXXXX",
+  "required": true,
+  "pattern": "^\\d{2}-\\d{8}$"
+}
+```
+
+### Invoice Number
+
+```json
+{
+  "type": "input",
+  "name": "invoiceNumber",
+  "label": "Invoice Number",
+  "placeholder": "INV-2024-0001",
+  "required": true,
+  "pattern": "^INV-\\d{4}-\\d{4}$",
+  "onChange": {
+    "type": "api",
+    "api": "/api/invoices/check-duplicate",
+    "method": "POST",
+    "data": { "invoiceNumber": "${value}" }
+  }
+}
+```
+
+### Product SKU
+
+```json
+{
+  "type": "input",
+  "name": "sku",
+  "label": "Product SKU",
+  "placeholder": "PRD-CAT-0000",
+  "required": true,
+  "maxLength": 20,
+  "pattern": "^[A-Z]{3}-[A-Z]{3}-\\d{4}$"
+}
+```
+
+### Purchase Order Number
+
+```json
+{
+  "type": "input",
+  "name": "poNumber",
+  "label": "Purchase Order Number",
+  "placeholder": "PO-2024-0001",
+  "required": true,
+  "pattern": "^PO-\\d{4}-\\d{4}$"
+}
+```
+
+### Budget Amount
+
+```json
+{
+  "type": "input",
+  "name": "budgetAmount",
+  "label": "Budget Amount",
+  "inputType": "number",
+  "placeholder": "0.00",
+  "required": true,
+  "pattern": "^\\d+(\\.\\d{1,2})?$"
+}
+```
+
+### Department Code
+
+```json
+{
+  "type": "input",
+  "name": "deptCode",
+  "label": "Department Code",
+  "placeholder": "DEPT-00",
+  "required": true,
+  "pattern": "^DEPT-\\d{2}$",
+  "maxLength": 7
+}
+```
+
 ## Related Components
 
 - **[Select](/docs/03-objectui/basic-components/select)** - For predefined options

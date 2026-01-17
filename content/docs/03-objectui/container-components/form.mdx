@@ -105,6 +105,431 @@ Form container with fields and submission handling.
 }
 ```
 
+## Enterprise Use Cases
+
+### Employee Registration Form
+
+```json
+{
+  "type": "form",
+  "title": "New Employee Registration",
+  "api": "/api/employees",
+  "method": "POST",
+  "columns": 2,
+  "fields": [
+    {
+      "type": "input",
+      "name": "employeeId",
+      "label": "Employee ID",
+      "required": true,
+      "pattern": "^EMP-\\d{4}$"
+    },
+    {
+      "type": "input",
+      "name": "firstName",
+      "label": "First Name",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "lastName",
+      "label": "Last Name",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "email",
+      "label": "Email",
+      "inputType": "email",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "department",
+      "label": "Department",
+      "api": "/api/departments",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "position",
+      "label": "Position",
+      "api": "/api/positions",
+      "required": true
+    },
+    {
+      "type": "datepicker",
+      "name": "hireDate",
+      "label": "Hire Date",
+      "mode": "date",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "salary",
+      "label": "Salary",
+      "inputType": "number",
+      "required": true
+    },
+    {
+      "type": "switch",
+      "name": "isActive",
+      "label": "Active Status",
+      "defaultValue": true
+    }
+  ],
+  "submitText": "Register Employee",
+  "onSuccess": {
+    "type": "toast",
+    "message": "Employee registered successfully!"
+  }
+}
+```
+
+### Purchase Order Form
+
+```json
+{
+  "type": "form",
+  "title": "Create Purchase Order",
+  "api": "/api/purchase-orders",
+  "method": "POST",
+  "fields": [
+    {
+      "type": "input",
+      "name": "poNumber",
+      "label": "PO Number",
+      "required": true,
+      "pattern": "^PO-\\d{4}-\\d{4}$",
+      "placeholder": "PO-2024-0001"
+    },
+    {
+      "type": "select",
+      "name": "supplierId",
+      "label": "Supplier",
+      "api": "/api/suppliers",
+      "optionLabel": "companyName",
+      "optionValue": "id",
+      "required": true,
+      "searchable": true
+    },
+    {
+      "type": "datepicker",
+      "name": "orderDate",
+      "label": "Order Date",
+      "mode": "date",
+      "defaultValue": "today",
+      "required": true
+    },
+    {
+      "type": "datepicker",
+      "name": "deliveryDate",
+      "label": "Expected Delivery Date",
+      "mode": "date",
+      "minDate": "today",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "paymentTerms",
+      "label": "Payment Terms",
+      "options": [
+        { "label": "Net 30", "value": "net30" },
+        { "label": "Net 60", "value": "net60" },
+        { "label": "Cash on Delivery", "value": "cod" }
+      ],
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "totalAmount",
+      "label": "Total Amount",
+      "inputType": "number",
+      "required": true
+    },
+    {
+      "type": "switch",
+      "name": "requiresApproval",
+      "label": "Requires Manager Approval",
+      "defaultValue": true
+    }
+  ],
+  "submitText": "Create Purchase Order",
+  "onSuccess": {
+    "type": "navigate",
+    "url": "/purchase-orders"
+  }
+}
+```
+
+### Expense Report Form
+
+```json
+{
+  "type": "form",
+  "title": "Submit Expense Report",
+  "api": "/api/expense-reports",
+  "method": "POST",
+  "columns": 2,
+  "fields": [
+    {
+      "type": "input",
+      "name": "reportTitle",
+      "label": "Report Title",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "expenseCategory",
+      "label": "Expense Category",
+      "options": [
+        { "label": "Travel", "value": "travel" },
+        { "label": "Meals", "value": "meals" },
+        { "label": "Supplies", "value": "supplies" },
+        { "label": "Training", "value": "training" }
+      ],
+      "required": true
+    },
+    {
+      "type": "datepicker",
+      "name": "expenseDate",
+      "label": "Expense Date",
+      "mode": "date",
+      "maxDate": "today",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "amount",
+      "label": "Amount",
+      "inputType": "number",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "currency",
+      "label": "Currency",
+      "options": [
+        { "label": "USD", "value": "usd" },
+        { "label": "EUR", "value": "eur" },
+        { "label": "GBP", "value": "gbp" }
+      ],
+      "defaultValue": "usd",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "costCenter",
+      "label": "Cost Center",
+      "api": "/api/cost-centers",
+      "required": true
+    }
+  ],
+  "submitText": "Submit for Approval",
+  "onSuccess": {
+    "type": "toast",
+    "message": "Expense report submitted successfully!"
+  }
+}
+```
+
+### Invoice Creation Form
+
+```json
+{
+  "type": "form",
+  "title": "Create Invoice",
+  "api": "/api/invoices",
+  "method": "POST",
+  "columns": 2,
+  "fields": [
+    {
+      "type": "input",
+      "name": "invoiceNumber",
+      "label": "Invoice Number",
+      "required": true,
+      "pattern": "^INV-\\d{4}-\\d{4}$"
+    },
+    {
+      "type": "select",
+      "name": "customerId",
+      "label": "Customer",
+      "api": "/api/customers",
+      "optionLabel": "companyName",
+      "optionValue": "id",
+      "required": true,
+      "searchable": true
+    },
+    {
+      "type": "datepicker",
+      "name": "invoiceDate",
+      "label": "Invoice Date",
+      "mode": "date",
+      "defaultValue": "today",
+      "required": true
+    },
+    {
+      "type": "datepicker",
+      "name": "dueDate",
+      "label": "Due Date",
+      "mode": "date",
+      "minDate": "today",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "paymentMethod",
+      "label": "Payment Method",
+      "options": [
+        { "label": "Bank Transfer", "value": "bank_transfer" },
+        { "label": "Check", "value": "check" },
+        { "label": "Cash", "value": "cash" }
+      ],
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "subtotal",
+      "label": "Subtotal",
+      "inputType": "number",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "taxRate",
+      "label": "Tax Rate (%)",
+      "inputType": "number",
+      "defaultValue": "10"
+    },
+    {
+      "type": "switch",
+      "name": "isRecurring",
+      "label": "Recurring Invoice",
+      "defaultValue": false
+    }
+  ],
+  "submitText": "Create Invoice",
+  "onSuccess": {
+    "type": "navigate",
+    "url": "/invoices"
+  }
+}
+```
+
+### Leave Request Form
+
+```json
+{
+  "type": "form",
+  "title": "Request Leave",
+  "api": "/api/leave-requests",
+  "method": "POST",
+  "fields": [
+    {
+      "type": "select",
+      "name": "leaveType",
+      "label": "Leave Type",
+      "options": [
+        { "label": "Annual Leave", "value": "annual" },
+        { "label": "Sick Leave", "value": "sick" },
+        { "label": "Personal Leave", "value": "personal" },
+        { "label": "Unpaid Leave", "value": "unpaid" }
+      ],
+      "required": true
+    },
+    {
+      "type": "datepicker",
+      "name": "leavePeriod",
+      "label": "Leave Period",
+      "mode": "daterange",
+      "minDate": "today",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "reason",
+      "label": "Reason",
+      "required": true,
+      "maxLength": 500
+    }
+  ],
+  "submitText": "Submit Request",
+  "onSuccess": {
+    "type": "toast",
+    "message": "Leave request submitted for approval"
+  }
+}
+```
+
+### Asset Management Form
+
+```json
+{
+  "type": "form",
+  "title": "Register Asset",
+  "api": "/api/assets",
+  "method": "POST",
+  "columns": 2,
+  "fields": [
+    {
+      "type": "input",
+      "name": "assetTag",
+      "label": "Asset Tag",
+      "required": true,
+      "pattern": "^AST-\\d{4}$"
+    },
+    {
+      "type": "input",
+      "name": "assetName",
+      "label": "Asset Name",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "assetCategory",
+      "label": "Category",
+      "options": [
+        { "label": "Computer", "value": "computer" },
+        { "label": "Furniture", "value": "furniture" },
+        { "label": "Vehicle", "value": "vehicle" },
+        { "label": "Equipment", "value": "equipment" }
+      ],
+      "required": true
+    },
+    {
+      "type": "datepicker",
+      "name": "purchaseDate",
+      "label": "Purchase Date",
+      "mode": "date",
+      "required": true
+    },
+    {
+      "type": "input",
+      "name": "purchasePrice",
+      "label": "Purchase Price",
+      "inputType": "number",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "assignedTo",
+      "label": "Assigned To",
+      "api": "/api/employees",
+      "optionLabel": "fullName",
+      "optionValue": "id",
+      "searchable": true
+    },
+    {
+      "type": "datepicker",
+      "name": "warrantyExpiry",
+      "label": "Warranty Expiry",
+      "mode": "date"
+    }
+  ],
+  "submitText": "Register Asset"
+}
+```
+
 ## Features
 
 ### Layouts

@@ -108,6 +108,262 @@ Data table with sorting, filtering, and pagination.
 }
 ```
 
+## Enterprise Use Cases
+
+### Employee Management Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/employees",
+  "columns": [
+    { "name": "employeeId", "label": "Employee ID", "width": 120, "sortable": true },
+    { "name": "fullName", "label": "Full Name", "sortable": true },
+    { "name": "department", "label": "Department", "filterable": true },
+    { "name": "position", "label": "Position", "filterable": true },
+    { "name": "hireDate", "label": "Hire Date", "type": "date", "sortable": true },
+    { "name": "salary", "label": "Salary", "type": "number" },
+    { "name": "isActive", "label": "Status", "type": "boolean" }
+  ],
+  "filters": [
+    { "name": "department", "label": "Department", "type": "select", "api": "/api/departments" },
+    { "name": "position", "label": "Position", "type": "select", "api": "/api/positions" },
+    { "name": "status", "label": "Status", "type": "select", "options": [
+      { "label": "Active", "value": "active" },
+      { "label": "Inactive", "value": "inactive" }
+    ]}
+  ],
+  "rowActions": [
+    { "label": "View", "onClick": { "type": "navigate", "url": "/employees/${id}" } },
+    { "label": "Edit", "onClick": { "type": "dialog", "title": "Edit Employee", "body": { "type": "form", "fields": [...] } } },
+    { "label": "Deactivate", "onClick": { "type": "api", "api": "/api/employees/${id}/deactivate", "method": "POST", "confirm": "Deactivate this employee?" } }
+  ],
+  "pagination": true,
+  "pageSize": 25,
+  "searchable": true
+}
+```
+
+### Invoice Management Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/invoices",
+  "columns": [
+    { "name": "invoiceNumber", "label": "Invoice #", "width": 150, "sortable": true },
+    { "name": "customerName", "label": "Customer", "sortable": true },
+    { "name": "invoiceDate", "label": "Invoice Date", "type": "date", "sortable": true },
+    { "name": "dueDate", "label": "Due Date", "type": "date", "sortable": true },
+    { "name": "amount", "label": "Amount", "type": "number", "sortable": true },
+    { "name": "status", "label": "Status", "filterable": true }
+  ],
+  "filters": [
+    { "name": "status", "label": "Status", "type": "select", "options": [
+      { "label": "Draft", "value": "draft" },
+      { "label": "Sent", "value": "sent" },
+      { "label": "Paid", "value": "paid" },
+      { "label": "Overdue", "value": "overdue" }
+    ]},
+    { "name": "dateRange", "label": "Date Range", "type": "datepicker", "mode": "daterange" }
+  ],
+  "selectable": true,
+  "batchActions": [
+    { "label": "Send Selected", "onClick": { "type": "api", "api": "/api/invoices/batch-send", "method": "POST" } },
+    { "label": "Download PDF", "onClick": { "type": "download", "url": "/api/invoices/batch-download" } }
+  ],
+  "rowActions": [
+    { "label": "View", "onClick": { "type": "navigate", "url": "/invoices/${id}" } },
+    { "label": "Send", "onClick": { "type": "api", "api": "/api/invoices/${id}/send", "method": "POST" } },
+    { "label": "Download", "onClick": { "type": "download", "url": "/api/invoices/${id}/pdf" } }
+  ],
+  "pagination": true,
+  "pageSize": 20,
+  "searchable": true
+}
+```
+
+### Inventory Management Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/inventory",
+  "columns": [
+    { "name": "sku", "label": "SKU", "width": 120, "sortable": true },
+    { "name": "productName", "label": "Product Name", "sortable": true },
+    { "name": "category", "label": "Category", "filterable": true },
+    { "name": "quantity", "label": "Quantity", "type": "number", "sortable": true },
+    { "name": "unitPrice", "label": "Unit Price", "type": "number", "sortable": true },
+    { "name": "totalValue", "label": "Total Value", "type": "number", "sortable": true },
+    { "name": "lastRestocked", "label": "Last Restocked", "type": "date" }
+  ],
+  "filters": [
+    { "name": "category", "label": "Category", "type": "select", "api": "/api/categories" },
+    { "name": "lowStock", "label": "Low Stock Only", "type": "switch" }
+  ],
+  "selectable": true,
+  "batchActions": [
+    { "label": "Adjust Stock", "onClick": { "type": "dialog", "body": { "type": "form", "fields": [...] } } },
+    { "label": "Export", "onClick": { "type": "download", "url": "/api/inventory/export" } }
+  ],
+  "rowActions": [
+    { "label": "Edit", "onClick": { "type": "dialog", "title": "Edit Product", "body": { "type": "form", "fields": [...] } } },
+    { "label": "Restock", "onClick": { "type": "dialog", "title": "Restock", "body": { "type": "form", "fields": [...] } } }
+  ],
+  "pagination": true,
+  "pageSize": 30,
+  "searchable": true
+}
+```
+
+### Purchase Order Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/purchase-orders",
+  "columns": [
+    { "name": "poNumber", "label": "PO Number", "width": 150, "sortable": true },
+    { "name": "supplierName", "label": "Supplier", "sortable": true },
+    { "name": "orderDate", "label": "Order Date", "type": "date", "sortable": true },
+    { "name": "deliveryDate", "label": "Delivery Date", "type": "date", "sortable": true },
+    { "name": "totalAmount", "label": "Total Amount", "type": "number", "sortable": true },
+    { "name": "status", "label": "Status", "filterable": true },
+    { "name": "approvalStatus", "label": "Approval", "filterable": true }
+  ],
+  "filters": [
+    { "name": "status", "label": "Status", "type": "select", "options": [
+      { "label": "Draft", "value": "draft" },
+      { "label": "Submitted", "value": "submitted" },
+      { "label": "Approved", "value": "approved" },
+      { "label": "Received", "value": "received" }
+    ]},
+    { "name": "supplier", "label": "Supplier", "type": "select", "api": "/api/suppliers" }
+  ],
+  "rowActions": [
+    { "label": "View", "onClick": { "type": "navigate", "url": "/purchase-orders/${id}" } },
+    { "label": "Approve", "onClick": { "type": "api", "api": "/api/purchase-orders/${id}/approve", "method": "POST", "confirm": "Approve this purchase order?" } },
+    { "label": "Cancel", "onClick": { "type": "api", "api": "/api/purchase-orders/${id}/cancel", "method": "POST", "confirm": "Cancel this purchase order?" } }
+  ],
+  "pagination": true,
+  "pageSize": 20
+}
+```
+
+### Expense Report Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/expense-reports",
+  "columns": [
+    { "name": "reportId", "label": "Report ID", "width": 100, "sortable": true },
+    { "name": "employeeName", "label": "Employee", "sortable": true },
+    { "name": "reportTitle", "label": "Title", "sortable": true },
+    { "name": "submissionDate", "label": "Submitted", "type": "date", "sortable": true },
+    { "name": "totalAmount", "label": "Amount", "type": "number", "sortable": true },
+    { "name": "status", "label": "Status", "filterable": true }
+  ],
+  "filters": [
+    { "name": "status", "label": "Status", "type": "select", "options": [
+      { "label": "Pending", "value": "pending" },
+      { "label": "Approved", "value": "approved" },
+      { "label": "Rejected", "value": "rejected" },
+      { "label": "Paid", "value": "paid" }
+    ]},
+    { "name": "dateRange", "label": "Submission Date", "type": "datepicker", "mode": "daterange" }
+  ],
+  "selectable": true,
+  "batchActions": [
+    { "label": "Approve Selected", "onClick": { "type": "api", "api": "/api/expense-reports/batch-approve", "method": "POST" } },
+    { "label": "Export", "onClick": { "type": "download", "url": "/api/expense-reports/export" } }
+  ],
+  "rowActions": [
+    { "label": "Review", "onClick": { "type": "navigate", "url": "/expense-reports/${id}" } },
+    { "label": "Approve", "onClick": { "type": "api", "api": "/api/expense-reports/${id}/approve", "method": "POST" } },
+    { "label": "Reject", "onClick": { "type": "dialog", "title": "Reject Report", "body": { "type": "form", "fields": [{ "type": "input", "name": "reason", "label": "Rejection Reason" }] } } }
+  ],
+  "pagination": true,
+  "pageSize": 25,
+  "searchable": true
+}
+```
+
+### Leave Request Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/leave-requests",
+  "columns": [
+    { "name": "requestId", "label": "Request ID", "width": 100 },
+    { "name": "employeeName", "label": "Employee", "sortable": true },
+    { "name": "leaveType", "label": "Leave Type", "filterable": true },
+    { "name": "startDate", "label": "Start Date", "type": "date", "sortable": true },
+    { "name": "endDate", "label": "End Date", "type": "date" },
+    { "name": "days", "label": "Days", "type": "number" },
+    { "name": "status", "label": "Status", "filterable": true }
+  ],
+  "filters": [
+    { "name": "status", "label": "Status", "type": "select", "options": [
+      { "label": "Pending", "value": "pending" },
+      { "label": "Approved", "value": "approved" },
+      { "label": "Rejected", "value": "rejected" }
+    ]},
+    { "name": "leaveType", "label": "Leave Type", "type": "select", "options": [
+      { "label": "Annual Leave", "value": "annual" },
+      { "label": "Sick Leave", "value": "sick" },
+      { "label": "Personal Leave", "value": "personal" }
+    ]}
+  ],
+  "rowActions": [
+    { "label": "View", "onClick": { "type": "navigate", "url": "/leave-requests/${id}" } },
+    { "label": "Approve", "onClick": { "type": "api", "api": "/api/leave-requests/${id}/approve", "method": "POST" } },
+    { "label": "Reject", "onClick": { "type": "api", "api": "/api/leave-requests/${id}/reject", "method": "POST" } }
+  ],
+  "pagination": true,
+  "pageSize": 20
+}
+```
+
+### Asset Management Table
+
+```json
+{
+  "type": "table",
+  "api": "/api/assets",
+  "columns": [
+    { "name": "assetTag", "label": "Asset Tag", "width": 120, "sortable": true },
+    { "name": "assetName", "label": "Asset Name", "sortable": true },
+    { "name": "category", "label": "Category", "filterable": true },
+    { "name": "assignedTo", "label": "Assigned To", "sortable": true },
+    { "name": "purchaseDate", "label": "Purchase Date", "type": "date", "sortable": true },
+    { "name": "purchasePrice", "label": "Purchase Price", "type": "number" },
+    { "name": "warrantyExpiry", "label": "Warranty Expiry", "type": "date" }
+  ],
+  "filters": [
+    { "name": "category", "label": "Category", "type": "select", "options": [
+      { "label": "Computer", "value": "computer" },
+      { "label": "Furniture", "value": "furniture" },
+      { "label": "Vehicle", "value": "vehicle" }
+    ]},
+    { "name": "assigned", "label": "Assignment Status", "type": "select", "options": [
+      { "label": "Assigned", "value": "assigned" },
+      { "label": "Available", "value": "available" }
+    ]}
+  ],
+  "rowActions": [
+    { "label": "View", "onClick": { "type": "navigate", "url": "/assets/${id}" } },
+    { "label": "Assign", "onClick": { "type": "dialog", "title": "Assign Asset", "body": { "type": "form", "fields": [...] } } },
+    { "label": "Maintain", "onClick": { "type": "dialog", "title": "Log Maintenance", "body": { "type": "form", "fields": [...] } } }
+  ],
+  "pagination": true,
+  "pageSize": 30,
+  "searchable": true
+}
+```
+
 ## Features
 
 ### Columns

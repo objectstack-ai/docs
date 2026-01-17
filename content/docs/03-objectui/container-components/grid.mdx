@@ -102,6 +102,316 @@ The grid supports five breakpoint sizes:
 }
 ```
 
+## Enterprise Use Cases
+
+### Executive Dashboard
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "sm": 2, "lg": 4 },
+  "gap": "20px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Total Revenue",
+      "body": { "type": "text", "value": "$${kpi.revenue}" },
+      "footer": { "type": "text", "value": "↑ ${kpi.revenueGrowth}%" }
+    },
+    {
+      "type": "card",
+      "title": "Active Employees",
+      "body": { "type": "text", "value": "${kpi.employees}" },
+      "footer": { "type": "text", "value": "+${kpi.newHires} this month" }
+    },
+    {
+      "type": "card",
+      "title": "Pending Invoices",
+      "body": { "type": "text", "value": "${kpi.pendingInvoices}" },
+      "footer": { "type": "text", "value": "$${kpi.pendingAmount}" }
+    },
+    {
+      "type": "card",
+      "title": "Open POs",
+      "body": { "type": "text", "value": "${kpi.openPOs}" },
+      "footer": { "type": "text", "value": "$${kpi.poTotal}" }
+    }
+  ]
+}
+```
+
+### HR Department Dashboard
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "md": 3 },
+  "gap": "24px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Total Employees",
+      "body": { "type": "text", "value": "${hr.totalEmployees}", "style": "text-3xl font-bold" },
+      "actions": [{ "label": "View All", "onClick": { "type": "navigate", "url": "/employees" } }]
+    },
+    {
+      "type": "card",
+      "title": "Leave Requests",
+      "description": "Pending Approval",
+      "body": { "type": "text", "value": "${hr.pendingLeave}", "style": "text-3xl font-bold text-orange-600" },
+      "actions": [{ "label": "Review", "onClick": { "type": "navigate", "url": "/leave-requests?status=pending" } }]
+    },
+    {
+      "type": "card",
+      "title": "Open Positions",
+      "body": { "type": "text", "value": "${hr.openPositions}", "style": "text-3xl font-bold" },
+      "actions": [{ "label": "Post Job", "onClick": { "type": "dialog", "body": {...} } }]
+    }
+  ]
+}
+```
+
+### Finance Overview Grid
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "sm": 2, "lg": 4 },
+  "gap": "16px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Accounts Receivable",
+      "body": { "type": "text", "value": "$${finance.ar}" }
+    },
+    {
+      "type": "card",
+      "title": "Accounts Payable",
+      "body": { "type": "text", "value": "$${finance.ap}" }
+    },
+    {
+      "type": "card",
+      "title": "Cash Balance",
+      "body": { "type": "text", "value": "$${finance.cash}" }
+    },
+    {
+      "type": "card",
+      "title": "Monthly Expenses",
+      "body": { "type": "text", "value": "$${finance.expenses}" }
+    }
+  ]
+}
+```
+
+### Department Performance Grid
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "md": 2, "xl": 3 },
+  "gap": "20px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Sales Department",
+      "body": [
+        { "type": "text", "value": "Employees: ${depts.sales.count}" },
+        { "type": "text", "value": "Revenue: $${depts.sales.revenue}" },
+        { "type": "text", "value": "Target: ${depts.sales.targetPercent}%" }
+      ],
+      "actions": [{ "label": "Details", "onClick": { "type": "navigate", "url": "/departments/sales" } }]
+    },
+    {
+      "type": "card",
+      "title": "Engineering",
+      "body": [
+        { "type": "text", "value": "Employees: ${depts.eng.count}" },
+        { "type": "text", "value": "Projects: ${depts.eng.projects}" },
+        { "type": "text", "value": "Completed: ${depts.eng.completed}%" }
+      ],
+      "actions": [{ "label": "Details", "onClick": { "type": "navigate", "url": "/departments/engineering" } }]
+    },
+    {
+      "type": "card",
+      "title": "Operations",
+      "body": [
+        { "type": "text", "value": "Employees: ${depts.ops.count}" },
+        { "type": "text", "value": "Orders: ${depts.ops.orders}" },
+        { "type": "text", "value": "Efficiency: ${depts.ops.efficiency}%" }
+      ],
+      "actions": [{ "label": "Details", "onClick": { "type": "navigate", "url": "/departments/operations" } }]
+    }
+  ]
+}
+```
+
+### Approval Workflow Grid
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "md": 2, "lg": 3 },
+  "gap": "24px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Purchase Orders",
+      "description": "Pending Approval",
+      "body": {
+        "type": "text",
+        "value": "${approvals.po.count} items",
+        "style": "text-2xl font-bold"
+      },
+      "footer": { "type": "text", "value": "Total: $${approvals.po.total}" },
+      "actions": [{ "label": "Review", "onClick": { "type": "navigate", "url": "/purchase-orders?status=pending" } }]
+    },
+    {
+      "type": "card",
+      "title": "Expense Reports",
+      "description": "Pending Approval",
+      "body": {
+        "type": "text",
+        "value": "${approvals.expense.count} items",
+        "style": "text-2xl font-bold"
+      },
+      "footer": { "type": "text", "value": "Total: $${approvals.expense.total}" },
+      "actions": [{ "label": "Review", "onClick": { "type": "navigate", "url": "/expense-reports?status=pending" } }]
+    },
+    {
+      "type": "card",
+      "title": "Leave Requests",
+      "description": "Pending Approval",
+      "body": {
+        "type": "text",
+        "value": "${approvals.leave.count} items",
+        "style": "text-2xl font-bold"
+      },
+      "actions": [{ "label": "Review", "onClick": { "type": "navigate", "url": "/leave-requests?status=pending" } }]
+    }
+  ]
+}
+```
+
+### Inventory Status Grid
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "sm": 2, "md": 4 },
+  "gap": "16px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Total Products",
+      "body": { "type": "text", "value": "${inventory.totalProducts}" }
+    },
+    {
+      "type": "card",
+      "title": "Low Stock Items",
+      "body": { "type": "text", "value": "${inventory.lowStock}", "style": "text-orange-600" }
+    },
+    {
+      "type": "card",
+      "title": "Out of Stock",
+      "body": { "type": "text", "value": "${inventory.outOfStock}", "style": "text-red-600" }
+    },
+    {
+      "type": "card",
+      "title": "Inventory Value",
+      "body": { "type": "text", "value": "$${inventory.totalValue}" }
+    }
+  ]
+}
+```
+
+### Project Portfolio Grid
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "md": 2, "lg": 3 },
+  "gap": "24px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Project Alpha",
+      "description": "Status: In Progress",
+      "cover": "/images/project-alpha.jpg",
+      "body": [
+        { "type": "text", "value": "Progress: 65%" },
+        { "type": "text", "value": "Budget: $500,000" },
+        { "type": "text", "value": "Team: 12 members" }
+      ],
+      "actions": [{ "label": "View", "onClick": { "type": "navigate", "url": "/projects/alpha" } }]
+    },
+    {
+      "type": "card",
+      "title": "Project Beta",
+      "description": "Status: Planning",
+      "cover": "/images/project-beta.jpg",
+      "body": [
+        { "type": "text", "value": "Progress: 15%" },
+        { "type": "text", "value": "Budget: $350,000" },
+        { "type": "text", "value": "Team: 8 members" }
+      ],
+      "actions": [{ "label": "View", "onClick": { "type": "navigate", "url": "/projects/beta" } }]
+    },
+    {
+      "type": "card",
+      "title": "Project Gamma",
+      "description": "Status: Completed",
+      "cover": "/images/project-gamma.jpg",
+      "body": [
+        { "type": "text", "value": "Progress: 100%" },
+        { "type": "text", "value": "Budget: $200,000" },
+        { "type": "text", "value": "Team: 5 members" }
+      ],
+      "actions": [{ "label": "View", "onClick": { "type": "navigate", "url": "/projects/gamma" } }]
+    }
+  ]
+}
+```
+
+### Alert Dashboard Grid
+
+```json
+{
+  "type": "grid",
+  "columns": { "xs": 1, "md": 2 },
+  "gap": "20px",
+  "items": [
+    {
+      "type": "card",
+      "title": "Overdue Invoices",
+      "body": { "type": "text", "value": "${alerts.overdueInvoices}", "style": "text-3xl font-bold text-red-600" },
+      "footer": { "type": "text", "value": "Total: $${alerts.overdueAmount}" },
+      "actions": [{ "label": "View", "onClick": { "type": "navigate", "url": "/invoices?filter=overdue" } }]
+    },
+    {
+      "type": "card",
+      "title": "Expiring Contracts",
+      "body": { "type": "text", "value": "${alerts.expiringContracts}", "style": "text-3xl font-bold text-yellow-600" },
+      "footer": { "type": "text", "value": "Next 30 days" },
+      "actions": [{ "label": "View", "onClick": { "type": "navigate", "url": "/contracts?filter=expiring" } }]
+    },
+    {
+      "type": "card",
+      "title": "Compliance Issues",
+      "body": { "type": "text", "value": "${alerts.compliance}", "style": "text-3xl font-bold text-orange-600" },
+      "footer": { "type": "text", "value": "Requires attention" },
+      "actions": [{ "label": "Review", "onClick": { "type": "navigate", "url": "/compliance" } }]
+    },
+    {
+      "type": "card",
+      "title": "System Alerts",
+      "body": { "type": "text", "value": "${alerts.system}", "style": "text-3xl font-bold" },
+      "footer": { "type": "text", "value": "Last 24 hours" },
+      "actions": [{ "label": "View Logs", "onClick": { "type": "navigate", "url": "/system/alerts" } }]
+    }
+  ]
+}
+```
+
 ## Related Components
 
 - **[Card](/docs/03-objectui/container-components/card)** - Grid items

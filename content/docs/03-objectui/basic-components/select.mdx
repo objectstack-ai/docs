@@ -122,6 +122,175 @@ Enable `searchable: true` to allow users to filter options by typing.
 
 Use `dependsOn` to create cascading selects where one field's options depend on another field's value.
 
+## Enterprise Use Cases
+
+### Department Selection
+
+```json
+{
+  "type": "select",
+  "name": "department",
+  "label": "Department",
+  "placeholder": "Select Department",
+  "required": true,
+  "api": "/api/departments",
+  "optionLabel": "name",
+  "optionValue": "id",
+  "searchable": true
+}
+```
+
+### Employee Role / Position
+
+```json
+{
+  "type": "select",
+  "name": "role",
+  "label": "Position",
+  "required": true,
+  "options": [
+    { "label": "Manager", "value": "manager" },
+    { "label": "Team Lead", "value": "team_lead" },
+    { "label": "Senior Developer", "value": "senior_dev" },
+    { "label": "Developer", "value": "developer" },
+    { "label": "Junior Developer", "value": "junior_dev" },
+    { "label": "Intern", "value": "intern" }
+  ]
+}
+```
+
+### Approval Status
+
+```json
+{
+  "type": "select",
+  "name": "approvalStatus",
+  "label": "Approval Status",
+  "required": true,
+  "options": [
+    { "label": "Pending", "value": "pending" },
+    { "label": "Approved", "value": "approved" },
+    { "label": "Rejected", "value": "rejected" },
+    { "label": "On Hold", "value": "on_hold" }
+  ]
+}
+```
+
+### Payment Method
+
+```json
+{
+  "type": "select",
+  "name": "paymentMethod",
+  "label": "Payment Method",
+  "required": true,
+  "options": [
+    { "label": "Bank Transfer", "value": "bank_transfer" },
+    { "label": "Check", "value": "check" },
+    { "label": "Cash", "value": "cash" },
+    { "label": "Credit Card", "value": "credit_card" }
+  ]
+}
+```
+
+### Cost Center
+
+```json
+{
+  "type": "select",
+  "name": "costCenter",
+  "label": "Cost Center",
+  "required": true,
+  "api": "/api/cost-centers",
+  "optionLabel": "code",
+  "optionValue": "id",
+  "searchable": true
+}
+```
+
+### Project Assignment
+
+```json
+{
+  "type": "select",
+  "name": "projectId",
+  "label": "Assign to Project",
+  "multiple": true,
+  "searchable": true,
+  "api": "/api/projects/active",
+  "optionLabel": "name",
+  "optionValue": "id"
+}
+```
+
+### Supplier Selection
+
+```json
+{
+  "type": "select",
+  "name": "supplierId",
+  "label": "Supplier",
+  "required": true,
+  "api": "/api/suppliers",
+  "optionLabel": "companyName",
+  "optionValue": "id",
+  "searchable": true,
+  "clearable": true
+}
+```
+
+### Cascading: Country, State, City
+
+```json
+{
+  "type": "form",
+  "fields": [
+    {
+      "type": "select",
+      "name": "country",
+      "label": "Country",
+      "api": "/api/countries",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "state",
+      "label": "State/Province",
+      "api": "/api/states?country=${country}",
+      "dependsOn": "country",
+      "required": true
+    },
+    {
+      "type": "select",
+      "name": "city",
+      "label": "City",
+      "api": "/api/cities?state=${state}",
+      "dependsOn": "state",
+      "required": true
+    }
+  ]
+}
+```
+
+### Expense Category
+
+```json
+{
+  "type": "select",
+  "name": "expenseCategory",
+  "label": "Expense Category",
+  "required": true,
+  "options": [
+    { "label": "Travel", "value": "travel" },
+    { "label": "Meals & Entertainment", "value": "meals" },
+    { "label": "Office Supplies", "value": "supplies" },
+    { "label": "Software & Subscriptions", "value": "software" },
+    { "label": "Training", "value": "training" },
+    { "label": "Other", "value": "other" }
+  ]
+}
+```
+
 ## Related Components
 
 - **[Input](/docs/03-objectui/basic-components/input)** - For text entry

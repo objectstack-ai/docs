@@ -94,6 +94,147 @@ Switches are ideal for:
 - Activating/deactivating settings
 - Binary choices (yes/no, on/off)
 
+## Enterprise Use Cases
+
+### Employee Active Status
+
+```json
+{
+  "type": "switch",
+  "name": "isEmployeeActive",
+  "label": "Employee Active Status",
+  "defaultValue": true,
+  "checkedText": "Active",
+  "uncheckedText": "Inactive"
+}
+```
+
+### Product Availability
+
+```json
+{
+  "type": "switch",
+  "name": "isAvailable",
+  "label": "Product Available for Sale",
+  "defaultValue": true,
+  "onChange": {
+    "type": "api",
+    "api": "/api/products/${productId}/availability",
+    "method": "PUT",
+    "data": { "available": "${value}" }
+  }
+}
+```
+
+### Approval Required
+
+```json
+{
+  "type": "switch",
+  "name": "requiresApproval",
+  "label": "Requires Manager Approval",
+  "defaultValue": false,
+  "checkedText": "Required",
+  "uncheckedText": "Not Required"
+}
+```
+
+### Auto-Generate Invoice Number
+
+```json
+{
+  "type": "switch",
+  "name": "autoGenerateInvoice",
+  "label": "Auto-Generate Invoice Number",
+  "defaultValue": true
+}
+```
+
+### Tax Exempt
+
+```json
+{
+  "type": "switch",
+  "name": "isTaxExempt",
+  "label": "Tax Exempt",
+  "defaultValue": false,
+  "checkedText": "Exempt",
+  "uncheckedText": "Taxable"
+}
+```
+
+### Overtime Eligible
+
+```json
+{
+  "type": "switch",
+  "name": "overtimeEligible",
+  "label": "Overtime Eligible",
+  "defaultValue": true
+}
+```
+
+### Inventory Tracking
+
+```json
+{
+  "type": "switch",
+  "name": "trackInventory",
+  "label": "Track Inventory",
+  "defaultValue": true,
+  "checkedText": "Enabled",
+  "uncheckedText": "Disabled"
+}
+```
+
+### Allow Partial Shipment
+
+```json
+{
+  "type": "switch",
+  "name": "allowPartialShipment",
+  "label": "Allow Partial Shipment",
+  "defaultValue": false
+}
+```
+
+### Recurring Invoice
+
+```json
+{
+  "type": "switch",
+  "name": "isRecurring",
+  "label": "Recurring Invoice",
+  "defaultValue": false,
+  "checkedText": "Recurring",
+  "uncheckedText": "One-time"
+}
+```
+
+### Department Active
+
+```json
+{
+  "type": "switch",
+  "name": "isDepartmentActive",
+  "label": "Department Status",
+  "defaultValue": true,
+  "checkedText": "Active",
+  "uncheckedText": "Archived"
+}
+```
+
+### Notification on Approval
+
+```json
+{
+  "type": "switch",
+  "name": "notifyOnApproval",
+  "label": "Send Notification on Approval",
+  "defaultValue": true
+}
+```
+
 ## Related Components
 
 - **[Input](/docs/03-objectui/basic-components/input)** - For text entry

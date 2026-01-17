@@ -97,6 +97,195 @@ Optional footer for additional content or metadata.
 
 Action buttons appear in the card's action area.
 
+## Enterprise Use Cases
+
+### KPI Dashboard Cards
+
+```json
+{
+  "type": "card",
+  "title": "Total Revenue",
+  "description": "Year to Date",
+  "body": {
+    "type": "text",
+    "value": "$${revenue.total}",
+    "style": "text-4xl font-bold text-green-600"
+  },
+  "footer": {
+    "type": "text",
+    "value": "↑ ${revenue.growth}% from last year"
+  }
+}
+```
+
+### Employee Summary Card
+
+```json
+{
+  "type": "card",
+  "title": "${employee.fullName}",
+  "description": "${employee.position}",
+  "avatar": "${employee.avatarUrl}",
+  "body": [
+    { "type": "text", "value": "Employee ID: ${employee.id}" },
+    { "type": "text", "value": "Department: ${employee.department}" },
+    { "type": "text", "value": "Hire Date: ${employee.hireDate}" },
+    { "type": "text", "value": "Email: ${employee.email}" },
+    { "type": "text", "value": "Phone: ${employee.phone}" }
+  ],
+  "actions": [
+    { "label": "View Profile", "onClick": { "type": "navigate", "url": "/employees/${employee.id}" } },
+    { "label": "Send Message", "onClick": { "type": "dialog", "body": {...} } }
+  ]
+}
+```
+
+### Invoice Status Card
+
+```json
+{
+  "type": "card",
+  "title": "Invoice ${invoice.number}",
+  "description": "Customer: ${invoice.customerName}",
+  "body": [
+    { "type": "text", "value": "Amount: $${invoice.amount}" },
+    { "type": "text", "value": "Due Date: ${invoice.dueDate}" },
+    { "type": "text", "value": "Status: ${invoice.status}" }
+  ],
+  "footer": {
+    "type": "text",
+    "value": "${invoice.daysOverdue} days overdue",
+    "style": "text-red-600"
+  },
+  "actions": [
+    { "label": "View Details", "onClick": { "type": "navigate", "url": "/invoices/${invoice.id}" } },
+    { "label": "Send Reminder", "onClick": { "type": "api", "api": "/api/invoices/${invoice.id}/remind", "method": "POST" } }
+  ]
+}
+```
+
+### Department Statistics Card
+
+```json
+{
+  "type": "card",
+  "title": "${department.name}",
+  "description": "Department Overview",
+  "body": [
+    { "type": "text", "value": "Employees: ${department.employeeCount}" },
+    { "type": "text", "value": "Budget: $${department.budget}" },
+    { "type": "text", "value": "Spent: $${department.spent}" },
+    { "type": "text", "value": "Available: $${department.available}" }
+  ],
+  "actions": [
+    { "label": "View Details", "onClick": { "type": "navigate", "url": "/departments/${department.id}" } },
+    { "label": "Manage Budget", "onClick": { "type": "dialog", "body": {...} } }
+  ]
+}
+```
+
+### Pending Approval Card
+
+```json
+{
+  "type": "card",
+  "title": "Pending Approvals",
+  "description": "Items awaiting your review",
+  "body": [
+    { "type": "text", "value": "Purchase Orders: ${approvals.poCount}" },
+    { "type": "text", "value": "Expense Reports: ${approvals.expenseCount}" },
+    { "type": "text", "value": "Leave Requests: ${approvals.leaveCount}" }
+  ],
+  "actions": [
+    { "label": "Review", "onClick": { "type": "navigate", "url": "/approvals" } }
+  ]
+}
+```
+
+### Inventory Alert Card
+
+```json
+{
+  "type": "card",
+  "title": "Low Stock Alert",
+  "description": "Products below reorder level",
+  "body": {
+    "type": "text",
+    "value": "${inventory.lowStockCount} items",
+    "style": "text-2xl font-bold text-orange-600"
+  },
+  "footer": {
+    "type": "text",
+    "value": "Requires immediate attention"
+  },
+  "actions": [
+    { "label": "View Items", "onClick": { "type": "navigate", "url": "/inventory?filter=low-stock" } },
+    { "label": "Create PO", "onClick": { "type": "dialog", "body": {...} } }
+  ]
+}
+```
+
+### Project Status Card
+
+```json
+{
+  "type": "card",
+  "title": "${project.name}",
+  "description": "Project: ${project.code}",
+  "cover": "${project.coverImage}",
+  "body": [
+    { "type": "text", "value": "Status: ${project.status}" },
+    { "type": "text", "value": "Progress: ${project.progress}%" },
+    { "type": "text", "value": "Budget: $${project.budget}" },
+    { "type": "text", "value": "Team Size: ${project.teamSize}" }
+  ],
+  "actions": [
+    { "label": "View Dashboard", "onClick": { "type": "navigate", "url": "/projects/${project.id}" } },
+    { "label": "Update Status", "onClick": { "type": "dialog", "body": {...} } }
+  ]
+}
+```
+
+### Expense Summary Card
+
+```json
+{
+  "type": "card",
+  "title": "Monthly Expenses",
+  "description": "${currentMonth}",
+  "body": [
+    { "type": "text", "value": "Total: $${expenses.total}" },
+    { "type": "text", "value": "Approved: $${expenses.approved}" },
+    { "type": "text", "value": "Pending: $${expenses.pending}" },
+    { "type": "text", "value": "Rejected: $${expenses.rejected}" }
+  ],
+  "footer": {
+    "type": "text",
+    "value": "${expenses.percentOfBudget}% of budget used"
+  }
+}
+```
+
+### Asset Management Card
+
+```json
+{
+  "type": "card",
+  "title": "${asset.name}",
+  "description": "Asset Tag: ${asset.tag}",
+  "body": [
+    { "type": "text", "value": "Category: ${asset.category}" },
+    { "type": "text", "value": "Assigned To: ${asset.assignedTo}" },
+    { "type": "text", "value": "Purchase Date: ${asset.purchaseDate}" },
+    { "type": "text", "value": "Warranty Expiry: ${asset.warrantyExpiry}" }
+  ],
+  "actions": [
+    { "label": "View History", "onClick": { "type": "navigate", "url": "/assets/${asset.id}/history" } },
+    { "label": "Log Maintenance", "onClick": { "type": "dialog", "body": {...} } }
+  ]
+}
+```
+
 ## Use Cases
 
 - User profiles
@@ -104,6 +293,10 @@ Action buttons appear in the card's action area.
 - Statistics/metrics
 - Content previews
 - Settings panels
+- **KPI Dashboards** - Display key performance indicators
+- **Status Summaries** - Show entity status and quick actions
+- **Alert Notifications** - Highlight items needing attention
+- **Financial Summaries** - Display revenue, expenses, budgets
 
 ## Related Components
 

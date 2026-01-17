@@ -111,6 +111,163 @@ Common format patterns:
 - `YYYY-MM-DD HH:mm` - 2024-01-15 14:30
 - `HH:mm` - 14:30
 
+## Enterprise Use Cases
+
+### Employee Hire Date
+
+```json
+{
+  "type": "datepicker",
+  "name": "hireDate",
+  "label": "Hire Date",
+  "mode": "date",
+  "required": true,
+  "maxDate": "today"
+}
+```
+
+### Contract Period
+
+```json
+{
+  "type": "datepicker",
+  "name": "contractPeriod",
+  "label": "Contract Period",
+  "mode": "daterange",
+  "required": true,
+  "minDate": "today",
+  "defaultValue": {
+    "start": "2024-01-01",
+    "end": "2024-12-31"
+  }
+}
+```
+
+### Fiscal Year Start
+
+```json
+{
+  "type": "datepicker",
+  "name": "fiscalYearStart",
+  "label": "Fiscal Year Start Date",
+  "mode": "date",
+  "required": true,
+  "format": "YYYY-MM-DD"
+}
+```
+
+### Invoice Date
+
+```json
+{
+  "type": "datepicker",
+  "name": "invoiceDate",
+  "label": "Invoice Date",
+  "mode": "date",
+  "required": true,
+  "maxDate": "today",
+  "defaultValue": "today"
+}
+```
+
+### Payment Due Date
+
+```json
+{
+  "type": "datepicker",
+  "name": "dueDate",
+  "label": "Payment Due Date",
+  "mode": "date",
+  "required": true,
+  "minDate": "today",
+  "format": "YYYY-MM-DD"
+}
+```
+
+### Leave Request Period
+
+```json
+{
+  "type": "datepicker",
+  "name": "leavePeriod",
+  "label": "Leave Period",
+  "mode": "daterange",
+  "required": true,
+  "minDate": "today",
+  "disabledDates": ["2024-12-25", "2024-01-01"]
+}
+```
+
+### Shift Time
+
+```json
+{
+  "type": "datepicker",
+  "name": "shiftTime",
+  "label": "Shift Time",
+  "mode": "time",
+  "required": true,
+  "format": "HH:mm"
+}
+```
+
+### Meeting Schedule
+
+```json
+{
+  "type": "datepicker",
+  "name": "meetingDateTime",
+  "label": "Meeting Date & Time",
+  "mode": "datetime",
+  "required": true,
+  "minDate": "today",
+  "showTime": true,
+  "format": "YYYY-MM-DD HH:mm"
+}
+```
+
+### Performance Review Period
+
+```json
+{
+  "type": "datepicker",
+  "name": "reviewPeriod",
+  "label": "Performance Review Period",
+  "mode": "daterange",
+  "required": true,
+  "defaultValue": {
+    "start": "2024-01-01",
+    "end": "2024-03-31"
+  }
+}
+```
+
+### Asset Purchase Date
+
+```json
+{
+  "type": "datepicker",
+  "name": "purchaseDate",
+  "label": "Asset Purchase Date",
+  "mode": "date",
+  "required": true,
+  "maxDate": "today"
+}
+```
+
+### Warranty Expiration Date
+
+```json
+{
+  "type": "datepicker",
+  "name": "warrantyExpiry",
+  "label": "Warranty Expiration Date",
+  "mode": "date",
+  "required": true,
+  "minDate": "today"
+}
+```
+
 ## Related Components
 
 - **[Input](/docs/03-objectui/basic-components/input)** - For text entry

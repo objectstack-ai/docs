@@ -81,6 +81,342 @@ Top-level page container with header and actions.
 }
 ```
 
+## Enterprise Use Cases
+
+### Employee Management Dashboard
+
+```json
+{
+  "type": "page",
+  "title": "Employee Management",
+  "description": "Manage employees, departments, and organizational structure",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "HR", "url": "/hr" },
+    { "label": "Employees" }
+  ],
+  "actions": [
+    {
+      "label": "Add Employee",
+      "onClick": {
+        "type": "dialog",
+        "title": "New Employee",
+        "body": {
+          "type": "form",
+          "api": "/api/employees",
+          "method": "POST",
+          "fields": [...]
+        }
+      }
+    },
+    {
+      "label": "Import",
+      "onClick": { "type": "navigate", "url": "/employees/import" }
+    },
+    {
+      "label": "Export",
+      "onClick": { "type": "download", "url": "/api/employees/export" }
+    }
+  ],
+  "body": {
+    "type": "table",
+    "api": "/api/employees",
+    "columns": [...],
+    "searchable": true,
+    "pagination": true
+  }
+}
+```
+
+### Invoice Management Page
+
+```json
+{
+  "type": "page",
+  "title": "Invoices",
+  "description": "Create and manage customer invoices",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "Finance", "url": "/finance" },
+    { "label": "Invoices" }
+  ],
+  "actions": [
+    {
+      "label": "Create Invoice",
+      "onClick": {
+        "type": "navigate",
+        "url": "/invoices/new"
+      }
+    },
+    {
+      "label": "Batch Send",
+      "onClick": {
+        "type": "dialog",
+        "title": "Send Invoices",
+        "body": { "type": "form", "fields": [...] }
+      }
+    }
+  ],
+  "body": {
+    "type": "table",
+    "api": "/api/invoices",
+    "columns": [...],
+    "filters": [...],
+    "pagination": true
+  }
+}
+```
+
+### Purchase Order Page with Tabs
+
+```json
+{
+  "type": "page",
+  "title": "Purchase Orders",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "Procurement", "url": "/procurement" },
+    { "label": "Purchase Orders" }
+  ],
+  "actions": [
+    {
+      "label": "New PO",
+      "onClick": { "type": "navigate", "url": "/purchase-orders/new" }
+    }
+  ],
+  "tabs": [
+    {
+      "label": "All Orders",
+      "key": "all",
+      "body": {
+        "type": "table",
+        "api": "/api/purchase-orders",
+        "columns": [...]
+      }
+    },
+    {
+      "label": "Pending Approval",
+      "key": "pending",
+      "body": {
+        "type": "table",
+        "api": "/api/purchase-orders?status=pending",
+        "columns": [...]
+      }
+    },
+    {
+      "label": "Approved",
+      "key": "approved",
+      "body": {
+        "type": "table",
+        "api": "/api/purchase-orders?status=approved",
+        "columns": [...]
+      }
+    }
+  ]
+}
+```
+
+### Expense Report Approval Page
+
+```json
+{
+  "type": "page",
+  "title": "Expense Reports",
+  "description": "Review and approve employee expense reports",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "Finance", "url": "/finance" },
+    { "label": "Expense Reports" }
+  ],
+  "actions": [
+    {
+      "label": "Submit Report",
+      "onClick": {
+        "type": "dialog",
+        "title": "New Expense Report",
+        "body": {
+          "type": "form",
+          "api": "/api/expense-reports",
+          "fields": [...]
+        }
+      }
+    }
+  ],
+  "body": {
+    "type": "table",
+    "api": "/api/expense-reports",
+    "columns": [...],
+    "filters": [
+      { "name": "status", "label": "Status", "type": "select" },
+      { "name": "dateRange", "label": "Date Range", "type": "datepicker" }
+    ]
+  }
+}
+```
+
+### HR Dashboard with Multiple Sections
+
+```json
+{
+  "type": "page",
+  "title": "HR Dashboard",
+  "description": "Human Resources overview and quick actions",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "HR Dashboard" }
+  ],
+  "tabs": [
+    {
+      "label": "Overview",
+      "key": "overview",
+      "body": {
+        "type": "grid",
+        "columns": 3,
+        "items": [
+          {
+            "type": "card",
+            "title": "Total Employees",
+            "value": "248",
+            "trend": "+12",
+            "trendLabel": "vs last month"
+          },
+          {
+            "type": "card",
+            "title": "Pending Leave Requests",
+            "value": "15",
+            "action": { "type": "navigate", "url": "/leave-requests" }
+          },
+          {
+            "type": "card",
+            "title": "New Hires This Month",
+            "value": "8"
+          }
+        ]
+      }
+    },
+    {
+      "label": "Employees",
+      "key": "employees",
+      "body": {
+        "type": "table",
+        "api": "/api/employees",
+        "columns": [...]
+      }
+    },
+    {
+      "label": "Leave Management",
+      "key": "leave",
+      "body": {
+        "type": "table",
+        "api": "/api/leave-requests",
+        "columns": [...]
+      }
+    }
+  ]
+}
+```
+
+### Inventory Management Page
+
+```json
+{
+  "type": "page",
+  "title": "Inventory",
+  "description": "Track and manage product inventory",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "Operations", "url": "/operations" },
+    { "label": "Inventory" }
+  ],
+  "actions": [
+    {
+      "label": "Add Product",
+      "onClick": {
+        "type": "dialog",
+        "title": "New Product",
+        "body": { "type": "form", "fields": [...] }
+      }
+    },
+    {
+      "label": "Adjust Stock",
+      "onClick": {
+        "type": "dialog",
+        "title": "Stock Adjustment",
+        "body": { "type": "form", "fields": [...] }
+      }
+    },
+    {
+      "label": "Export Report",
+      "onClick": { "type": "download", "url": "/api/inventory/export" }
+    }
+  ],
+  "body": {
+    "type": "table",
+    "api": "/api/inventory",
+    "columns": [...],
+    "filters": [
+      { "name": "category", "label": "Category", "type": "select" },
+      { "name": "lowStock", "label": "Low Stock Alert", "type": "switch" }
+    ]
+  }
+}
+```
+
+### Settings Page with Multiple Tabs
+
+```json
+{
+  "type": "page",
+  "title": "Company Settings",
+  "breadcrumbs": [
+    { "label": "Home", "url": "/" },
+    { "label": "Settings" }
+  ],
+  "tabs": [
+    {
+      "label": "General",
+      "key": "general",
+      "body": {
+        "type": "form",
+        "api": "/api/settings/general",
+        "method": "PUT",
+        "fields": [
+          { "type": "input", "name": "companyName", "label": "Company Name" },
+          { "type": "input", "name": "taxId", "label": "Tax ID" },
+          { "type": "select", "name": "currency", "label": "Default Currency" }
+        ]
+      }
+    },
+    {
+      "label": "Financial",
+      "key": "financial",
+      "body": {
+        "type": "form",
+        "api": "/api/settings/financial",
+        "method": "PUT",
+        "fields": [
+          { "type": "datepicker", "name": "fiscalYearStart", "label": "Fiscal Year Start" },
+          { "type": "input", "name": "taxRate", "label": "Default Tax Rate" },
+          { "type": "select", "name": "paymentTerms", "label": "Default Payment Terms" }
+        ]
+      }
+    },
+    {
+      "label": "Approval Workflow",
+      "key": "approval",
+      "body": {
+        "type": "form",
+        "fields": [
+          { "type": "switch", "name": "requirePOApproval", "label": "Require PO Approval" },
+          { "type": "switch", "name": "requireExpenseApproval", "label": "Require Expense Approval" },
+          { "type": "input", "name": "approvalThreshold", "label": "Auto-approval Threshold" }
+        ]
+      }
+    }
+  ]
+}
+```
+
 ## Features
 
 ### Breadcrumbs
