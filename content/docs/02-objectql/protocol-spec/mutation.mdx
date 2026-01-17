@@ -1,0 +1,78 @@
+---
+title: Mutation Operations
+description: Complete reference for inserting, updating, and deleting data in ObjectQL
+---
+
+# Mutation Operations
+
+This document provides the complete specification for ObjectQL's Mutation operations.
+
+## Insert
+
+```typescript
+await db.mutation('customer', {
+  action: 'insert',
+  data: {
+    name: 'Acme Corp',
+    email: 'contact@acme.com',
+    status: 'active'
+  }
+})
+```
+
+## Update
+
+```typescript
+await db.mutation('customer', {
+  action: 'update',
+  filters: [['_id', '=', customerId]],
+  data: {
+    status: 'inactive',
+    modified: new Date()
+  }
+})
+```
+
+## Delete
+
+```typescript
+await db.mutation('customer', {
+  action: 'delete',
+  filters: [['status', '=', 'archived']]
+})
+```
+
+## Batch Operations
+
+### Batch Insert
+
+```typescript
+// Batch insert
+await db.mutation('product', {
+  action: 'insert',
+  data: [
+    { name: 'Product 1', price: 10 },
+    { name: 'Product 2', price: 20 },
+    { name: 'Product 3', price: 30 }
+  ]
+})
+```
+
+### Batch Update
+
+```typescript
+// Batch update
+await db.mutation('task', {
+  action: 'update',
+  filters: [['project_id', '=', projectId]],
+  data: { status: 'cancelled' }
+})
+```
+
+## Next Steps
+
+- Learn [Query DSL](/docs/02-objectql/protocol-spec/query-dsl) for querying data
+- Explore [Aggregation](/docs/02-objectql/protocol-spec/aggregation) for data analysis
+- Review [Schema Definition](/docs/02-objectql/protocol-spec/schema-definition) for data modeling
+- Explore [Core Features](/docs/02-objectql/core-features) for performance optimizations
+- Master the [Server SDK](/docs/02-objectql/server-sdk) API reference

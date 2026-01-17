@@ -1,0 +1,9 @@
+{
+  "title": "协议规范",
+  "pages": [
+    "schema-definition",
+    "query-dsl",
+    "aggregation",
+    "mutation"
+  ]
+}
