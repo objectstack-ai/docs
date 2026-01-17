@@ -1,0 +1,645 @@
+---
+title: 部署与运维
+description: 以独立模式、服务器模式和多租户模式部署 ObjectOS
+---
+
+# 部署与运维
+
+ObjectOS 支持灵活的部署选项以匹配您的应用需求:从单文件独立可执行程序到容器化的多租户 SaaS 平台。
+
+## 部署模式
+
+ObjectOS 可以以三种主要模式部署:
+
+### 1. 独立模式
+
+带嵌入式数据库的单文件可执行程序,用于本地优先应用。
+
+### 2. 服务器模式
+
+传统的服务器部署,使用外部数据库,用于团队协作。
+
+### 3. 多租户模式
+
+SaaS 就绪的部署,具有完整的租户隔离。
+
+## 独立模式(.oos 文件)
+
+独立模式将您的应用打包为一个带嵌入式 SQLite 数据库的可执行 `.oos` 文件。
+
+### 创建独立应用
+
+```typescript
+// app.ts - 您的应用定义
+import { ObjectOS } from '@objectstack/os'
+
+const app = new ObjectOS({
+  mode: 'standalone',
+  
+  // 嵌入式存储
+  storage: {
+    type: 'sqlite',
+    embedded: true  // 数据库打包在 .oos 文件中
+  },
+  
+  // 您的 schema
+  schema: {
+    objects: {
+      tasks: {
+        fields: {
+          name: { type: 'text', required: true },
+          completed: { type: 'boolean', defaultValue: false }
+        }
+      }
+    }
+  },
+  
+  // 您的页面
+  pages: {
+    home: {
+      type: 'list',
+      object: 'tasks'
+    }
+  }
+})
+
+export default app
+```
+
+### 构建 .oos 文件
+
+```bash
+# 安装 ObjectOS CLI
+npm install -g @objectstack/cli
+
+# 构建独立可执行文件
+objectos build app.ts --output myapp.oos
+
+# 输出: myapp.oos (单个可执行文件)
+```
+
+### 运行 .oos 文件
+
+```bash
+# 添加可执行权限 (Linux/Mac)
+chmod +x myapp.oos
+
+# 运行应用
+./myapp.oos
+
+# 应用启动在 http://localhost:3000
+# 数据默认存储在 ~/.myapp/data.db
+```
+
+### .oos 文件配置
+
+用户可以通过环境变量配置 .oos 文件:
+
+```bash
+# 自定义数据目录
+DATA_DIR=~/Documents/myapp ./myapp.oos
+
+# 自定义端口
+PORT=8080 ./myapp.oos
+
+# 启用同步
+SYNC_ENABLED=true SYNC_URL=https://sync.example.com ./myapp.oos
+```
+
+### 分发
+
+将您的应用作为单个文件分发:
+
+```bash
+# 跨平台构建
+objectos build app.ts --platform linux --output myapp-linux.oos
+objectos build app.ts --platform macos --output myapp-macos.oos
+objectos build app.ts --platform windows --output myapp.exe
+
+# 用户只需下载并运行 - 无需安装!
+```
+
+## 服务器模式(Docker 部署)
+
+服务器模式将 ObjectOS 部署为带外部数据库的容器化服务。
+
+### 基本 Docker 部署
+
+创建 `Dockerfile`:
+
+```dockerfile
+FROM node:18-alpine
+
+# 安装依赖
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --production
+
+# 复制应用
+COPY . .
+
+# 构建应用
+RUN npm run build
+
+# 暴露端口
+EXPOSE 3000
+
+# 启动应用
+CMD ["npm", "start"]
+```
+
+创建 `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@db:5432/myapp
+      - SESSION_SECRET=${SESSION_SECRET}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=myapp
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  db-data:
+```
+
+### 环境变量
+
+通过环境变量配置您的应用:
+
+```bash
+# 数据库连接
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+
+# 服务器设置
+PORT=3000
+HOST=0.0.0.0
+NODE_ENV=production
+
+# 认证
+SESSION_SECRET=your-secret-key-min-32-chars
+JWT_SECRET=your-jwt-secret-key
+
+# OAuth (可选)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# 邮件 (可选)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=your-smtp-user
+SMTP_PASS=your-smtp-password
+
+# 存储 (可选 - 用于文件上传)
+S3_BUCKET=your-bucket
+S3_REGION=us-east-1
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+
+# 日志
+LOG_LEVEL=info  # debug, info, warn, error
+```
+
+### 使用 Docker Compose 部署
+
+```bash
+# 启动服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f app
+
+# 停止服务
+docker-compose down
+
+# 更新应用
+docker-compose pull
+docker-compose up -d --build
+```
+
+### 生产环境部署
+
+对于生产环境,添加这些配置:
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+    deploy:
+      replicas: 3  # 多个实例
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./backups:/backups
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
+
+volumes:
+  db-data:
+```
+
+### Nginx 配置
+
+创建 `nginx.conf` 作为反向代理:
+
+```nginx
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream app {
+        least_conn;
+        server app:3000;
+    }
+
+    server {
+        listen 80;
+        server_name example.com;
+
+        # 重定向 HTTP 到 HTTPS
+        return 301 https://$server_name$request_uri;
+    }
+
+    server {
+        listen 443 ssl http2;
+        server_name example.com;
+
+        # SSL 证书
+        ssl_certificate /etc/nginx/certs/fullchain.pem;
+        ssl_certificate_key /etc/nginx/certs/privkey.pem;
+
+        # 安全头
+        add_header Strict-Transport-Security "max-age=31536000" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+
+        # 代理设置
+        location / {
+            proxy_pass http://app;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_cache_bypass $http_upgrade;
+        }
+
+        # WebSocket 支持
+        location /ws {
+            proxy_pass http://app;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+    }
+}
+```
+
+## 多租户 SaaS 配置
+
+将 ObjectOS 部署为具有完整租户隔离的多租户 SaaS 平台。
+
+### 多租户架构
+
+ObjectOS 支持两种多租户策略:
+
+#### 1. Virtual City 策略(推荐)
+
+使用 ObjectQL 的 Virtual City 机制实现租户隔离:
+
+```typescript
+const app = new ObjectOS({
+  mode: 'multi-tenant',
+  
+  // 多租户配置
+  multiTenant: {
+    enabled: true,
+    strategy: 'virtualCity',  // 使用 Virtual City
+    isolation: 'strict',      // 严格租户隔离
+    
+    // 租户识别
+    identifier: {
+      type: 'subdomain',  // tenant1.app.com, tenant2.app.com
+      // 或: type: 'header', header: 'X-Tenant-ID'
+      // 或: type: 'path',   pattern: '/:tenantId/*'
+    }
+  },
+  
+  // 共享数据库
+  storage: {
+    type: 'postgresql',
+    url: process.env.DATABASE_URL
+  }
+})
+```
+
+#### 2. 每租户独立数据库策略
+
+每个租户使用独立数据库:
+
+```typescript
+const app = new ObjectOS({
+  mode: 'multi-tenant',
+  
+  multiTenant: {
+    enabled: true,
+    strategy: 'database',  // 独立数据库
+    
+    // 数据库路由
+    databaseResolver: async (tenantId) => {
+      return {
+        type: 'postgresql',
+        url: `postgresql://user:pass@host:5432/tenant_${tenantId}`
+      }
+    }
+  }
+})
+```
+
+### 多租户环境变量
+
+```bash
+# 多租户模式
+MULTI_TENANT=true
+TENANT_STRATEGY=virtualCity  # 或 'database'
+TENANT_IDENTIFIER=subdomain   # 'subdomain', 'header', 或 'path'
+
+# 数据库
+DATABASE_URL=postgresql://user:pass@host:5432/saas_app
+
+# 租户管理
+TENANT_AUTO_CREATE=false  # 不自动创建租户
+TENANT_ADMIN_EMAIL=admin@example.com
+```
+
+### 多租户 Docker Compose
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MULTI_TENANT=true
+      - TENANT_STRATEGY=virtualCity
+      - TENANT_IDENTIFIER=subdomain
+      - DATABASE_URL=postgresql://postgres:password@db:5432/saas_app
+      - SESSION_SECRET=${SESSION_SECRET}
+    depends_on:
+      - db
+      - redis
+    deploy:
+      replicas: 3
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=saas_app
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  db-data:
+  redis-data:
+```
+
+### 租户管理
+
+```typescript
+// 创建新租户
+const tenant = await app.tenants.create({
+  id: 'acme-corp',
+  name: 'Acme Corporation',
+  domain: 'acme.myapp.com',
+  plan: 'enterprise',
+  settings: {
+    maxUsers: 100,
+    maxStorage: '100GB'
+  }
+})
+
+// 列出所有租户
+const tenants = await app.tenants.list()
+
+// 通过 ID 获取租户
+const tenant = await app.tenants.get('acme-corp')
+
+// 更新租户
+await app.tenants.update('acme-corp', {
+  plan: 'enterprise-plus',
+  settings: {
+    maxUsers: 500
+  }
+})
+
+// 删除租户(含数据)
+await app.tenants.delete('acme-corp', {
+  deleteData: true  // 永久删除租户数据
+})
+```
+
+## 数据库迁移
+
+跨部署管理 schema 变更:
+
+```bash
+# 生成迁移
+objectos migrate create add-priority-field
+
+# 应用迁移
+objectos migrate up
+
+# 回滚迁移
+objectos migrate down
+
+# 检查迁移状态
+objectos migrate status
+```
+
+迁移文件示例:
+
+```typescript
+// migrations/20240115_add_priority_field.ts
+export async function up(db) {
+  await db.addField('tasks', {
+    priority: { 
+      type: 'select',
+      options: ['low', 'medium', 'high'],
+      defaultValue: 'medium'
+    }
+  })
+}
+
+export async function down(db) {
+  await db.removeField('tasks', 'priority')
+}
+```
+
+## 监控与日志
+
+### 应用日志
+
+```typescript
+const app = new ObjectOS({
+  logging: {
+    level: 'info',  // debug, info, warn, error
+    format: 'json', // json, text
+    outputs: [
+      { type: 'console' },
+      { type: 'file', path: './logs/app.log' },
+      { 
+        type: 'cloudwatch',
+        group: '/aws/objectos/myapp',
+        stream: 'production'
+      }
+    ]
+  }
+})
+```
+
+### 健康检查
+
+```typescript
+// 内置健康检查端点
+// GET /health
+
+{
+  "status": "healthy",
+  "database": "connected",
+  "uptime": 86400,
+  "memory": {
+    "used": "256MB",
+    "total": "1GB"
+  }
+}
+```
+
+### 指标
+
+```typescript
+const app = new ObjectOS({
+  metrics: {
+    enabled: true,
+    endpoint: '/metrics',  // Prometheus 指标
+    include: [
+      'http_requests',
+      'db_queries',
+      'cache_hits',
+      'active_users'
+    ]
+  }
+})
+```
+
+## 备份与恢复
+
+### 自动备份
+
+```bash
+# 设置自动备份 (PostgreSQL)
+# 在 cron 中使用 pg_dump
+
+0 2 * * * docker exec db pg_dump -U postgres myapp > /backups/myapp-$(date +\%Y\%m\%d).sql
+
+# 从备份恢复
+docker exec -i db psql -U postgres myapp < /backups/myapp-20240115.sql
+```
+
+### ObjectOS 备份 API
+
+```typescript
+// 创建备份
+await app.backup.create({
+  path: './backups/myapp-backup.db',
+  includeFiles: true
+})
+
+// 从备份恢复
+await app.backup.restore({
+  path: './backups/myapp-backup.db'
+})
+```
+
+## 下一步
+
+您现在了解了如何以各种配置部署 ObjectOS:
+
+- **[平台架构](/docs/objectos/platform-architecture)** - 回顾平台架构
+- **[身份与访问](/docs/objectos/identity-access)** - 配置安全和权限

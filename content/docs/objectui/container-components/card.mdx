@@ -1,0 +1,111 @@
+---
+title: Card
+description: Card container with header, body, and footer
+---
+
+# Card
+
+Card container with header, body, and footer.
+
+## Protocol
+
+```typescript
+{
+  type: 'card',
+  title?: string,
+  description?: string,
+  cover?: string,             // Cover image URL
+  avatar?: string,            // Avatar image URL
+  actions?: Action[],
+  body: Component | Component[],
+  footer?: Component | Component[],
+}
+```
+
+## Examples
+
+### Basic Card
+
+```json
+{
+  "type": "card",
+  "title": "User Profile",
+  "avatar": "${user.avatar}",
+  "body": [
+    { "type": "text", "value": "Name: ${user.name}" },
+    { "type": "text", "value": "Email: ${user.email}" },
+    { "type": "text", "value": "Role: ${user.role}" }
+  ],
+  "actions": [
+    { "label": "Edit", "onClick": { "type": "navigate", "url": "/users/${user.id}/edit" } },
+    { "label": "Delete", "onClick": { "type": "api", "api": "/api/users/${user.id}", "method": "DELETE" } }
+  ]
+}
+```
+
+### Card with Cover Image
+
+```json
+{
+  "type": "card",
+  "title": "Product",
+  "description": "Premium wireless headphones",
+  "cover": "/images/product.jpg",
+  "body": {
+    "type": "text",
+    "value": "$299.99"
+  },
+  "actions": [
+    { "label": "Buy Now", "onClick": {...} }
+  ]
+}
+```
+
+### Stats Card
+
+```json
+{
+  "type": "card",
+  "title": "Total Sales",
+  "body": {
+    "type": "text",
+    "value": "$${stats.totalSales}",
+    "style": "text-3xl font-bold"
+  },
+  "footer": {
+    "type": "text",
+    "value": "↑ 12% from last month"
+  }
+}
+```
+
+## Features
+
+### Header
+
+Cards can have a title, description, and avatar/cover image in the header.
+
+### Body
+
+The body can contain any component or array of components.
+
+### Footer
+
+Optional footer for additional content or metadata.
+
+### Actions
+
+Action buttons appear in the card's action area.
+
+## Use Cases
+
+- User profiles
+- Product listings
+- Statistics/metrics
+- Content previews
+- Settings panels
+
+## Related Components
+
+- **[Grid](/docs/objectui/container-components/grid)** - Card layouts
+- **[Page](/docs/objectui/container-components/page)** - Page container
