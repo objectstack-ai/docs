@@ -20,7 +20,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Check links in content directory
         uses: gaurav-nelson/github-action-markdown-link-check@1.0.17
