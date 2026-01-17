@@ -1,966 +1,722 @@
 ---
-title: ObjectOS 平台规范
-description: 运行时编排平台 - 身份管理、RBAC、多租户和部署
+title: ObjectOS - 业务操作系统
+description: 企业级内核 - 身份治理、工作流编排与本地优先同步
 ---
 
-# ObjectOS:运行时编排平台
+# ObjectOS:业务操作系统
 
-ObjectOS 是将 ObjectQL(数据)和 ObjectUI(界面)绑定成统一应用环境的**运行时平台**。它提供核心平台服务:身份管理、访问控制、插件架构和灵活的部署模式。
+**你不会通过自己编写进程调度器和文件系统来构建应用。你会使用操作系统(Linux/Windows)。那么,为什么要为每个业务应用重复编写身份验证、工作流引擎和同步逻辑呢?**
 
-## 规范概览
+ObjectOS 是**企业级内核**。它在统一的运行时中编排身份、数据同步和业务流程——消除微服务蔓延和意大利面式单体架构。
 
-ObjectOS **不是应用服务器**——它是一个**平台规范**,包含参考实现。该平台定义:
-
-1. **QL-UI 绑定协议**:ObjectQL 和 ObjectUI 如何通信
-2. **身份与访问系统**:用户管理、RBAC、字段级安全
-3. **插件架构**:业务逻辑的扩展契约
-4. **部署模式**:独立模式、服务器模式和多租户配置
-
-### 核心设计原则
-
-**本地优先设计**:ObjectOS 应用**默认离线运行**。独立模式(.oos 文件)完全在本地设备上运行,无需任何网络依赖。
-
-**数据库无关**:ObjectOS 从不假设特定数据库。配置决定数据是存储在 SQLite(本地)、PostgreSQL(云端)还是 Oracle(企业)中。
-
-**机制而非策略**:ObjectOS 提供身份和权限**机制**(RBAC 接口),而非**策略**(硬编码的用户系统)。应用定义自己的用户模型。
 ---
 
-## 平台架构
+## 指挥中心:ObjectOS 架构
+
+ObjectOS 充当 ObjectStack 生态系统的中央 **CPU**,将 ObjectQL(内存/数据)和 ObjectUI(显示/IO)连接成一个统一的生产级系统。
 
 ```mermaid
 graph TB
-    subgraph "应用层"
-        App[您的应用]
+    subgraph "ObjectOS 内核"
+        Auth[身份与治理<br/>RBAC • SSO • 字段级安全]
+        Workflow[工作流编排<br/>FSM • 审批链 • 自动化]
+        Sync[本地优先同步引擎<br/>CRDT • 冲突解决 • 离线优先]
+        Plugin[插件架构<br/>微内核设计 • CRM/HRM/ERP 作为插件]
     end
     
-    subgraph "ObjectOS 平台"
-        Auth[身份与访问层<br/>用户、角色、权限]
-        Binding[QL-UI 绑定层<br/>数据 ↔ 界面桥接]
-        Plugin[插件架构<br/>自定义业务逻辑]
-        Deploy[部署层<br/>独立 / 服务器 / 多租户]
+    subgraph "数据引擎"
+        QL[ObjectQL<br/>定义数据结构]
     end
     
-    subgraph "核心引擎"
-        UI[ObjectUI<br/>界面协议]
-        QL[ObjectQL<br/>数据协议]
+    subgraph "视图引擎"
+        UI[ObjectUI<br/>定义视觉结构]
     end
     
-    subgraph "基础设施"
-        DB[(数据库)]
-        Storage[文件存储]
-        Cache[缓存层]
-    end
+    Auth --> QL
+    Auth --> UI
+    Workflow --> QL
+    Sync --> QL
+    Plugin --> QL
+    Plugin --> UI
     
-    App --> Auth
-    Auth --> Binding
-    Binding --> UI
-    Binding --> QL
-    Binding --> Plugin
-    Deploy --> DB
-    Deploy --> Storage
-    Deploy --> Cache
-    
-    style Auth fill:#e1f5ff
-    style Binding fill:#fff3e0
-    style Plugin fill:#f3e5f5
-    style Deploy fill:#e8f5e9
+    style Auth fill:#667eea,color:#fff
+    style Workflow fill:#764ba2,color:#fff
+    style Sync fill:#f093fb,color:#fff
+    style Plugin fill:#4facfe,color:#fff
+    style QL fill:#43e97b,color:#fff
+    style UI fill:#fa709a,color:#fff
 ```
 
-### 平台职责
-
-1. **身份与访问**:在协议层管理用户、角色和权限
-2. **QL-UI 绑定**:自动连接 ObjectQL 数据源到 ObjectUI 组件
-3. **插件系统**:为自定义业务逻辑(触发器、验证器、工作流)提供钩子
-4. **部署**:处理应用打包和运行时配置
+**ObjectQL** 定义**数据结构**。**ObjectUI** 定义**视觉结构**。**ObjectOS** 为它们注入生命。
 
 ---
 
-## 核心平台组件
+## 内核的四大支柱
 
-### 1. QL-UI 绑定协议
+ObjectOS 提供四项基础能力,无需编写自定义基础设施代码:
 
-ObjectOS 自动连接 ObjectQL 数据源到 ObjectUI 组件:
+### 1. 身份与治理
 
+**不仅仅是登录库,而是治理引擎。**
+
+ObjectOS 提供内置的**基于角色的访问控制(RBAC)**、通过 OIDC/SAML 实现的**单点登录(SSO)**,以及在协议层(而非应用层)运行的**字段级安全(FLS)**。
+
+**核心能力:**
+- **多租户身份**:具有租户级治理的隔离用户空间
+- **基于属性的访问控制(ABAC)**:使用表达式定义权限(`$user.department === 'sales'`)
+- **审计日志**:记录每个数据变更的用户上下文和时间戳
+- **零信任架构**:无隐式信任;每个请求都根据权限集进行验证
+
+**示例:字段级安全**
 ```typescript
-interface BindingConfiguration {
-  dataSource: ObjectQLConfig        // ObjectQL 连接
-  uiSource: ObjectUIConfig          // UI 协议定义
-  autoSync?: boolean                // 数据变化时自动刷新
-  caching?: CacheStrategy           // 客户端缓存
+interface Employee {
+  name: string          // 所有人可读
+  email: string         // 所有人可读
+  salary: number        // 仅 HR 或管理员可读
+  ssn: string           // 仅管理员可读
 }
 
-interface ObjectQLConfig {
-  driver: DatabaseDriver
-  url: string
-  schema: SchemaRegistry
-}
-
-interface ObjectUIConfig {
-  pages: Record<string, PageProtocol>
-  components: Record<string, ComponentProtocol>
-  theme?: ThemeConfig
-}
-```
-
-**绑定示例**:
-```typescript
-import { ObjectOS } from '@objectstack/os'
-
-const app = new ObjectOS({
-  // 数据层
-  data: {
-    driver: 'sqlite',
-    url: './myapp.db',
-    schema: {
-      objects: {
-        customers: {
-          fields: {
-            name: { type: 'text', required: true },
-            email: { type: 'email', unique: true },
-            status: { type: 'select', options: ['active', 'inactive'] }
-          }
-        }
-      }
-    }
-  },
-  
-  // UI 层
-  ui: {
-    pages: {
-      customers: {
-        type: 'page',
-        title: 'Customer Management',
-        body: {
-          type: 'table',
-          object: 'customers',  // 自动绑定到 ObjectQL 对象
-          columns: [
-            { field: 'name', sortable: true },
-            { field: 'email' },
-            { field: 'status', type: 'badge' }
-          ]
-        }
-      }
-    }
-  }
-})
-
-await app.start()
-```
-
-ObjectOS 处理:
-- ✅ UI 组件挂载时获取数据
-- ✅ 数据操作前进行权限检查(RBAC)
-- ✅ 变更前进行验证
-- ✅ 错误处理和用户反馈
-- ✅ 缓存管理
-
-### 2. 身份与访问管理
-
-ObjectOS 提供**协议级身份系统**,包含 RBAC 和字段级安全:
-
-```typescript
-interface IdentitySystem {
-  objects: {
-    _users: SystemObject            // 内置用户对象
-    _roles: SystemObject            // 内置角色对象
-    _permissions: SystemObject      // 内置权限对象
-  }
-  
-  authentication: AuthConfig        // 认证提供者
-  authorization: AuthzConfig        // 权限规则
-}
-
-interface SystemObject {
-  _users: {
-    fields: {
-      username: { type: 'text', unique: true }
-      email: { type: 'email', unique: true }
-      password_hash: { type: 'text' }  // 永不通过 API 暴露
-      role: { type: 'lookup', reference_to: '_roles' }
-      is_active: { type: 'boolean', defaultValue: true }
-      created_at: { type: 'datetime', auto: 'onCreate' }
-    }
-  }
-  
-  _roles: {
-    fields: {
-      name: { type: 'text', unique: true }
-      description: { type: 'text' }
-      permissions: { type: 'master_detail', reference_to: '_permissions' }
-    }
-  }
-  
-  _permissions: {
-    fields: {
-      object: { type: 'text' }       // 目标对象名称
-      allow_read: { type: 'boolean' }
-      allow_create: { type: 'boolean' }
-      allow_edit: { type: 'boolean' }
-      allow_delete: { type: 'boolean' }
-      field_level_security: { type: 'json' }  // 字段级规则
+// FLS 配置
+{
+  "fields": {
+    "salary": {
+      "read": "$user.role === 'hr' || $user.role === 'admin'",
+      "edit": "$user.role === 'hr'"
+    },
+    "ssn": {
+      "read": "$user.role === 'admin'",
+      "edit": false
     }
   }
 }
 ```
 
-**示例:权限配置**:
-```typescript
-const app = new ObjectOS({
-  // ... 数据和 UI 配置 ...
+当普通用户查询员工数据时,`salary` 和 `ssn` 字段会被内核**自动过滤**——无需应用层过滤。
+
+---
+
+### 2. 工作流编排
+
+**有限状态机(FSM)即代码。不再有嵌套的 if/else 语句。**
+
+ObjectOS 提供**声明式工作流引擎**,审批链、自动化规则和业务流程在 **YAML 或 TypeScript** 中定义,而不是命令式的意大利面代码。
+
+**核心能力:**
+- **状态机定义**:声明式定义状态、转换和守卫
+- **审批链**:带升级规则的多步骤审批
+- **事件驱动触发器**:数据变更或计划触发自动执行
+- **并行执行**:并发运行多个工作流步骤
+- **补偿逻辑**:失败时自动回滚(Saga 模式)
+
+**示例:采购订单审批工作流**
+```yaml
+workflow:
+  name: purchase_order_approval
+  trigger:
+    object: purchase_orders
+    event: insert
+    condition: amount > 10000
   
-  identity: {
-    authentication: {
-      providers: ['email', 'oauth'],
-      jwt: {
-        secret: process.env.JWT_SECRET,
-        expiresIn: '7d'
+  states:
+    - name: pending_manager_approval
+      on_enter:
+        - action: notify
+          recipients: ["{{record.manager.email}}"]
+          template: manager_approval_request
+      
+      transitions:
+        - event: manager_approved
+          target: pending_finance_approval
+          guard: "$user.id === record.manager.id"
+        - event: manager_rejected
+          target: rejected
+    
+    - name: pending_finance_approval
+      on_enter:
+        - action: notify
+          recipients: ["finance@company.com"]
+          template: finance_approval_request
+      
+      transitions:
+        - event: finance_approved
+          target: approved
+          guard: "$user.department === 'finance'"
+        - event: finance_rejected
+          target: rejected
+    
+    - name: approved
+      on_enter:
+        - action: update
+          object: purchase_orders
+          data:
+            status: approved
+            approved_at: "{{now()}}"
+        - action: notify
+          recipients: ["{{record.created_by.email}}"]
+          template: purchase_order_approved
+    
+    - name: rejected
+      on_enter:
+        - action: notify
+          recipients: ["{{record.created_by.email}}"]
+          template: purchase_order_rejected
+```
+
+**结果**:业务逻辑是**配置,而非代码**。内核处理执行、状态持久化和错误恢复。
+
+---
+
+### 3. 本地优先同步引擎
+
+**杀手级功能:离线优先应用与自动冲突解决。**
+
+构建离线优先应用非常困难。ObjectOS 充当**复制主控**,使用**无冲突复制数据类型(CRDT)**和**最后写入获胜(LWW)**策略管理服务器数据库(PostgreSQL/MySQL)和客户端数据库(SQLite/RxDB)之间的差异。
+
+**核心能力:**
+- **自动同步协议**:带 delta 压缩的双向复制
+- **冲突解决**:基于 CRDT 的合并或可自定义的解决策略
+- **离线队列**:变更在本地排队,连接恢复时重放
+- **选择性同步**:仅同步与用户上下文相关的数据(RBAC 感知)
+- **静态加密**:敏感数据的客户端加密
+
+**同步架构:**
+
+```mermaid
+sequenceDiagram
+    participant Client as 客户端 DB<br/>(SQLite)
+    participant Kernel as ObjectOS 内核
+    participant Server as 服务器 DB<br/>(PostgreSQL)
+    
+    Note over Client: 用户在离线状态<br/>下编辑记录
+    Client->>Client: 将变更存储在<br/>本地变更日志
+    
+    Note over Client,Server: 网络恢复
+    
+    Client->>Kernel: 推送变更日志
+    Kernel->>Kernel: 检测冲突<br/>(CRDT/LWW)
+    Kernel->>Server: 提交已解决的变更
+    Server-->>Kernel: 确认
+    Kernel-->>Client: 返回同步状态
+    
+    Note over Server: 另一用户编辑<br/>同一记录
+    Server->>Kernel: 新变更事件
+    Kernel->>Client: 推送 delta
+    Client->>Client: 使用 CRDT 合并
+```
+
+**示例:冲突解决配置**
+```typescript
+{
+  sync: {
+    enabled: true,
+    remote: 'https://api.example.com',
+    strategy: 'crdt',  // 或 'last-write-wins', 'manual'
+    
+    conflictResolution: {
+      // 字段级解决策略
+      fields: {
+        title: 'last-write-wins',
+        description: 'crdt-text',  // 文本的操作转换
+        priority: 'max',            // 取最高值
+        assignee: 'manual'          // 需要用户干预
       }
     },
     
-    authorization: {
-      defaultRole: 'user',
-      roles: {
-        admin: {
-          permissions: {
-            customers: { read: true, create: true, edit: true, delete: true },
-            orders: { read: true, create: true, edit: true, delete: true }
-          }
-        },
-        user: {
-          permissions: {
-            customers: { 
-              read: true, 
-              create: false, 
-              edit: false, 
-              delete: false 
-            },
-            orders: { 
-              read: 'owner eq $user.id',  // 基于公式的权限
-              create: true, 
-              edit: 'owner eq $user.id', 
-              delete: false 
-            }
-          }
-        },
-        guest: {
-          permissions: {
-            customers: { read: false, create: false, edit: false, delete: false },
-            orders: { read: false, create: false, edit: false, delete: false }
-          }
-        }
-      }
-    }
-  }
-})
-```
-
-### 3. 字段级安全(FLS)
-
-字段级别的细粒度访问控制:
-
-```typescript
-interface FieldLevelSecurity {
-  object: string
-  field: string
-  read?: boolean | Expression      // 可以读取字段吗?
-  edit?: boolean | Expression      // 可以修改字段吗?
-}
-```
-
-**示例:FLS 配置**:
-```json
-{
-  "objects": {
-    "employees": {
-      "fields": {
-        "name": { "type": "text" },
-        "email": { "type": "email" },
-        "salary": { 
-          "type": "currency",
-          "field_level_security": {
-            "read": "$user.role === 'hr' || $user.role === 'admin'",
-            "edit": "$user.role === 'hr'"
-          }
-        },
-        "ssn": { 
-          "type": "text",
-          "field_level_security": {
-            "read": "$user.role === 'admin'",
-            "edit": false
-          }
-        }
-      }
+    // 仅同步用户有权查看的数据
+    filter: '$user.accessible_records',
+    
+    // 传输前加密
+    encryption: {
+      enabled: true,
+      algorithm: 'AES-256-GCM'
     }
   }
 }
 ```
 
-当普通用户查询员工时:
-```json
-// 查询
-{ "object": "employees" }
+**结果**:您的应用**默认离线工作**。同步是实现细节,而非功能。
 
-// 响应(salary 和 ssn 字段自动过滤)
-[
-  { "name": "John Doe", "email": "john@company.com" }
-]
-```
+---
 
 ### 4. 插件架构
 
-使用自定义业务逻辑扩展 ObjectOS:
+**微内核设计:一切皆插件。**
 
+ObjectOS 遵循**微内核架构**,核心仅提供原始操作(认证、数据访问、工作流执行)。所有业务逻辑——CRM、HRM、ERP——都通过**清单**作为**插件**加载。
+
+**核心能力:**
+- **声明式清单**:定义插件依赖、权限和生命周期钩子
+- **沙盒执行**:插件在具有显式权限的隔离上下文中运行
+- **热重载**:无需重启内核即可更新插件
+- **版本管理**:具有语义版本控制的并行插件版本
+- **市场就绪**:将插件分发为 npm 包或 Docker 镜像
+
+**示例:CRM 插件清单**
 ```typescript
-interface ObjectOSPlugin {
-  name: string
-  version: string
+// crm-plugin.manifest.ts
+export const CRMPlugin: PluginManifest = {
+  name: '@company/crm',
+  version: '2.1.0',
   
-  // 生命周期钩子
-  onInstall?(): Promise<void>
-  onUninstall?(): Promise<void>
-  onStart?(app: ObjectOSApp): Promise<void>
-  onStop?(): Promise<void>
-  
-  // 数据钩子
-  beforeQuery?(query: QueryProtocol): Promise<QueryProtocol>
-  afterQuery?(result: QueryResult): Promise<QueryResult>
-  beforeMutation?(mutation: MutationProtocol): Promise<MutationProtocol>
-  afterMutation?(result: MutationResult): Promise<MutationResult>
-  
-  // UI 钩子
-  beforeRender?(protocol: ComponentProtocol): Promise<ComponentProtocol>
-  
-  // 自定义路由
-  routes?: RouteDefinition[]
-  
-  // 自定义组件
-  components?: Record<string, ComponentDefinition>
-}
-```
-
-**示例:审计日志插件**:
-```typescript
-const auditLogPlugin: ObjectOSPlugin = {
-  name: 'audit-log',
-  version: '1.0.0',
-  
-  async afterMutation(result: MutationResult) {
-    // 记录所有数据变更
-    await this.db.insert({
-      object: '_audit_logs',
-      action: 'insert',
-      data: {
-        user_id: this.context.user.id,
-        object: result.object,
-        action: result.action,
-        record_id: result.id,
-        timestamp: new Date(),
-        changes: result.changes
-      }
-    })
-    
-    return result
-  }
-}
-
-// 安装插件
-app.use(auditLogPlugin)
-```
-
-**示例:邮件通知插件**:
-```typescript
-const emailPlugin: ObjectOSPlugin = {
-  name: 'email-notifications',
-  version: '1.0.0',
-  
-  async afterMutation(result: MutationResult) {
-    if (result.object === 'orders' && result.action === 'insert') {
-      // 发送订单确认邮件
-      await this.sendEmail({
-        to: result.data.customer_email,
-        subject: 'Order Confirmation',
-        template: 'order-confirmation',
-        data: result.data
-      })
+  // 依赖项
+  requires: {
+    objectos: '^3.0.0',
+    plugins: {
+      '@company/email-service': '^1.0.0'
     }
-    
-    return result
   },
   
-  routes: [
-    {
-      path: '/api/emails/preview/:template',
-      method: 'GET',
-      handler: async (req, res) => {
-        const template = await this.renderTemplate(req.params.template)
-        res.send(template)
-      }
-    }
-  ]
-}
-```
-
----
-
-## 部署模式
-
-ObjectOS 支持三种部署策略:
-
-### 1. 独立模式(本地优先)
-
-**使用场景**:个人应用、离线优先工具、边缘计算
-
-**配置**:
-```typescript
-const app = new ObjectOS({
-  mode: 'standalone',
-  storage: './myapp.oos',  // 单文件 SQLite 数据库
-  ui: {
-    pages: { ... }
-  }
-})
-
-await app.start()
-```
-
-**特性**:
-- ✅ 无需服务器基础设施
-- ✅ 完全离线能力
-- ✅ 数据存储在本地 .oos 文件(SQLite)
-- ✅ 可作为单个可执行文件分发
-- ✅ 无需网络连接
-
-**分发**:
-```bash
-# 打包为独立可执行文件
-objectstack build --mode standalone --output myapp.oos
-
-# 可在任何地方运行
-./myapp.oos
-# 或
-objectstack run myapp.oos
-```
-
-### 2. 服务器模式(云/企业)
-
-**使用场景**:团队协作、Web 应用、云部署
-
-**配置**:
-```typescript
-const app = new ObjectOS({
-  mode: 'server',
-  port: 3000,
-  data: {
-    driver: 'postgres',
-    url: process.env.DATABASE_URL
+  // 所需权限
+  permissions: {
+    objects: ['contacts', 'companies', 'opportunities'],
+    actions: ['read', 'create', 'update', 'delete'],
+    apis: ['/api/crm/*']
   },
-  identity: {
-    authentication: {
-      providers: ['email', 'oauth'],
-      oauth: {
-        google: {
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET
+  
+  // Schema 扩展
+  schema: {
+    objects: {
+      contacts: {
+        fields: {
+          name: { type: 'text', required: true },
+          email: { type: 'email', unique: true },
+          company: { type: 'lookup', reference_to: 'companies' },
+          lead_score: { type: 'number', formula: 'calculate_lead_score()' }
+        }
+      },
+      companies: {
+        fields: {
+          name: { type: 'text', required: true },
+          industry: { type: 'select', options: ['tech', 'finance', 'retail'] },
+          annual_revenue: { type: 'currency' }
         }
       }
     }
   },
-  ui: {
-    pages: { ... }
-  }
-})
-
-await app.listen()
-```
-
-**特性**:
-- ✅ 支持多用户认证
-- ✅ 自动生成 RESTful API
-- ✅ 适用于任何数据库(MySQL、PostgreSQL、Oracle)
-- ✅ 通过负载均衡器水平扩展
-- ✅ 可与现有系统集成
-
-**部署**:
-```dockerfile
-# Dockerfile
-FROM node:18
-WORKDIR /app
-COPY package.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-```bash
-# 部署到云端
-docker build -t myapp .
-docker push myapp:latest
-kubectl apply -f deployment.yaml
-```
-
-### 3. 多租户 SaaS 模式
-
-**使用场景**:SaaS 平台、多租户应用
-
-**配置**:
-```typescript
-const app = new ObjectOS({
-  mode: 'multi-tenant',
-  tenantStrategy: 'virtualCity',  // 或 'schema' 或 'database'
-  data: {
-    driver: 'postgres',
-    url: process.env.DATABASE_URL
+  
+  // 工作流定义
+  workflows: {
+    lead_nurturing: {
+      trigger: { object: 'contacts', event: 'insert' },
+      steps: [
+        { action: 'wait', duration: '1 day' },
+        { action: 'send_email', template: 'welcome' },
+        { action: 'wait', duration: '3 days' },
+        { action: 'send_email', template: 'follow_up', condition: 'lead_score < 50' }
+      ]
+    }
   },
-  multiTenant: {
-    identification: {
-      strategy: 'subdomain',  // customer1.myapp.com, customer2.myapp.com
-      // 或: 'header'         // X-Tenant-ID header
-      // 或: 'jwt'            // 从 JWT token 提取
+  
+  // UI 扩展
+  ui: {
+    pages: {
+      contacts: { type: 'list', object: 'contacts' },
+      contact_detail: { type: 'detail', object: 'contacts' }
     },
-    isolation: {
-      strategy: 'virtualCity',    // 所有租户在一个数据库中,通过上下文过滤
-      // 或: 'schema'              // 每个租户获得一个 PostgreSQL schema
-      // 或: 'database'            // 每个租户获得单独数据库
+    dashboard_widgets: [
+      { type: 'chart', title: 'Leads by Source', query: 'aggregate_leads_by_source()' }
+    ]
+  },
+  
+  // 生命周期钩子
+  lifecycle: {
+    async onInstall() {
+      // 种子初始数据
+      await this.seed('data/initial_industries.json')
     },
-    provisioning: {
-      autoCreate: true,            // 注册时自动创建租户
-      defaultPlan: 'trial'
+    async onStart() {
+      // 注册自定义路由
+      this.router.post('/api/crm/import', importContactsHandler)
     }
   }
-})
-
-// 中间件提取租户上下文
-app.use((req, res, next) => {
-  const tenantId = req.hostname.split('.')[0]  // 从子域名提取
-  req.tenant = app.getTenant(tenantId)
-  next()
-})
-
-// 所有查询自动限定到租户范围
-app.get('/api/customers', async (req, res) => {
-  const customers = await req.tenant.query('customers', {})
-  res.json(customers)  // 仅返回该租户的客户
-})
+}
 ```
 
-**租户隔离策略**:
-
-| 策略 | 描述 | 优点 | 缺点 | 使用场景 |
-|----------|-------------|------|------|----------|
-| **虚拟城市** | 所有租户共享数据库,通过上下文过滤 | ✅ 资源利用率高<br/>✅ 管理简单 | ❌ 需要仔细过滤<br/>❌ 单点故障 | 多租户、中等数据量 |
-| **Schema 隔离** | 每个租户获得 PostgreSQL schema | ✅ 数据隔离<br/>✅ 备份简单 | ❌ Schema 限制(PostgreSQL:约100个)<br/>❌ 迁移复杂 | 数百个租户 |
-| **Database 隔离** | 每个租户获得独立数据库 | ✅ 完全隔离<br/>✅ 独立扩展<br/>✅ 迁移简单 | ❌ 资源使用高<br/>❌ 管理开销大 | 企业客户、高价值租户 |
+**结果**:业务逻辑是**声明式配置**。内核处理实例化、依赖注入和生命周期管理。
 
 ---
 
-## 高级特性
+## 复制协议:本地优先深度解析
 
-### 1. 混合同步(本地优先 + 云端)
+**问题**:构建离线优先应用需要管理复杂的状态同步、冲突解决和网络分区处理。大多数团队低估了这种复杂性,最终得到脆弱、容易出错的实现。
 
-结合独立模式与可选云同步:
+**解决方案**:ObjectOS 提供**复制协议**,处理整个同步生命周期——从离线变更到冲突检测再到合并策略。
+
+### 工作原理
+
+ObjectOS 实现**日志结构复制**系统:
+
+1. **每个变更都会创建一个变更日志条目**(客户端和服务器)
+2. **同步比较向量时钟**以检测分歧
+3. **使用可配置策略解决冲突**(CRDT、LWW、手动)
+4. **已解决的状态被提交**到客户端和服务器
+
+```mermaid
+graph LR
+    subgraph "客户端"
+        C1[用户操作] --> C2[本地变更]
+        C2 --> C3[变更日志条目<br/>向量时钟: v1]
+        C3 --> C4[本地 DB 更新]
+    end
+    
+    subgraph "同步引擎"
+        S1[检测在线] --> S2[比较向量时钟]
+        S2 --> S3{冲突?}
+        S3 -->|是| S4[运行解决策略]
+        S3 -->|否| S5[直接合并]
+        S4 --> S6[提交已解决状态]
+        S5 --> S6
+    end
+    
+    subgraph "服务器端"
+        V1[接收变更日志] --> V2[验证权限]
+        V2 --> V3[应用到服务器 DB]
+        V3 --> V4[广播给其他客户端]
+    end
+    
+    C4 --> S1
+    S6 --> V1
+```
+
+### 冲突解决策略
+
+ObjectOS 支持每个字段的多种解决策略:
+
+| 策略 | 描述 | 使用场景 | 示例 |
+|----------|-------------|----------|---------|
+| **最后写入获胜(LWW)** | 最新时间戳获胜 | 简单字段(状态、类别) | `priority: 'last-write-wins'` |
+| **CRDT(操作转换)** | 合并并发编辑 | 协作文本编辑 | `description: 'crdt-text'` |
+| **Max/Min** | 取最高/最低值 | 计数器、评分 | `view_count: 'max'` |
+| **Union** | 组合所有值 | 标签、多选 | `tags: 'union'` |
+| **手动** | 需要用户解决 | 关键字段 | `assignee: 'manual'` |
+
+### 复制主控架构
 
 ```typescript
+// ObjectOS 充当复制主控
+interface ReplicationMaster {
+  // 跟踪客户端状态
+  clients: Map<ClientID, VectorClock>
+  
+  // 变更日志存储
+  serverLog: ChangelogEntry[]
+  
+  // 冲突检测器
+  detectConflicts(
+    clientLog: ChangelogEntry[],
+    serverLog: ChangelogEntry[]
+  ): Conflict[]
+  
+  // 解析器
+  resolveConflicts(
+    conflicts: Conflict[],
+    strategy: ResolutionStrategy
+  ): ResolvedState
+  
+  // 广播器
+  broadcastToClients(
+    changes: ChangelogEntry[],
+    excludeClient?: ClientID
+  ): void
+}
+```
+
+**示例:配置同步行为**
+```typescript
 const app = new ObjectOS({
-  mode: 'standalone',
-  storage: './myapp.oos',
+  mode: 'hybrid',  // 本地优先 + 可选同步
+  
+  storage: {
+    local: './app.db',  // SQLite
+    remote: 'postgres://server/db'
+  },
   
   sync: {
     enabled: true,
-    remote: 'https://sync.myapp.com',
-    strategy: 'manual',  // 或 'automatic', 'scheduled'
-    conflict: 'last-write-wins',  // 或 'manual-resolution'
+    
+    // 同步间隔(0 = 仅手动)
+    interval: 60000,  // 60 秒
+    
+    // 每个对象的冲突解决
+    objects: {
+      tasks: {
+        title: 'last-write-wins',
+        description: 'crdt-text',     // 操作转换
+        assignee: 'manual',            // 用户必须解决
+        completed_at: 'last-write-wins'
+      },
+      
+      analytics: {
+        view_count: 'max',             // 取最高值
+        tags: 'union'                  // 合并所有标签
+      }
+    },
+    
+    // 选择性同步(RBAC 感知)
+    filter: {
+      tasks: '$user.team.id === record.team_id',
+      analytics: 'record.public === true'
+    },
+    
+    // 加密
     encryption: {
       enabled: true,
       algorithm: 'AES-256-GCM',
-      key: process.env.ENCRYPTION_KEY
-    }
-  }
-})
-
-// 手动触发同步
-await app.sync.push()  // 上传本地变更
-await app.sync.pull()  // 下载远程变更
-await app.sync.bidirectional()  // 双向同步并解决冲突
-```
-
-### 2. 工作流引擎
-
-内置工作流自动化:
-
-```typescript
-const app = new ObjectOS({
-  // ... 配置 ...
-  
-  workflows: {
-    order_approval: {
-      trigger: { 
-        object: 'orders', 
-        action: 'insert',
-        condition: 'total_amount > 10000'
-      },
-      steps: [
-        {
-          action: 'update',
-          object: 'orders',
-          data: { status: 'pending_approval' }
-        },
-        {
-          action: 'notification',
-          type: 'email',
-          to: '{{approver.email}}',
-          template: 'order-approval-request'
-        }
-      ]
+      key: process.env.SYNC_ENCRYPTION_KEY
     },
     
-    lead_nurturing: {
-      trigger: {
-        object: 'leads',
-        action: 'insert'
-      },
-      steps: [
-        { action: 'wait', duration: '1 day' },
-        {
-          action: 'notification',
-          type: 'email',
-          template: 'welcome-email'
-        },
-        { action: 'wait', duration: '3 days' },
-        {
-          action: 'notification',
-          type: 'email',
-          template: 'follow-up-email',
-          condition: 'status == "new"'
-        }
-      ]
+    // 性能批处理
+    batch: {
+      maxSize: 100,        // 每次同步最多 100 个变更
+      maxWait: 5000        // 强制同步前最多等待 5 秒
     }
   }
 })
 ```
 
-### 3. API 生成
+### 离线队列管理
 
-ObjectOS 从 ObjectQL schemas 自动生成 RESTful API:
+离线时,ObjectOS 在本地对变更排队:
 
 ```typescript
-// Schema 定义
-{
+// 用户离线时编辑
+await db.update('tasks', taskId, { status: 'completed' })
+
+// 变更在本地排队
+// Queue: [
+//   { 
+//     object: 'tasks', 
+//     action: 'update', 
+//     id: taskId, 
+//     changes: { status: 'completed' },
+//     timestamp: '2024-01-17T10:30:00Z',
+//     vectorClock: { client: 'abc123', version: 42 }
+//   }
+// ]
+
+// 在线时,队列自动重放
+// ObjectOS 处理:
+// ✅ 权限重新验证(以防 RBAC 发生变化)
+// ✅ 冲突检测
+// ✅ 合并策略
+// ✅ 错误恢复(指数退避重试)
+```
+
+**结果**:开发人员定义**要同步什么**和**如何解决冲突**。ObjectOS 处理**何时**和**在哪里**。
+
+---
+
+## 生态系统集成:三位一体
+
+ObjectOS 通过将**数据结构**(ObjectQL)和**视觉结构**(ObjectUI)绑定到**活系统**中,完成了 ObjectStack 三位一体。
+
+```mermaid
+graph TB
+    subgraph "开发人员职责"
+        D1[定义数据模型<br/>ObjectQL Schema]
+        D2[定义 UI 组件<br/>ObjectUI 协议]
+        D3[定义业务逻辑<br/>工作流 + 插件]
+    end
+    
+    subgraph "ObjectOS 内核职责"
+        K1[身份验证]
+        K2[授权 RBAC/FLS]
+        K3[数据验证]
+        K4[工作流执行]
+        K5[同步编排]
+        K6[插件生命周期]
+        K7[API 生成]
+    end
+    
+    subgraph "运行时环境"
+        R1[独立应用<br/>.oos 文件]
+        R2[Web 服务器<br/>Docker + K8s]
+        R3[多租户 SaaS<br/>隔离租户]
+    end
+    
+    D1 --> K3
+    D1 --> K7
+    D2 --> K7
+    D3 --> K4
+    D3 --> K6
+    
+    K1 --> K2
+    K2 --> K3
+    K3 --> K7
+    K4 --> K5
+    K6 --> K5
+    
+    K7 --> R1
+    K7 --> R2
+    K7 --> R3
+    
+    style D1 fill:#43e97b,color:#000
+    style D2 fill:#fa709a,color:#fff
+    style D3 fill:#667eea,color:#fff
+    style K1 fill:#764ba2,color:#fff
+    style K2 fill:#764ba2,color:#fff
+    style K3 fill:#764ba2,color:#fff
+    style K4 fill:#764ba2,color:#fff
+    style K5 fill:#764ba2,color:#fff
+    style K6 fill:#764ba2,color:#fff
+    style K7 fill:#764ba2,color:#fff
+```
+
+### 职责划分
+
+| 组件 | 定义 | 输出 | 示例 |
+|-----------|---------|--------|---------|
+| **ObjectQL** | 数据结构 | JSON Schema + 验证规则 | `{ object: 'users', fields: { email: { type: 'email', unique: true } } }` |
+| **ObjectUI** | 视觉结构 | 组件协议 | `{ type: 'form', object: 'users', fields: ['name', 'email'] }` |
+| **ObjectOS** | 运行时行为 | 可执行应用 | 身份验证 + 同步 + 工作流 |
+
+### 示例:端到端集成
+
+**步骤 1:定义数据(ObjectQL)**
+```typescript
+const schema = {
   objects: {
-    products: {
+    invoices: {
       fields: {
-        name: { type: 'text', required: true },
-        price: { type: 'currency' },
-        category: { type: 'select', options: ['electronics', 'clothing'] }
+        invoice_number: { type: 'autonumber', prefix: 'INV-' },
+        customer: { type: 'lookup', reference_to: 'customers' },
+        total: { type: 'currency', formula: 'SUM(line_items.amount)' },
+        status: { 
+          type: 'select', 
+          options: ['draft', 'sent', 'paid', 'overdue'],
+          default: 'draft'
+        },
+        due_date: { type: 'date' }
       }
     }
   }
 }
-
-// 自动生成的 REST API:
-// GET    /api/products           - 列出所有产品
-// GET    /api/products/:id       - 获取单个产品
-// POST   /api/products           - 创建产品
-// PATCH  /api/products/:id       - 更新产品
-// DELETE /api/products/:id       - 删除产品
-// GET    /api/products/count     - 统计产品数量
-// POST   /api/products/aggregate - 聚合产品数据
 ```
 
-通过插件自定义 API 端点:
-
+**步骤 2:定义 UI(ObjectUI)**
 ```typescript
-const customAPIPlugin: ObjectOSPlugin = {
-  name: 'custom-api',
-  routes: [
-    {
-      path: '/api/products/featured',
-      method: 'GET',
-      handler: async (req, res) => {
-        const products = await req.db.query({
-          object: 'products',
-          filters: [{ field: 'featured', operator: 'eq', value: true }],
-          top: 10
-        })
-        res.json(products)
+const pages = {
+  invoices: {
+    type: 'list',
+    object: 'invoices',
+    filters: [{ field: 'status', operator: 'ne', value: 'paid' }],
+    columns: ['invoice_number', 'customer', 'total', 'status', 'due_date'],
+    actions: [
+      {
+        label: 'Send Invoice',
+        trigger: 'workflow:send_invoice',
+        condition: 'status === "draft"'
       }
-    }
-  ]
+    ]
+  }
 }
 ```
 
-### 4. 实时更新
+**步骤 3:定义工作流(ObjectOS)**
+```yaml
+workflows:
+  send_invoice:
+    trigger:
+      manual: true
+      object: invoices
+      condition: status === 'draft'
+    
+    steps:
+      - action: update
+        object: invoices
+        data:
+          status: sent
+          sent_at: "{{now()}}"
+      
+      - action: send_email
+        to: "{{record.customer.email}}"
+        subject: "Invoice {{record.invoice_number}}"
+        template: invoice_email
+        attachments:
+          - type: pdf
+            template: invoice_pdf
+      
+      - action: schedule
+        delay: "{{record.due_date}}"
+        workflow: check_overdue
+```
 
-支持实时数据的 WebSocket:
-
+**步骤 4:ObjectOS 编排一切**
 ```typescript
 const app = new ObjectOS({
-  // ... 配置 ...
+  schema,      // 来自 ObjectQL
+  pages,       // 来自 ObjectUI
+  workflows,   // 业务逻辑
   
-  realtime: {
-    enabled: true,
-    transport: 'websocket',
-    port: 3001
-  }
+  // ObjectOS 处理:
+  identity: { authentication: { providers: ['email'] } },
+  sync: { enabled: true, strategy: 'crdt' },
+  deployment: { mode: 'server', port: 3000 }
 })
 
-// 客户端(通过 ObjectUI 自动)
-{
-  type: 'table',
-  object: 'orders',
-  realtime: true  // 数据变化时表格自动更新
-}
+await app.start()
+// ✅ RESTful API 自动生成
+// ✅ Web UI 自动渲染
+// ✅ 身份验证已启用
+// ✅ 工作流已激活
+// ✅ 同步已配置
 ```
+
+**结果**:您定义**什么**(数据、UI、逻辑)。ObjectOS 处理**如何**(认证、同步、部署)。
 
 ---
 
-## 使用场景
+## ObjectOS 的重要性
 
-### 1. 个人生产力工具
+### 对于 CTO 和企业架构师
 
-**场景**:笔记应用、本地 CRM、项目管理
+**您正在解决的问题:**
+- **微服务蔓延**:47 个服务都在做认证,每个都略有不同
+- **意大利面式单体**:业务逻辑埋藏在控制器中,无法测试
+- **供应商锁定**:与 Firebase/Supabase/AWS Amplify 紧密耦合
+- **合规噩梦**:没有审计跟踪,不一致的 RBAC
 
-**配置**:
-```typescript
-const app = new ObjectOS({
-  mode: 'standalone',
-  storage: '~/.mynotes/data.oos'
-})
-```
+**ObjectOS 提供:**
+- **统一控制平面**:所有应用的一个治理模型
+- **声明式一切**:逻辑作为配置,而非代码
+- **数据库无关**:今天 MySQL,明天 PostgreSQL,遗留系统用 Oracle
+- **合规就绪**:内置审计日志、RBAC、FLS
 
-**优势**:
-- 零配置——下载即可运行
-- 完全隐私——数据永不离开设备
-- 天然离线工作
-- 可选择性同步到云端
+### 对于后端负责人
 
-### 2. 企业系统集成
+**您正在解决的问题:**
+- **样板地狱**:每个微服务中相同的认证代码
+- **同步复杂性**:CRDT 很难;您做错了 LWW
+- **测试困难**:业务逻辑与框架代码混合
 
-**场景**:跨多个遗留数据库的统一仪表板
-
-**配置**:
-```typescript
-// 连接多个数据源
-const erpDB = new ObjectQL({ driver: 'oracle', url: 'oracle://...' })
-const crmDB = new ObjectQL({ driver: 'sqlserver', url: 'sqlserver://...' })
-
-const app = new ObjectOS({
-  mode: 'server',
-  dataSources: {
-    erp: erpDB,
-    crm: crmDB
-  },
-  ui: {
-    pages: {
-      dashboard: {
-        type: 'grid',
-        items: [
-          { type: 'table', object: 'erp.customers' },
-          { type: 'table', object: 'crm.leads' }
-        ]
-      }
-    }
-  }
-})
-```
-
-**优势**:
-- 多系统统一 UI
-- 一致的查询语言
-- 无需自定义集成代码
-- 易于维护和扩展
-
-### 3. 多租户 SaaS 平台
-
-**场景**:项目管理 SaaS
-
-**配置**:
-```typescript
-const app = new ObjectOS({
-  mode: 'multi-tenant',
-  tenantStrategy: 'schema',
-  data: {
-    driver: 'postgres',
-    url: process.env.DATABASE_URL
-  },
-  identity: {
-    authentication: {
-      providers: ['email', 'oauth']
-    }
-  }
-})
-```
-
-**优势**:
-- 完全租户隔离
-- 开箱即用的 RBAC
-- 可扩展架构
-- 可在策略间迁移租户
-
----
-
-## 学习内容
-
-本规范文档涵盖:
-
-- ✅ **[平台架构](/cn/docs/objectos/architecture)** - QL-UI 绑定、身份系统、插件架构
-- ✅ **[身份与访问](/cn/docs/objectos/identity-access)** - 用户管理、RBAC、字段级安全
-- ✅ **[插件开发](/cn/docs/objectos/plugins)** - 创建自定义业务逻辑扩展
-- ✅ **[部署指南](/cn/docs/objectos/deployment)** - 独立、服务器和多租户模式
-- ✅ **[API 参考](/cn/docs/objectos/api-reference)** - 完整的 ObjectOS SDK 文档
-- ✅ **[最佳实践](/cn/docs/objectos/best-practices)** - 安全、性能和可扩展性模式
-
----
-
-## 快速开始示例
-
-这是一个完整的端到端示例:
-
-```typescript
-import { ObjectOS } from '@objectstack/os'
-
-// 1. 初始化 ObjectOS
-const app = new ObjectOS({
-  mode: 'server',
-  port: 3000,
-  
-  // 数据层(ObjectQL)
-  data: {
-    driver: 'sqlite',
-    url: './myapp.db',
-    schema: {
-      objects: {
-        tasks: {
-          fields: {
-            title: { type: 'text', required: true },
-            status: { type: 'select', options: ['todo', 'in_progress', 'done'] },
-            owner: { type: 'lookup', reference_to: '_users' }
-          },
-          permission_set: {
-            user: {
-              allowRead: true,
-              allowCreate: true,
-              allowEdit: 'owner eq $user.id',
-              allowDelete: 'owner eq $user.id'
-            }
-          }
-        }
-      }
-    }
-  },
-  
-  // UI 层(ObjectUI)
-  ui: {
-    pages: {
-      home: {
-        type: 'page',
-        title: 'My Tasks',
-        body: {
-          type: 'table',
-          object: 'tasks',
-          filters: [{ field: 'status', operator: 'ne', value: 'done' }],
-          columns: [
-            { field: 'title', sortable: true },
-            { field: 'status', type: 'badge' }
-          ],
-          actions: [
-            {
-              label: 'Complete',
-              type: 'api_request',
-              api: '/api/tasks/{{row.id}}',
-              method: 'PATCH',
-              data: { status: 'done' }
-            }
-          ]
-        }
-      }
-    }
-  },
-  
-  // 身份层
-  identity: {
-    authentication: {
-      providers: ['email']
-    },
-    authorization: {
-      defaultRole: 'user'
-    }
-  }
-})
-
-// 2. 启动应用
-await app.listen()
-console.log('ObjectOS running at http://localhost:3000')
-```
-
-这创建了一个完整的任务管理应用,包含:
-- SQLite 数据库
-- 用户认证
-- 权限控制的任务 CRUD
-- 自动 REST API
-- Web 界面
-- 仅用约 50 行代码
-
----
-
-## 设计原理
-
-### 为什么需要 QL-UI 绑定?
-
-**手动 API 开发很繁琐**。自动绑定提供:
-
-- **零样板代码**:无需编写 REST 控制器
-- **类型安全**:ObjectQL schema 强制数据契约
-- **权限强制执行**:自动应用 RBAC
-- **一致性**:所有组件遵循相同模式
-
-### 为什么内置身份系统?
-
-**大多数应用都需要用户管理**。内置系统提供:
-
-- **标准对象**:`_users`、`_roles`、`_permissions` 对象
-- **开箱即用的 RBAC**:无需自定义权限代码
-- **字段级安全**:细粒度访问控制
-- **集成就绪**:可插拔的认证提供者(OAuth、LDAP、SAML)
-
-### 为什么需要插件架构?
-
-**每个应用都有独特需求**。插件系统提供:
-
-- **可扩展性**:无需分叉即可添加自定义业务逻辑
-- **可组合性**:组合插件实现复杂工作流
-- **可维护性**:插件与核心平台隔离
-- **社区**:跨项目共享和重用插件
-
----
-
-## 规范合规性
-
-ObjectOS 实现必须通过 **ObjectOS 合规性测试套件**:
-
-- ✅ 具有自动数据获取的 QL-UI 绑定
-- ✅ 用户认证和会话管理
-- ✅ RBAC 权限强制执行
-- ✅ 字段级安全过滤
-- ✅ 具有生命周期钩子的插件系统
-- ✅ 独立模式(.oos 文件执行)
-- ✅ 服务器模式(HTTP API 服务器)
-- ✅ 多租户模式(虚拟城市隔离)
-
-参考实现:
-- **Node.js**: [@objectstack/os](https://github.com/objectstack-ai/objectos) (JavaScript/TypeScript)
-- **Python**: [objectos-py](https://github.com/objectstack-ai/objectos-py) (计划中)
-- **Go**: [objectos-go](https://github.com/objectstack-ai/objectos-go) (计划中)
+**ObjectOS 提供:**
+- **协议驱动**:将工作流作为 YAML 测试,而非运行时行为
+- **经过验证的同步**:经过实战检验的 CRDT 实现
+- **热重载**:无需部署即可更改工作流
 
 ---
 
 ## 下一步
 
-1. **理解平台架构**:阅读[架构](/cn/docs/objectos/architecture)以了解 ObjectOS 如何编排 QL 和 UI
-2. **设置身份系统**:查看[身份与访问](/cn/docs/objectos/identity-access)了解用户管理和 RBAC
-3. **部署应用**:遵循[部署指南](/cn/docs/objectos/deployment)了解独立、服务器或多租户模式
-4. **使用插件扩展**:学习[插件开发](/cn/docs/objectos/plugins)以添加自定义业务逻辑
+探索 ObjectOS 平台能力:
 
-关于哲学背景,请参阅:
-- **[宣言](/cn/docs/framework/manifesto)** - 为什么 ObjectOS 是本地优先和基于插件的
-- **[架构](/cn/docs/framework/architecture)** - ObjectOS 如何完善 ObjectStack 生态系统
+1. **[平台架构](/cn/docs/objectos/platform-architecture)** - 深入了解 QL-UI 绑定和运行时
+2. **[身份与访问](/cn/docs/objectos/identity-access)** - RBAC、SSO、字段级安全
+3. **[部署](/cn/docs/objectos/deployment)** - 独立、服务器和多租户模式
+
+实现示例:
+- **[插件开发指南](/cn/docs/objectos/plugins)** - 构建您的第一个插件
+- **[工作流模式](/cn/docs/objectos/workflows)** - 常见自动化场景
+- **[同步配置](/cn/docs/objectos/sync)** - 配置本地优先复制
+
+---
+
+## 设计哲学
+
+ObjectOS 遵循三个核心原则:
+
+1. **机制,而非策略**:我们提供 RBAC 接口,而非硬编码的用户系统。您定义策略。
+2. **默认本地优先**:应用离线运行。同步是可选的,而非必需的。
+3. **协议驱动**:业务逻辑存在于数据(JSON/YAML)中,而非代码(if/else)中。
+
+**ObjectOS 不是框架。它是业务应用的操作系统。**
