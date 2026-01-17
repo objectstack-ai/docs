@@ -13,7 +13,8 @@ export function getAllMdxFiles(dir) {
     if (stat && stat.isDirectory()) {
       results = results.concat(getAllMdxFiles(file));
     } else {
-      if (file.endsWith('.mdx')) {
+      // Only include .mdx files that don't have language suffix
+      if (file.endsWith('.mdx') && !file.endsWith('.cn.mdx') && !file.endsWith('.en.mdx')) {
         results.push(path.relative(process.cwd(), file));
       }
     }
@@ -22,19 +23,22 @@ export function getAllMdxFiles(dir) {
 }
 
 export function resolveTranslatedFilePath(enFilePath) {
-  // Strategy: content/docs/path/to/file.mdx -> content/docs-cn/path/to/file.mdx
-  const docsRoot = path.join(process.cwd(), 'content/docs');
-  
-  // If input path is relative, make it absolute first to check
+  // Strategy: Use dot parser convention
+  // content/docs/path/to/file.mdx -> content/docs/path/to/file.cn.mdx
+  // Skip files that already have language suffix (.cn.mdx or .en.mdx)
   const absPath = path.resolve(enFilePath);
   
-  if (!absPath.startsWith(docsRoot)) {
-     // Fallback or specific logic if file is not in content/docs
-     return enFilePath.replace('content/docs', 'content/docs-cn');
+  // Skip if already has .cn.mdx or .en.mdx suffix
+  if (absPath.endsWith('.cn.mdx') || absPath.endsWith('.en.mdx')) {
+    return absPath;
   }
-
-  const relativePath = path.relative(docsRoot, enFilePath);
-  return path.join(process.cwd(), 'content/docs-cn', relativePath);
+  
+  // Replace .mdx with .cn.mdx
+  if (absPath.endsWith('.mdx')) {
+    return absPath.replace(/\.mdx$/, '.cn.mdx');
+  }
+  
+  return absPath;
 }
 
 export async function translateContent(content, openai, model) {

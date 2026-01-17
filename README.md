@@ -13,8 +13,8 @@ This repository contains the documentation for:
 ## Features
 
 - 🌍 **Multi-language Support**: 
-  - Source: English (`content/docs`)
-  - Target: Chinese (`content/docs-cn`) - *Auto-translated via AI*
+  - Source: English (`content/docs/*.mdx`)
+  - Target: Chinese (`content/docs/*.cn.mdx`) - *Auto-translated via AI using dot parser*
 - 📝 **MDX Content**: Interactive documentation with Type-safe components.
 - 🛠️ **Automated Workflows**: 
   - AI Translation CLI (`packages/cli`)
