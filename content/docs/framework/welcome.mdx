@@ -1,0 +1,70 @@
+---
+title: Welcome to ObjectStack
+description: Build local-first, full-stack applications that run anywhere.
+---
+
+# Welcome to ObjectStack
+
+> **Build local-first, full-stack applications that run anywhere.**
+
+ObjectStack is a development platform designed for **data sovereignty** and **technical decoupling**. By separating business logic from technical implementation through standardized protocols, it allows you to write your application once and deploy it on any infrastructure—from a local SQLite file to an enterprise Oracle cluster.
+
+## Why ObjectStack?
+
+### 1. Local-First & Data Sovereignty
+Your data belongs to you. ObjectStack applications store data locally by default, ensuring complete control, offline capability, and zero vendor lock-in risk.
+
+### 2. Database Agnostic
+**Write once, adapter everywhere.** Don't bind your business logic to a specific database vendor. ObjectStack's protocol layer abstracts the underlying storage, allowing you to migrate freely between MySQL, PostgreSQL, SQLite, Oracle, and SQL Server.
+
+### 3. Protocol-Driven Development
+We separate the *what* from the *how*. You define your Backend (ObjectQL) and Frontend (ObjectUI) using standard JSON protocols, significantly reducing boilerplate code and technical debt.
+
+---
+
+## Core Ecosystem
+
+ObjectStack consists of three integrated engines that work together to form a complete platform:
+
+### 1. ObjectQL (Backend Engine)
+**The universal data protocol.**
+
+ObjectQL is a database-agnostic query engine that acts as a translation layer between your app and the database.
+- **Unified Query Language**: Use a single JSON-based syntax to query any supported database.
+- **Auto-Migration**: Define your schema once, and let the engine handle database table creation and updates.
+- **Virtual Indexing**: Built-in performance optimization mechanisms.
+
+### 2. ObjectUI (Frontend Engine)
+**The declarative interface protocol.**
+
+ObjectUI allows you to build complex user interfaces using pure JSON descriptions, rendering them into modern React components.
+- **Zero-Code UI**: Generate forms, tables, and dashboards without writing frontend implementation code.
+- **Responsive by Default**: Adapts automatically to mobile, tablet, and desktop layouts.
+- **Themeable**: Switch visual styles instantly without changing structure.
+
+### 3. ObjectOS (Runtime Platform)
+**The operating system for your apps.**
+
+ObjectOS connects ObjectQL and ObjectUI into a cohesive runtime environment, handling the essential services every app needs.
+- **Identity & Access**: Out-of-the-box RBAC (Role-Based Access Control) and field-level security.
+- **Plugin Architecture**: Extend functionality with a flexible plugin system.
+- **Multi-Tenant Ready**: Deploy as a single-user local app or a multi-tenant SaaS platform seamlessly.
+
+## Component Relationship Diagram
+
+![ObjectStack Architecture](/img/architecture.svg)
+
+## Use Cases
+
+| Scenario | Benefit |
+| :--- | :--- |
+| **Individual Developers** | Build local tools (Notes, CRM) quickly without setting up servers. |
+| **Enterprise IT** | Create unified management systems over heterogeneous legacy databases. |
+| **SaaS Startups** | Focus on core business logic while getting multi-tenancy for free. |
+| **Low-Code Vendors** | Use ObjectStack as a robust, vendor-neutral underlying engine. |
+
+## Next Steps
+
+- **[Quick Start](/docs/framework/quickstart)**: Deploy your first application in 5 minutes.
+- **[The Manifesto](/docs/framework/manifesto)**: Deep dive into our "Protocol-Driven" design philosophy.
+- **[The AI Codex](/docs/framework/ai-codex)**: Learn how AI accelerates ObjectStack development.

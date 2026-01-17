@@ -1,0 +1,92 @@
+---
+title: Component Specification
+description: Complete protocol reference for all ObjectUI components
+---
+
+# Component Specification
+
+This comprehensive reference documents all ObjectUI components and their JSON protocols. The specification is organized into three main categories for easy navigation.
+
+## Overview
+
+ObjectUI uses a JSON-based protocol to define user interfaces declaratively. Each component has a specific type and set of properties that control its appearance and behavior.
+
+## Component Categories
+
+### Basic Components
+
+Form and input components that handle user data entry.
+
+**Includes:** Input, Select, DatePicker, Switch
+
+→ **[View Basic Components](/docs/objectui/basic-components)**
+
+### Container Components
+
+Layout and structural components that organize the UI.
+
+**Includes:** Page, Grid, Card, Form, Table
+
+→ **[View Container Components](/docs/objectui/container-components)**
+
+### Actions
+
+Interactive behaviors and event handlers.
+
+**Includes:** API Request, Navigate, Dialog, Toast
+
+→ **[View Actions](/docs/objectui/actions)**
+
+## Quick Example
+
+Here's a simple example combining different component types:
+
+```json
+{
+  "type": "page",
+  "title": "User Profile",
+  "body": {
+    "type": "form",
+    "api": "/api/users",
+    "fields": [
+      {
+        "type": "input",
+        "name": "name",
+        "label": "Full Name",
+        "required": true
+      },
+      {
+        "type": "select",
+        "name": "role",
+        "label": "Role",
+        "options": [
+          { "label": "Admin", "value": "admin" },
+          { "label": "User", "value": "user" }
+        ]
+      }
+    ],
+    "onSuccess": {
+      "type": "toast",
+      "message": "Profile updated!"
+    }
+  }
+}
+```
+
+## Component Features
+
+All ObjectUI components support:
+
+- **Protocol-Driven**: Pure JSON configuration
+- **Type Safety**: TypeScript definitions available
+- **Template Support**: Dynamic values with `${variable}` syntax
+- **Event Handling**: Flexible action system
+- **Validation**: Built-in form validation
+- **API Integration**: Native support for REST APIs
+
+## Next Steps
+
+- **[Basic Components](/docs/objectui/basic-components)** - Learn about form and input components
+- **[Container Components](/docs/objectui/container-components)** - Explore layout components
+- **[Actions](/docs/objectui/actions)** - Understand interactive behaviors
+- **[Renderer Usage](/docs/objectui/renderer-usage)** - Learn how to integrate components in your application

@@ -1,0 +1,49 @@
+---
+title: Basic Components
+description: Fundamental form and input components in ObjectUI
+---
+
+# Basic Components
+
+Basic components are the fundamental building blocks for forms and data input.
+
+## Component List
+
+- **[Input](/docs/objectui/basic-components/input)** - Text input field for single-line text entry
+- **[Select](/docs/objectui/basic-components/select)** - Dropdown selection field
+- **[DatePicker](/docs/objectui/basic-components/datepicker)** - Date and time selection component
+- **[Switch](/docs/objectui/basic-components/switch)** - Toggle switch for boolean values
+
+## Overview
+
+Basic components handle user data entry through various input types. They support:
+
+- **Validation**: Built-in validation rules and custom patterns
+- **Event Handling**: onChange events for real-time interactions
+- **API Integration**: Dynamic data loading and dependent fields
+- **Accessibility**: Keyboard navigation and screen reader support
+
+## Common Properties
+
+All basic components share these common properties:
+
+```typescript
+{
+  name: string,              // Field identifier
+  label?: string,            // Display label
+  placeholder?: string,      // Placeholder text
+  defaultValue?: any,        // Initial value
+  required?: boolean,        // Required validation
+  disabled?: boolean,        // Disabled state
+  onChange?: Action,         // Change event handler
+}
+```
+
+## Next Steps
+
+Explore individual components for detailed protocol definitions and examples:
+
+- **[Input](/docs/objectui/basic-components/input)** - Single-line text entry
+- **[Select](/docs/objectui/basic-components/select)** - Dropdown selection
+- **[DatePicker](/docs/objectui/basic-components/datepicker)** - Date/time picker
+- **[Switch](/docs/objectui/basic-components/switch)** - Boolean toggle
