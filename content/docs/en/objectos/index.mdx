@@ -1,966 +1,722 @@
 ---
-title: ObjectOS Platform Specification
-description: Runtime Orchestration Platform - Identity Management, RBAC, Multi-Tenancy, and Deployment
+title: ObjectOS - The Business Operating System
+description: The Enterprise Kernel for Identity, Workflows, and Local-First Synchronization
 ---
 
-# ObjectOS: The Runtime Orchestration Platform
+# ObjectOS: The Business Operating System
 
-ObjectOS is the **runtime platform** that binds ObjectQL (data) and ObjectUI (interface) into a cohesive application environment. It provides essential platform services: identity management, access control, plugin architecture, and flexible deployment modes.
+**You don't build an app by writing your own process scheduler and file system. You use an OS (Linux/Windows). So why are you writing your own Auth, Workflow engine, and Sync logic for every business app?**
 
-## Specification Overview
+ObjectOS is the **Kernel for your Enterprise**. It orchestrates Identity, Data Sync, and Business Processes in a unified runtime—eliminating microservices sprawl and spaghetti monoliths.
 
-ObjectOS is **not an application server**—it is a **platform specification** with reference implementations. The platform defines:
-
-1. **QL-UI Binding Protocol**: How ObjectQL and ObjectUI communicate
-2. **Identity & Access System**: User management, RBAC, field-level security
-3. **Plugin Architecture**: Extensibility contracts for business logic
-4. **Deployment Modes**: Standalone, server, and multi-tenant configurations
-
-### Core Design Principles
-
-**Local-First by Design**: ObjectOS applications run **offline by default**. Standalone mode (.oos files) operates entirely on local devices with zero network dependency.
-
-**Database Agnostic**: ObjectOS never assumes a specific database. Configuration determines whether data lives in SQLite (local), PostgreSQL (cloud), or Oracle (enterprise).
-
-**Mechanism over Policy**: ObjectOS provides identity and permission **mechanisms** (RBAC interfaces), not **policies** (hardcoded user systems). Applications define their own user models.
 ---
 
-## Platform Architecture
+## The Command Center: ObjectOS Architecture
+
+ObjectOS acts as the central **CPU** of the ObjectStack ecosystem, connecting ObjectQL (Memory/Data) and ObjectUI (Display/IO) into a cohesive, production-grade system.
 
 ```mermaid
 graph TB
-    subgraph "Application Layer"
-        App[Your Application]
+    subgraph "ObjectOS Kernel"
+        Auth[Identity & Governance<br/>RBAC • SSO • Field-Level Security]
+        Workflow[Workflow Orchestration<br/>FSM • Approval Chains • Automation]
+        Sync[Local-First Sync Engine<br/>CRDT • Conflict Resolution • Offline-First]
+        Plugin[Plugin Architecture<br/>Micro-kernel Design • CRM/HRM/ERP as Plugins]
     end
     
-    subgraph "ObjectOS Platform"
-        Auth[Identity & Access Layer<br/>Users, Roles, Permissions]
-        Binding[QL-UI Binding Layer<br/>Data ↔ Interface Bridge]
-        Plugin[Plugin Architecture<br/>Custom Business Logic]
-        Deploy[Deployment Layer<br/>Standalone / Server / Multi-Tenant]
+    subgraph "Data Engine"
+        QL[ObjectQL<br/>Defines Data Structure]
     end
     
-    subgraph "Core Engines"
-        UI[ObjectUI<br/>Interface Protocol]
-        QL[ObjectQL<br/>Data Protocol]
+    subgraph "View Engine"
+        UI[ObjectUI<br/>Defines Visual Structure]
     end
     
-    subgraph "Infrastructure"
-        DB[(Database)]
-        Storage[File Storage]
-        Cache[Cache Layer]
-    end
+    Auth --> QL
+    Auth --> UI
+    Workflow --> QL
+    Sync --> QL
+    Plugin --> QL
+    Plugin --> UI
     
-    App --> Auth
-    Auth --> Binding
-    Binding --> UI
-    Binding --> QL
-    Binding --> Plugin
-    Deploy --> DB
-    Deploy --> Storage
-    Deploy --> Cache
-    
-    style Auth fill:#e1f5ff
-    style Binding fill:#fff3e0
-    style Plugin fill:#f3e5f5
-    style Deploy fill:#e8f5e9
+    style Auth fill:#667eea,color:#fff
+    style Workflow fill:#764ba2,color:#fff
+    style Sync fill:#f093fb,color:#fff
+    style Plugin fill:#4facfe,color:#fff
+    style QL fill:#43e97b,color:#fff
+    style UI fill:#fa709a,color:#fff
 ```
 
-### Platform Responsibilities
-
-1. **Identity & Access**: Manages users, roles, and permissions at protocol level
-2. **QL-UI Binding**: Automatically connects ObjectQL data sources to ObjectUI components
-3. **Plugin System**: Provides hooks for custom business logic (triggers, validators, workflows)
-4. **Deployment**: Handles application packaging and runtime configuration
+**ObjectQL** defines the **Data Structure**. **ObjectUI** defines the **Visual Structure**. **ObjectOS** breathes life into them.
 
 ---
 
-## Core Platform Components
+## The Four Pillars of the Kernel
 
-### 1. QL-UI Binding Protocol
+ObjectOS provides four foundational capabilities that eliminate the need for custom infrastructure code:
 
-ObjectOS automatically wires ObjectQL data sources to ObjectUI components:
+### 1. Identity & Governance
 
+**Not just a login library, but a governance engine.**
+
+ObjectOS provides built-in **Role-Based Access Control (RBAC)**, **Single Sign-On (SSO)** via OIDC/SAML, and **Field-Level Security (FLS)** that operates at the protocol layer—not at the application layer.
+
+**Key Capabilities:**
+- **Multi-Tenant Identity**: Isolated user spaces with tenant-level governance
+- **Attribute-Based Access Control (ABAC)**: Define permissions using expressions (`$user.department === 'sales'`)
+- **Audit Logging**: Every data mutation tracked with user context and timestamp
+- **Zero Trust Architecture**: No implicit trust; every request validated against permission sets
+
+**Example: Field-Level Security**
 ```typescript
-interface BindingConfiguration {
-  dataSource: ObjectQLConfig        // ObjectQL connection
-  uiSource: ObjectUIConfig          // UI protocol definitions
-  autoSync?: boolean                // Auto-refresh on data changes
-  caching?: CacheStrategy           // Client-side caching
+interface Employee {
+  name: string          // Readable by all
+  email: string         // Readable by all
+  salary: number        // Readable only by HR or Admin
+  ssn: string           // Readable only by Admin
 }
 
-interface ObjectQLConfig {
-  driver: DatabaseDriver
-  url: string
-  schema: SchemaRegistry
-}
-
-interface ObjectUIConfig {
-  pages: Record<string, PageProtocol>
-  components: Record<string, ComponentProtocol>
-  theme?: ThemeConfig
-}
-```
-
-**Example Binding**:
-```typescript
-import { ObjectOS } from '@objectstack/os'
-
-const app = new ObjectOS({
-  // Data Layer
-  data: {
-    driver: 'sqlite',
-    url: './myapp.db',
-    schema: {
-      objects: {
-        customers: {
-          fields: {
-            name: { type: 'text', required: true },
-            email: { type: 'email', unique: true },
-            status: { type: 'select', options: ['active', 'inactive'] }
-          }
-        }
-      }
-    }
-  },
-  
-  // UI Layer
-  ui: {
-    pages: {
-      customers: {
-        type: 'page',
-        title: 'Customer Management',
-        body: {
-          type: 'table',
-          object: 'customers',  // Auto-binds to ObjectQL object
-          columns: [
-            { field: 'name', sortable: true },
-            { field: 'email' },
-            { field: 'status', type: 'badge' }
-          ]
-        }
-      }
-    }
-  }
-})
-
-await app.start()
-```
-
-ObjectOS handles:
-- ✅ Data fetching when UI component mounts
-- ✅ Permission checks (RBAC) before data operations
-- ✅ Validation before mutations
-- ✅ Error handling and user feedback
-- ✅ Cache management
-
-### 2. Identity & Access Management
-
-ObjectOS provides **protocol-level identity system** with RBAC and field-level security:
-
-```typescript
-interface IdentitySystem {
-  objects: {
-    _users: SystemObject            // Built-in user object
-    _roles: SystemObject            // Built-in role object
-    _permissions: SystemObject      // Built-in permission object
-  }
-  
-  authentication: AuthConfig        // Auth providers
-  authorization: AuthzConfig        // Permission rules
-}
-
-interface SystemObject {
-  _users: {
-    fields: {
-      username: { type: 'text', unique: true }
-      email: { type: 'email', unique: true }
-      password_hash: { type: 'text' }  // Never exposed via API
-      role: { type: 'lookup', reference_to: '_roles' }
-      is_active: { type: 'boolean', defaultValue: true }
-      created_at: { type: 'datetime', auto: 'onCreate' }
-    }
-  }
-  
-  _roles: {
-    fields: {
-      name: { type: 'text', unique: true }
-      description: { type: 'text' }
-      permissions: { type: 'master_detail', reference_to: '_permissions' }
-    }
-  }
-  
-  _permissions: {
-    fields: {
-      object: { type: 'text' }       // Target object name
-      allow_read: { type: 'boolean' }
-      allow_create: { type: 'boolean' }
-      allow_edit: { type: 'boolean' }
-      allow_delete: { type: 'boolean' }
-      field_level_security: { type: 'json' }  // Field-level rules
+// FLS Configuration
+{
+  "fields": {
+    "salary": {
+      "read": "$user.role === 'hr' || $user.role === 'admin'",
+      "edit": "$user.role === 'hr'"
+    },
+    "ssn": {
+      "read": "$user.role === 'admin'",
+      "edit": false
     }
   }
 }
 ```
 
-**Example: Permission Configuration**:
-```typescript
-const app = new ObjectOS({
-  // ... data and UI config ...
+When a regular user queries employee data, `salary` and `ssn` are **automatically filtered** by the kernel—no application-level filtering required.
+
+---
+
+### 2. Workflow Orchestration
+
+**Finite State Machines (FSM) as code. No more nested if/else statements.**
+
+ObjectOS provides a **declarative workflow engine** where approval chains, automation rules, and business processes are defined in **YAML or TypeScript**, not imperative spaghetti code.
+
+**Key Capabilities:**
+- **State Machine Definition**: Define states, transitions, and guards declaratively
+- **Approval Chains**: Multi-step approval with escalation rules
+- **Event-Driven Triggers**: Automatic execution on data mutations or schedules
+- **Parallel Execution**: Run multiple workflow steps concurrently
+- **Compensation Logic**: Automatic rollback on failure (Saga pattern)
+
+**Example: Purchase Order Approval Workflow**
+```yaml
+workflow:
+  name: purchase_order_approval
+  trigger:
+    object: purchase_orders
+    event: insert
+    condition: amount > 10000
   
-  identity: {
-    authentication: {
-      providers: ['email', 'oauth'],
-      jwt: {
-        secret: process.env.JWT_SECRET,
-        expiresIn: '7d'
+  states:
+    - name: pending_manager_approval
+      on_enter:
+        - action: notify
+          recipients: ["{{record.manager.email}}"]
+          template: manager_approval_request
+      
+      transitions:
+        - event: manager_approved
+          target: pending_finance_approval
+          guard: "$user.id === record.manager.id"
+        - event: manager_rejected
+          target: rejected
+    
+    - name: pending_finance_approval
+      on_enter:
+        - action: notify
+          recipients: ["finance@company.com"]
+          template: finance_approval_request
+      
+      transitions:
+        - event: finance_approved
+          target: approved
+          guard: "$user.department === 'finance'"
+        - event: finance_rejected
+          target: rejected
+    
+    - name: approved
+      on_enter:
+        - action: update
+          object: purchase_orders
+          data:
+            status: approved
+            approved_at: "{{now()}}"
+        - action: notify
+          recipients: ["{{record.created_by.email}}"]
+          template: purchase_order_approved
+    
+    - name: rejected
+      on_enter:
+        - action: notify
+          recipients: ["{{record.created_by.email}}"]
+          template: purchase_order_rejected
+```
+
+**Result**: Business logic is **configuration, not code**. The kernel handles execution, state persistence, and error recovery.
+
+---
+
+### 3. Local-First Sync Engine
+
+**The Killer Feature: Offline-first apps with automatic conflict resolution.**
+
+Building offline-first applications is notoriously difficult. ObjectOS acts as the **Replication Master**, managing the diffs between the Server DB (PostgreSQL/MySQL) and Client DB (SQLite/RxDB) using **Conflict-Free Replicated Data Types (CRDT)** and **Last-Write-Wins (LWW)** strategies.
+
+**Key Capabilities:**
+- **Automatic Sync Protocol**: Bi-directional replication with delta compression
+- **Conflict Resolution**: CRDT-based merges or customizable resolution strategies
+- **Offline Queue**: Mutations queued locally and replayed when connection restored
+- **Selective Sync**: Only sync data relevant to the user's context (RBAC-aware)
+- **Encryption at Rest**: Client-side encryption for sensitive data
+
+**Sync Architecture:**
+
+```mermaid
+sequenceDiagram
+    participant Client as Client DB<br/>(SQLite)
+    participant Kernel as ObjectOS Kernel
+    participant Server as Server DB<br/>(PostgreSQL)
+    
+    Note over Client: User edits record<br/>while offline
+    Client->>Client: Store mutation in<br/>local changelog
+    
+    Note over Client,Server: Network restored
+    
+    Client->>Kernel: Push changelog
+    Kernel->>Kernel: Detect conflicts<br/>(CRDT/LWW)
+    Kernel->>Server: Commit resolved changes
+    Server-->>Kernel: Acknowledge
+    Kernel-->>Client: Return sync status
+    
+    Note over Server: Another user edits<br/>same record
+    Server->>Kernel: New mutation event
+    Kernel->>Client: Push delta
+    Client->>Client: Merge using CRDT
+```
+
+**Example: Conflict Resolution Configuration**
+```typescript
+{
+  sync: {
+    enabled: true,
+    remote: 'https://api.example.com',
+    strategy: 'crdt',  // or 'last-write-wins', 'manual'
+    
+    conflictResolution: {
+      // Field-level resolution strategies
+      fields: {
+        title: 'last-write-wins',
+        description: 'crdt-text',  // Operational Transform for text
+        priority: 'max',            // Take highest value
+        assignee: 'manual'          // Require user intervention
       }
     },
     
-    authorization: {
-      defaultRole: 'user',
-      roles: {
-        admin: {
-          permissions: {
-            customers: { read: true, create: true, edit: true, delete: true },
-            orders: { read: true, create: true, edit: true, delete: true }
-          }
-        },
-        user: {
-          permissions: {
-            customers: { 
-              read: true, 
-              create: false, 
-              edit: false, 
-              delete: false 
-            },
-            orders: { 
-              read: 'owner eq $user.id',  // Formula-based permission
-              create: true, 
-              edit: 'owner eq $user.id', 
-              delete: false 
-            }
-          }
-        },
-        guest: {
-          permissions: {
-            customers: { read: false, create: false, edit: false, delete: false },
-            orders: { read: false, create: false, edit: false, delete: false }
-          }
-        }
-      }
-    }
-  }
-})
-```
-
-### 3. Field-Level Security (FLS)
-
-Fine-grained access control at the field level:
-
-```typescript
-interface FieldLevelSecurity {
-  object: string
-  field: string
-  read?: boolean | Expression      // Can read field?
-  edit?: boolean | Expression      // Can modify field?
-}
-```
-
-**Example: FLS Configuration**:
-```json
-{
-  "objects": {
-    "employees": {
-      "fields": {
-        "name": { "type": "text" },
-        "email": { "type": "email" },
-        "salary": { 
-          "type": "currency",
-          "field_level_security": {
-            "read": "$user.role === 'hr' || $user.role === 'admin'",
-            "edit": "$user.role === 'hr'"
-          }
-        },
-        "ssn": { 
-          "type": "text",
-          "field_level_security": {
-            "read": "$user.role === 'admin'",
-            "edit": false
-          }
-        }
-      }
+    // Only sync data the user is authorized to see
+    filter: '$user.accessible_records',
+    
+    // Encrypt before transmission
+    encryption: {
+      enabled: true,
+      algorithm: 'AES-256-GCM'
     }
   }
 }
 ```
 
-When a regular user queries employees:
-```json
-// Query
-{ "object": "employees" }
+**Result**: Your application works **offline by default**. Sync is an implementation detail, not a feature.
 
-// Response (salary and ssn fields automatically filtered)
-[
-  { "name": "John Doe", "email": "john@company.com" }
-]
-```
+---
 
 ### 4. Plugin Architecture
 
-Extend ObjectOS with custom business logic:
+**The Micro-kernel Design: Everything is a plugin.**
 
+ObjectOS follows a **micro-kernel architecture** where the core provides only primitive operations (auth, data access, workflow execution). All business logic—CRM, HRM, ERP—is loaded as **plugins** via a **Manifest**.
+
+**Key Capabilities:**
+- **Declarative Manifest**: Define plugin dependencies, permissions, and lifecycle hooks
+- **Sandboxed Execution**: Plugins run in isolated contexts with explicit permissions
+- **Hot Reload**: Update plugins without restarting the kernel
+- **Version Management**: Side-by-side plugin versions with semantic versioning
+- **Marketplace Ready**: Distribute plugins as npm packages or Docker images
+
+**Example: CRM Plugin Manifest**
 ```typescript
-interface ObjectOSPlugin {
-  name: string
-  version: string
+// crm-plugin.manifest.ts
+export const CRMPlugin: PluginManifest = {
+  name: '@company/crm',
+  version: '2.1.0',
   
-  // Lifecycle hooks
-  onInstall?(): Promise<void>
-  onUninstall?(): Promise<void>
-  onStart?(app: ObjectOSApp): Promise<void>
-  onStop?(): Promise<void>
-  
-  // Data hooks
-  beforeQuery?(query: QueryProtocol): Promise<QueryProtocol>
-  afterQuery?(result: QueryResult): Promise<QueryResult>
-  beforeMutation?(mutation: MutationProtocol): Promise<MutationProtocol>
-  afterMutation?(result: MutationResult): Promise<MutationResult>
-  
-  // UI hooks
-  beforeRender?(protocol: ComponentProtocol): Promise<ComponentProtocol>
-  
-  // Custom routes
-  routes?: RouteDefinition[]
-  
-  // Custom components
-  components?: Record<string, ComponentDefinition>
-}
-```
-
-**Example: Audit Log Plugin**:
-```typescript
-const auditLogPlugin: ObjectOSPlugin = {
-  name: 'audit-log',
-  version: '1.0.0',
-  
-  async afterMutation(result: MutationResult) {
-    // Log all data changes
-    await this.db.insert({
-      object: '_audit_logs',
-      action: 'insert',
-      data: {
-        user_id: this.context.user.id,
-        object: result.object,
-        action: result.action,
-        record_id: result.id,
-        timestamp: new Date(),
-        changes: result.changes
-      }
-    })
-    
-    return result
-  }
-}
-
-// Install plugin
-app.use(auditLogPlugin)
-```
-
-**Example: Email Notification Plugin**:
-```typescript
-const emailPlugin: ObjectOSPlugin = {
-  name: 'email-notifications',
-  version: '1.0.0',
-  
-  async afterMutation(result: MutationResult) {
-    if (result.object === 'orders' && result.action === 'insert') {
-      // Send order confirmation email
-      await this.sendEmail({
-        to: result.data.customer_email,
-        subject: 'Order Confirmation',
-        template: 'order-confirmation',
-        data: result.data
-      })
+  // Dependencies
+  requires: {
+    objectos: '^3.0.0',
+    plugins: {
+      '@company/email-service': '^1.0.0'
     }
-    
-    return result
   },
   
-  routes: [
-    {
-      path: '/api/emails/preview/:template',
-      method: 'GET',
-      handler: async (req, res) => {
-        const template = await this.renderTemplate(req.params.template)
-        res.send(template)
-      }
-    }
-  ]
-}
-```
-
----
-
-## Deployment Modes
-
-ObjectOS supports three deployment strategies:
-
-### 1. Standalone Mode (Local-First)
-
-**Use Case**: Personal applications, offline-first tools, edge computing
-
-**Configuration**:
-```typescript
-const app = new ObjectOS({
-  mode: 'standalone',
-  storage: './myapp.oos',  // Single-file SQLite database
-  ui: {
-    pages: { ... }
-  }
-})
-
-await app.start()
-```
-
-**Characteristics**:
-- ✅ Zero server infrastructure required
-- ✅ Complete offline capability
-- ✅ Data stored in local .oos file (SQLite)
-- ✅ Can be distributed as single executable
-- ✅ No network connectivity needed
-
-**Distribution**:
-```bash
-# Package as standalone executable
-objectstack build --mode standalone --output myapp.oos
-
-# Run anywhere
-./myapp.oos
-# or
-objectstack run myapp.oos
-```
-
-### 2. Server Mode (Cloud/Enterprise)
-
-**Use Case**: Team collaboration, web applications, cloud deployments
-
-**Configuration**:
-```typescript
-const app = new ObjectOS({
-  mode: 'server',
-  port: 3000,
-  data: {
-    driver: 'postgres',
-    url: process.env.DATABASE_URL
+  // Permissions required
+  permissions: {
+    objects: ['contacts', 'companies', 'opportunities'],
+    actions: ['read', 'create', 'update', 'delete'],
+    apis: ['/api/crm/*']
   },
-  identity: {
-    authentication: {
-      providers: ['email', 'oauth'],
-      oauth: {
-        google: {
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET
+  
+  // Schema extensions
+  schema: {
+    objects: {
+      contacts: {
+        fields: {
+          name: { type: 'text', required: true },
+          email: { type: 'email', unique: true },
+          company: { type: 'lookup', reference_to: 'companies' },
+          lead_score: { type: 'number', formula: 'calculate_lead_score()' }
+        }
+      },
+      companies: {
+        fields: {
+          name: { type: 'text', required: true },
+          industry: { type: 'select', options: ['tech', 'finance', 'retail'] },
+          annual_revenue: { type: 'currency' }
         }
       }
     }
   },
-  ui: {
-    pages: { ... }
-  }
-})
-
-await app.listen()
-```
-
-**Characteristics**:
-- ✅ Multi-user support with authentication
-- ✅ RESTful API automatically generated
-- ✅ Works with any database (MySQL, PostgreSQL, Oracle)
-- ✅ Horizontal scalability with load balancers
-- ✅ Can integrate with existing systems
-
-**Deployment**:
-```dockerfile
-# Dockerfile
-FROM node:18
-WORKDIR /app
-COPY package.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-```bash
-# Deploy to cloud
-docker build -t myapp .
-docker push myapp:latest
-kubectl apply -f deployment.yaml
-```
-
-### 3. Multi-Tenant SaaS Mode
-
-**Use Case**: SaaS platforms, multi-tenant applications
-
-**Configuration**:
-```typescript
-const app = new ObjectOS({
-  mode: 'multi-tenant',
-  tenantStrategy: 'virtualCity',  // or 'schema' or 'database'
-  data: {
-    driver: 'postgres',
-    url: process.env.DATABASE_URL
+  
+  // Workflow definitions
+  workflows: {
+    lead_nurturing: {
+      trigger: { object: 'contacts', event: 'insert' },
+      steps: [
+        { action: 'wait', duration: '1 day' },
+        { action: 'send_email', template: 'welcome' },
+        { action: 'wait', duration: '3 days' },
+        { action: 'send_email', template: 'follow_up', condition: 'lead_score < 50' }
+      ]
+    }
   },
-  multiTenant: {
-    identification: {
-      strategy: 'subdomain',  // customer1.myapp.com, customer2.myapp.com
-      // or: 'header'         // X-Tenant-ID header
-      // or: 'jwt'            // Extract from JWT token
+  
+  // UI extensions
+  ui: {
+    pages: {
+      contacts: { type: 'list', object: 'contacts' },
+      contact_detail: { type: 'detail', object: 'contacts' }
     },
-    isolation: {
-      strategy: 'virtualCity',    // All tenants in one database, filtered by context
-      // or: 'schema'              // Each tenant gets a PostgreSQL schema
-      // or: 'database'            // Each tenant gets separate database
+    dashboard_widgets: [
+      { type: 'chart', title: 'Leads by Source', query: 'aggregate_leads_by_source()' }
+    ]
+  },
+  
+  // Lifecycle hooks
+  lifecycle: {
+    async onInstall() {
+      // Seed initial data
+      await this.seed('data/initial_industries.json')
     },
-    provisioning: {
-      autoCreate: true,            // Auto-create tenant on signup
-      defaultPlan: 'trial'
+    async onStart() {
+      // Register custom routes
+      this.router.post('/api/crm/import', importContactsHandler)
     }
   }
-})
-
-// Middleware extracts tenant context
-app.use((req, res, next) => {
-  const tenantId = req.hostname.split('.')[0]  // From subdomain
-  req.tenant = app.getTenant(tenantId)
-  next()
-})
-
-// All queries automatically scoped to tenant
-app.get('/api/customers', async (req, res) => {
-  const customers = await req.tenant.query('customers', {})
-  res.json(customers)  // Only returns tenant's customers
-})
+}
 ```
 
-**Tenant Isolation Strategies**:
-
-| Strategy | Description | Pros | Cons | Use Case |
-|----------|-------------|------|------|----------|
-| **Virtual City** | All tenants share database, filtered by context | ✅ High resource efficiency<br/>✅ Easy management | ❌ Requires careful filtering<br/>❌ Single point of failure | Many tenants, moderate data volume |
-| **Schema-per-Tenant** | Each tenant gets PostgreSQL schema | ✅ Data isolation<br/>✅ Easy backups | ❌ Schema limits (PostgreSQL: ~100s)<br/>❌ Migration complexity | Hundreds of tenants |
-| **Database-per-Tenant** | Each tenant gets own database | ✅ Complete isolation<br/>✅ Independent scaling<br/>✅ Easy migration | ❌ High resource usage<br/>❌ Management overhead | Enterprise customers, high-value tenants |
+**Result**: Business logic is **declarative configuration**. The kernel handles instantiation, dependency injection, and lifecycle management.
 
 ---
 
-## Advanced Features
+## The Replication Protocol: Local-First Deep Dive
 
-### 1. Hybrid Sync (Local-First + Cloud)
+**The Problem**: Building offline-first apps requires managing complex state synchronization, conflict resolution, and network partition handling. Most teams underestimate this complexity and end up with fragile, bug-prone implementations.
 
-Combine standalone mode with optional cloud sync:
+**The Solution**: ObjectOS provides a **Replication Protocol** that handles the entire synchronization lifecycle—from offline mutations to conflict detection to merge strategies.
+
+### How It Works
+
+ObjectOS implements a **Log-Structured Replication** system:
+
+1. **Every mutation creates a changelog entry** (client and server)
+2. **Sync compares vector clocks** to detect divergence
+3. **Conflicts are resolved using configurable strategies** (CRDT, LWW, Manual)
+4. **Resolved state is committed** to both client and server
+
+```mermaid
+graph LR
+    subgraph "Client Side"
+        C1[User Action] --> C2[Local Mutation]
+        C2 --> C3[Changelog Entry<br/>Vector Clock: v1]
+        C3 --> C4[Local DB Updated]
+    end
+    
+    subgraph "Sync Engine"
+        S1[Detect Online] --> S2[Compare Vector Clocks]
+        S2 --> S3{Conflict?}
+        S3 -->|Yes| S4[Run Resolution Strategy]
+        S3 -->|No| S5[Direct Merge]
+        S4 --> S6[Commit Resolved State]
+        S5 --> S6
+    end
+    
+    subgraph "Server Side"
+        V1[Receive Changelog] --> V2[Validate Permissions]
+        V2 --> V3[Apply to Server DB]
+        V3 --> V4[Broadcast to Other Clients]
+    end
+    
+    C4 --> S1
+    S6 --> V1
+```
+
+### Conflict Resolution Strategies
+
+ObjectOS supports multiple resolution strategies per field:
+
+| Strategy | Description | Use Case | Example |
+|----------|-------------|----------|---------|
+| **Last-Write-Wins (LWW)** | Latest timestamp wins | Simple fields (status, category) | `priority: 'last-write-wins'` |
+| **CRDT (Operational Transform)** | Merge concurrent edits | Collaborative text editing | `description: 'crdt-text'` |
+| **Max/Min** | Take highest/lowest value | Counters, ratings | `view_count: 'max'` |
+| **Union** | Combine all values | Tags, multi-select | `tags: 'union'` |
+| **Manual** | Require user resolution | Critical fields | `assignee: 'manual'` |
+
+### Replication Master Architecture
 
 ```typescript
+// ObjectOS acts as the Replication Master
+interface ReplicationMaster {
+  // Track client states
+  clients: Map<ClientID, VectorClock>
+  
+  // Changelog storage
+  serverLog: ChangelogEntry[]
+  
+  // Conflict detector
+  detectConflicts(
+    clientLog: ChangelogEntry[],
+    serverLog: ChangelogEntry[]
+  ): Conflict[]
+  
+  // Resolver
+  resolveConflicts(
+    conflicts: Conflict[],
+    strategy: ResolutionStrategy
+  ): ResolvedState
+  
+  // Broadcaster
+  broadcastToClients(
+    changes: ChangelogEntry[],
+    excludeClient?: ClientID
+  ): void
+}
+```
+
+**Example: Configuring Sync Behavior**
+```typescript
 const app = new ObjectOS({
-  mode: 'standalone',
-  storage: './myapp.oos',
+  mode: 'hybrid',  // Local-first + optional sync
+  
+  storage: {
+    local: './app.db',  // SQLite
+    remote: 'postgres://server/db'
+  },
   
   sync: {
     enabled: true,
-    remote: 'https://sync.myapp.com',
-    strategy: 'manual',  // or 'automatic', 'scheduled'
-    conflict: 'last-write-wins',  // or 'manual-resolution'
+    
+    // Sync interval (0 = manual only)
+    interval: 60000,  // 60 seconds
+    
+    // Conflict resolution per object
+    objects: {
+      tasks: {
+        title: 'last-write-wins',
+        description: 'crdt-text',     // Operational Transform
+        assignee: 'manual',            // User must resolve
+        completed_at: 'last-write-wins'
+      },
+      
+      analytics: {
+        view_count: 'max',             // Take highest
+        tags: 'union'                  // Merge all tags
+      }
+    },
+    
+    // Selective sync (RBAC-aware)
+    filter: {
+      tasks: '$user.team.id === record.team_id',
+      analytics: 'record.public === true'
+    },
+    
+    // Encryption
     encryption: {
       enabled: true,
       algorithm: 'AES-256-GCM',
-      key: process.env.ENCRYPTION_KEY
-    }
-  }
-})
-
-// Trigger sync manually
-await app.sync.push()  // Upload local changes
-await app.sync.pull()  // Download remote changes
-await app.sync.bidirectional()  // Both directions with conflict resolution
-```
-
-### 2. Workflow Engine
-
-Built-in workflow automation:
-
-```typescript
-const app = new ObjectOS({
-  // ... config ...
-  
-  workflows: {
-    order_approval: {
-      trigger: { 
-        object: 'orders', 
-        action: 'insert',
-        condition: 'total_amount > 10000'
-      },
-      steps: [
-        {
-          action: 'update',
-          object: 'orders',
-          data: { status: 'pending_approval' }
-        },
-        {
-          action: 'notification',
-          type: 'email',
-          to: '{{approver.email}}',
-          template: 'order-approval-request'
-        }
-      ]
+      key: process.env.SYNC_ENCRYPTION_KEY
     },
     
-    lead_nurturing: {
-      trigger: {
-        object: 'leads',
-        action: 'insert'
-      },
-      steps: [
-        { action: 'wait', duration: '1 day' },
-        {
-          action: 'notification',
-          type: 'email',
-          template: 'welcome-email'
-        },
-        { action: 'wait', duration: '3 days' },
-        {
-          action: 'notification',
-          type: 'email',
-          template: 'follow-up-email',
-          condition: 'status == "new"'
-        }
-      ]
+    // Batching for performance
+    batch: {
+      maxSize: 100,        // Max 100 changes per sync
+      maxWait: 5000        // Wait max 5s before forcing sync
     }
   }
 })
 ```
 
-### 3. API Generation
+### Offline Queue Management
 
-ObjectOS automatically generates RESTful APIs from ObjectQL schemas:
+When offline, ObjectOS queues mutations locally:
 
 ```typescript
-// Schema definition
-{
+// User edits while offline
+await db.update('tasks', taskId, { status: 'completed' })
+
+// Mutation queued locally
+// Queue: [
+//   { 
+//     object: 'tasks', 
+//     action: 'update', 
+//     id: taskId, 
+//     changes: { status: 'completed' },
+//     timestamp: '2024-01-17T10:30:00Z',
+//     vectorClock: { client: 'abc123', version: 42 }
+//   }
+// ]
+
+// When online, queue is automatically replayed
+// ObjectOS handles:
+// ✅ Permission re-validation (in case RBAC changed)
+// ✅ Conflict detection
+// ✅ Merge strategies
+// ✅ Error recovery (retry with exponential backoff)
+```
+
+**Result**: Developers define **what** to sync and **how** to resolve conflicts. ObjectOS handles the **when** and **where**.
+
+---
+
+## Ecosystem Integration: The Trinity
+
+ObjectOS completes the ObjectStack trinity by binding **data structure** (ObjectQL) and **visual structure** (ObjectUI) into a **living system**.
+
+```mermaid
+graph TB
+    subgraph "Developer Responsibilities"
+        D1[Define Data Model<br/>ObjectQL Schema]
+        D2[Define UI Components<br/>ObjectUI Protocol]
+        D3[Define Business Logic<br/>Workflows + Plugins]
+    end
+    
+    subgraph "ObjectOS Kernel Responsibilities"
+        K1[Authentication]
+        K2[Authorization RBAC/FLS]
+        K3[Data Validation]
+        K4[Workflow Execution]
+        K5[Sync Orchestration]
+        K6[Plugin Lifecycle]
+        K7[API Generation]
+    end
+    
+    subgraph "Runtime Environment"
+        R1[Standalone App<br/>.oos file]
+        R2[Web Server<br/>Docker + K8s]
+        R3[Multi-Tenant SaaS<br/>Isolated Tenants]
+    end
+    
+    D1 --> K3
+    D1 --> K7
+    D2 --> K7
+    D3 --> K4
+    D3 --> K6
+    
+    K1 --> K2
+    K2 --> K3
+    K3 --> K7
+    K4 --> K5
+    K6 --> K5
+    
+    K7 --> R1
+    K7 --> R2
+    K7 --> R3
+    
+    style D1 fill:#43e97b,color:#000
+    style D2 fill:#fa709a,color:#fff
+    style D3 fill:#667eea,color:#fff
+    style K1 fill:#764ba2,color:#fff
+    style K2 fill:#764ba2,color:#fff
+    style K3 fill:#764ba2,color:#fff
+    style K4 fill:#764ba2,color:#fff
+    style K5 fill:#764ba2,color:#fff
+    style K6 fill:#764ba2,color:#fff
+    style K7 fill:#764ba2,color:#fff
+```
+
+### The Division of Responsibilities
+
+| Component | Defines | Output | Example |
+|-----------|---------|--------|---------|
+| **ObjectQL** | Data Structure | JSON Schema + Validation Rules | `{ object: 'users', fields: { email: { type: 'email', unique: true } } }` |
+| **ObjectUI** | Visual Structure | Component Protocol | `{ type: 'form', object: 'users', fields: ['name', 'email'] }` |
+| **ObjectOS** | Runtime Behavior | Executable Application | Authentication + Sync + Workflows |
+
+### Example: End-to-End Integration
+
+**Step 1: Define Data (ObjectQL)**
+```typescript
+const schema = {
   objects: {
-    products: {
+    invoices: {
       fields: {
-        name: { type: 'text', required: true },
-        price: { type: 'currency' },
-        category: { type: 'select', options: ['electronics', 'clothing'] }
+        invoice_number: { type: 'autonumber', prefix: 'INV-' },
+        customer: { type: 'lookup', reference_to: 'customers' },
+        total: { type: 'currency', formula: 'SUM(line_items.amount)' },
+        status: { 
+          type: 'select', 
+          options: ['draft', 'sent', 'paid', 'overdue'],
+          default: 'draft'
+        },
+        due_date: { type: 'date' }
       }
     }
   }
 }
-
-// Auto-generated REST API:
-// GET    /api/products           - List all products
-// GET    /api/products/:id       - Get single product
-// POST   /api/products           - Create product
-// PATCH  /api/products/:id       - Update product
-// DELETE /api/products/:id       - Delete product
-// GET    /api/products/count     - Count products
-// POST   /api/products/aggregate - Aggregate products
 ```
 
-Custom API endpoints via plugins:
-
+**Step 2: Define UI (ObjectUI)**
 ```typescript
-const customAPIPlugin: ObjectOSPlugin = {
-  name: 'custom-api',
-  routes: [
-    {
-      path: '/api/products/featured',
-      method: 'GET',
-      handler: async (req, res) => {
-        const products = await req.db.query({
-          object: 'products',
-          filters: [{ field: 'featured', operator: 'eq', value: true }],
-          top: 10
-        })
-        res.json(products)
+const pages = {
+  invoices: {
+    type: 'list',
+    object: 'invoices',
+    filters: [{ field: 'status', operator: 'ne', value: 'paid' }],
+    columns: ['invoice_number', 'customer', 'total', 'status', 'due_date'],
+    actions: [
+      {
+        label: 'Send Invoice',
+        trigger: 'workflow:send_invoice',
+        condition: 'status === "draft"'
       }
-    }
-  ]
+    ]
+  }
 }
 ```
 
-### 4. Real-Time Updates
+**Step 3: Define Workflow (ObjectOS)**
+```yaml
+workflows:
+  send_invoice:
+    trigger:
+      manual: true
+      object: invoices
+      condition: status === 'draft'
+    
+    steps:
+      - action: update
+        object: invoices
+        data:
+          status: sent
+          sent_at: "{{now()}}"
+      
+      - action: send_email
+        to: "{{record.customer.email}}"
+        subject: "Invoice {{record.invoice_number}}"
+        template: invoice_email
+        attachments:
+          - type: pdf
+            template: invoice_pdf
+      
+      - action: schedule
+        delay: "{{record.due_date}}"
+        workflow: check_overdue
+```
 
-WebSocket support for live data:
-
+**Step 4: ObjectOS Orchestrates Everything**
 ```typescript
 const app = new ObjectOS({
-  // ... config ...
+  schema,      // From ObjectQL
+  pages,       // From ObjectUI
+  workflows,   // Business logic
   
-  realtime: {
-    enabled: true,
-    transport: 'websocket',
-    port: 3001
-  }
+  // ObjectOS handles:
+  identity: { authentication: { providers: ['email'] } },
+  sync: { enabled: true, strategy: 'crdt' },
+  deployment: { mode: 'server', port: 3000 }
 })
 
-// Client-side (automatic via ObjectUI)
-{
-  type: 'table',
-  object: 'orders',
-  realtime: true  // Table updates automatically when data changes
-}
+await app.start()
+// ✅ RESTful API auto-generated
+// ✅ Web UI auto-rendered
+// ✅ Authentication enabled
+// ✅ Workflows active
+// ✅ Sync configured
 ```
+
+**Result**: You define **WHAT** (data, UI, logic). ObjectOS handles **HOW** (auth, sync, deployment).
 
 ---
 
-## Use Cases
+## Why ObjectOS Matters
 
-### 1. Personal Productivity Tools
+### For CTOs and Enterprise Architects
 
-**Scenario**: Note-taking app, local CRM, project management
+**The Problem You're Solving:**
+- **Microservices Sprawl**: 47 services doing auth, each slightly differently
+- **Spaghetti Monoliths**: Business logic buried in controllers, impossible to test
+- **Vendor Lock-In**: Tightly coupled to Firebase/Supabase/AWS Amplify
+- **Compliance Nightmares**: No audit trail, inconsistent RBAC
 
-**Configuration**:
-```typescript
-const app = new ObjectOS({
-  mode: 'standalone',
-  storage: '~/.mynotes/data.oos'
-})
-```
+**What ObjectOS Provides:**
+- **Unified Control Plane**: One governance model for all apps
+- **Declarative Everything**: Logic as configuration, not code
+- **Database Agnostic**: MySQL today, PostgreSQL tomorrow, Oracle for legacy
+- **Compliance Ready**: Built-in audit logs, RBAC, FLS
 
-**Benefits**:
-- Zero setup—just download and run
-- Complete privacy—data never leaves device
-- Works offline by design
-- Can sync to cloud optionally
+### For Backend Leads
 
-### 2. Enterprise System Integration
+**The Problem You're Solving:**
+- **Boilerplate Hell**: Same auth code in every microservice
+- **Sync Complexity**: CRDTs are hard; you're doing LWW wrong
+- **Testing Difficulties**: Business logic mixed with framework code
 
-**Scenario**: Unified dashboard over multiple legacy databases
-
-**Configuration**:
-```typescript
-// Connect to multiple data sources
-const erpDB = new ObjectQL({ driver: 'oracle', url: 'oracle://...' })
-const crmDB = new ObjectQL({ driver: 'sqlserver', url: 'sqlserver://...' })
-
-const app = new ObjectOS({
-  mode: 'server',
-  dataSources: {
-    erp: erpDB,
-    crm: crmDB
-  },
-  ui: {
-    pages: {
-      dashboard: {
-        type: 'grid',
-        items: [
-          { type: 'table', object: 'erp.customers' },
-          { type: 'table', object: 'crm.leads' }
-        ]
-      }
-    }
-  }
-})
-```
-
-**Benefits**:
-- Single UI for multiple systems
-- Consistent query language
-- No custom integration code
-- Easy to maintain and extend
-
-### 3. Multi-Tenant SaaS Platform
-
-**Scenario**: Project management SaaS
-
-**Configuration**:
-```typescript
-const app = new ObjectOS({
-  mode: 'multi-tenant',
-  tenantStrategy: 'schema',
-  data: {
-    driver: 'postgres',
-    url: process.env.DATABASE_URL
-  },
-  identity: {
-    authentication: {
-      providers: ['email', 'oauth']
-    }
-  }
-})
-```
-
-**Benefits**:
-- Complete tenant isolation
-- RBAC out of the box
-- Scalable architecture
-- Can migrate tenants between strategies
-
----
-
-## What You'll Learn
-
-This specification documentation covers:
-
-- ✅ **[Platform Architecture](/docs/objectos/architecture)** - QL-UI binding, identity system, plugin architecture
-- ✅ **[Identity & Access](/docs/objectos/identity-access)** - User management, RBAC, field-level security
-- ✅ **[Plugin Development](/docs/objectos/plugins)** - Creating custom business logic extensions
-- ✅ **[Deployment Guide](/docs/objectos/deployment)** - Standalone, server, and multi-tenant modes
-- ✅ **[API Reference](/docs/objectos/api-reference)** - Complete ObjectOS SDK documentation
-- ✅ **[Best Practices](/docs/objectos/best-practices)** - Security, performance, and scalability patterns
-
----
-
-## Quick Start Example
-
-Here's a complete end-to-end example:
-
-```typescript
-import { ObjectOS } from '@objectstack/os'
-
-// 1. Initialize ObjectOS
-const app = new ObjectOS({
-  mode: 'server',
-  port: 3000,
-  
-  // Data Layer (ObjectQL)
-  data: {
-    driver: 'sqlite',
-    url: './myapp.db',
-    schema: {
-      objects: {
-        tasks: {
-          fields: {
-            title: { type: 'text', required: true },
-            status: { type: 'select', options: ['todo', 'in_progress', 'done'] },
-            owner: { type: 'lookup', reference_to: '_users' }
-          },
-          permission_set: {
-            user: {
-              allowRead: true,
-              allowCreate: true,
-              allowEdit: 'owner eq $user.id',
-              allowDelete: 'owner eq $user.id'
-            }
-          }
-        }
-      }
-    }
-  },
-  
-  // UI Layer (ObjectUI)
-  ui: {
-    pages: {
-      home: {
-        type: 'page',
-        title: 'My Tasks',
-        body: {
-          type: 'table',
-          object: 'tasks',
-          filters: [{ field: 'status', operator: 'ne', value: 'done' }],
-          columns: [
-            { field: 'title', sortable: true },
-            { field: 'status', type: 'badge' }
-          ],
-          actions: [
-            {
-              label: 'Complete',
-              type: 'api_request',
-              api: '/api/tasks/{{row.id}}',
-              method: 'PATCH',
-              data: { status: 'done' }
-            }
-          ]
-        }
-      }
-    }
-  },
-  
-  // Identity Layer
-  identity: {
-    authentication: {
-      providers: ['email']
-    },
-    authorization: {
-      defaultRole: 'user'
-    }
-  }
-})
-
-// 2. Start the application
-await app.listen()
-console.log('ObjectOS running at http://localhost:3000')
-```
-
-This creates a complete task management application with:
-- SQLite database
-- User authentication
-- Permission-controlled task CRUD
-- Automatic REST API
-- Web interface
-- All in ~50 lines of code
-
----
-
-## Design Rationale
-
-### Why QL-UI Binding?
-
-**Manual API development is tedious**. Automatic binding provides:
-
-- **Zero Boilerplate**: No need to write REST controllers
-- **Type Safety**: ObjectQL schema enforces data contracts
-- **Permission Enforcement**: RBAC applied automatically
-- **Consistency**: All components follow same patterns
-
-### Why Built-in Identity?
-
-**Most applications need user management**. Built-in system provides:
-
-- **Standard Objects**: `_users`, `_roles`, `_permissions` objects
-- **RBAC Out of Box**: No custom permission code
-- **Field-Level Security**: Fine-grained access control
-- **Integration Ready**: Pluggable auth providers (OAuth, LDAP, SAML)
-
-### Why Plugin Architecture?
-
-**Every application has unique needs**. Plugin system provides:
-
-- **Extensibility**: Add custom business logic without forking
-- **Composability**: Combine plugins for complex workflows
-- **Maintainability**: Plugins isolated from core platform
-- **Community**: Share and reuse plugins across projects
-
----
-
-## Specification Compliance
-
-ObjectOS implementations must pass the **ObjectOS Compliance Test Suite**:
-
-- ✅ QL-UI binding with automatic data fetching
-- ✅ User authentication and session management
-- ✅ RBAC permission enforcement
-- ✅ Field-level security filtering
-- ✅ Plugin system with lifecycle hooks
-- ✅ Standalone mode (.oos file execution)
-- ✅ Server mode (HTTP API server)
-- ✅ Multi-tenant mode (Virtual City isolation)
-
-Reference implementations:
-- **Node.js**: [@objectstack/os](https://github.com/objectstack-ai/objectos) (JavaScript/TypeScript)
-- **Python**: [objectos-py](https://github.com/objectstack-ai/objectos-py) (planned)
-- **Go**: [objectos-go](https://github.com/objectstack-ai/objectos-go) (planned)
+**What ObjectOS Provides:**
+- **Protocol-Driven**: Test workflows as YAML, not runtime behavior
+- **Proven Sync**: Battle-tested CRDT implementation
+- **Hot Reload**: Change workflows without deployment
 
 ---
 
 ## Next Steps
 
-1. **Understand Platform Architecture**: Read [Architecture](/docs/objectos/architecture) to learn how ObjectOS orchestrates QL and UI
-2. **Setup Identity System**: Review [Identity & Access](/docs/objectos/identity-access) for user management and RBAC
-3. **Deploy Your App**: Follow [Deployment Guide](/docs/objectos/deployment) for standalone, server, or multi-tenant modes
-4. **Extend with Plugins**: Study [Plugin Development](/docs/objectos/plugins) to add custom business logic
+Explore the ObjectOS platform capabilities:
 
-For philosophical context, see:
-- **[The Manifesto](/docs/framework/manifesto)** - Why ObjectOS is local-first and plugin-based
-- **[Architecture](/docs/framework/architecture)** - How ObjectOS completes the ObjectStack ecosystem
+1. **[Platform Architecture](/docs/objectos/platform-architecture)** - Deep dive into QL-UI binding and runtime
+2. **[Identity & Access](/docs/objectos/identity-access)** - RBAC, SSO, Field-Level Security
+3. **[Deployment](/docs/objectos/deployment)** - Standalone, Server, and Multi-Tenant modes
+
+For implementation examples:
+- **[Plugin Development Guide](/docs/objectos/plugins)** - Build your first plugin
+- **[Workflow Patterns](/docs/objectos/workflows)** - Common automation scenarios
+- **[Sync Configuration](/docs/objectos/sync)** - Configure Local-First replication
+
+---
+
+## Design Philosophy
+
+ObjectOS follows three core principles:
+
+1. **Mechanism, Not Policy**: We provide RBAC interfaces, not hardcoded user systems. You define policies.
+2. **Local-First by Default**: Applications run offline. Sync is optional, not required.
+3. **Protocol-Driven**: Business logic lives in data (JSON/YAML), not in code (if/else).
+
+**ObjectOS is not a framework. It's an operating system for business applications.**
