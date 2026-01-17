@@ -2,6 +2,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import OpenAI from 'openai';
 
+// Supported language suffixes for i18n
+const LANGUAGE_SUFFIXES = ['.cn.mdx', '.en.mdx'];
+const TARGET_LANGUAGE_SUFFIX = '.cn.mdx';
+
+/**
+ * Check if a file has a language suffix
+ * @param {string} filePath - The file path to check
+ * @returns {boolean} - True if file has a language suffix
+ */
+function hasLanguageSuffix(filePath) {
+  return LANGUAGE_SUFFIXES.some(suffix => filePath.endsWith(suffix));
+}
+
 export function getAllMdxFiles(dir) {
   let results = [];
   if (!fs.existsSync(dir)) return results;
@@ -14,7 +27,7 @@ export function getAllMdxFiles(dir) {
       results = results.concat(getAllMdxFiles(file));
     } else {
       // Only include .mdx files that don't have language suffix
-      if (file.endsWith('.mdx') && !file.endsWith('.cn.mdx') && !file.endsWith('.en.mdx')) {
+      if (file.endsWith('.mdx') && !hasLanguageSuffix(file)) {
         results.push(path.relative(process.cwd(), file));
       }
     }
@@ -25,17 +38,17 @@ export function getAllMdxFiles(dir) {
 export function resolveTranslatedFilePath(enFilePath) {
   // Strategy: Use dot parser convention
   // content/docs/path/to/file.mdx -> content/docs/path/to/file.cn.mdx
-  // Skip files that already have language suffix (.cn.mdx or .en.mdx)
+  // Skip files that already have language suffix
   const absPath = path.resolve(enFilePath);
   
-  // Skip if already has .cn.mdx or .en.mdx suffix
-  if (absPath.endsWith('.cn.mdx') || absPath.endsWith('.en.mdx')) {
+  // Skip if already has a language suffix
+  if (hasLanguageSuffix(absPath)) {
     return absPath;
   }
   
-  // Replace .mdx with .cn.mdx
+  // Replace .mdx with target language suffix
   if (absPath.endsWith('.mdx')) {
-    return absPath.replace(/\.mdx$/, '.cn.mdx');
+    return absPath.replace(/\.mdx$/, TARGET_LANGUAGE_SUFFIX);
   }
   
   return absPath;
