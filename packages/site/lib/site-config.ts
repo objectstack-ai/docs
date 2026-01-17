@@ -2,7 +2,6 @@ import { deepMerge } from './deep-merge';
 import objectDocsConfig from '@/docs.site.json';
 
 export interface SiteConfig {
-  baseUrl: string;
   meta: {
     title: string;
     description: string;
@@ -83,7 +82,6 @@ export interface SiteConfig {
 }
 
 const defaultConfig: SiteConfig = {
-  baseUrl: '/docs',
   meta: {
     title: 'ObjectStack ',
     description: 'Documentation',
