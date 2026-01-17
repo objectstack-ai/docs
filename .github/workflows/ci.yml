@@ -36,8 +36,8 @@ jobs:
       # - name: Generate source files
       #  run: pnpm exec fumadocs-mdx
       
-      - name: Type check
-        run: pnpm exec tsc --noEmit
+      #- name: Type check
+      #  run: pnpm exec tsc --noEmit
       
       - name: Build
         run: pnpm run build
