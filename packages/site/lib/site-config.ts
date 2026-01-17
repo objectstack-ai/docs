@@ -1,6 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { deepMerge } from './deep-merge';
+import objectDocsConfig from '@/objectdocs.json';
 
 export interface SiteConfig {
   meta: {
@@ -141,33 +140,7 @@ const defaultConfig: SiteConfig = {
 };
 
 export function getSiteConfig(): SiteConfig {
-  try {
-    // Determine path to objectdocs.json. 
-    // Assuming process.cwd() is packages/site during build, or root during dev?
-    // Let's look for objectdocs.json in a few places.
-    
-    // 1. Check relative to current working directory (if run from root)
-    let configPath = path.resolve(process.cwd(), 'objectdocs.json');
-    if (fs.existsSync(configPath)) {
-      const content = fs.readFileSync(configPath, 'utf-8');
-      console.log('Loaded objectdocs.json from:', configPath);
-      return deepMerge(defaultConfig, JSON.parse(content));
-    }
-
-    // 2. Check relative to package root (../../objectdocs.json) if run from packages/site
-    configPath = path.resolve(process.cwd(), '../../objectdocs.json');
-    if (fs.existsSync(configPath)) {
-      const content = fs.readFileSync(configPath, 'utf-8');
-      console.log('Loaded objectdocs.json from:', configPath);
-      return deepMerge(defaultConfig, JSON.parse(content));
-    }
-    
-    console.warn('objectdocs.json not found at:', configPath, 'using default config');
-  } catch (error) {
-    console.error('Error loading objectdocs.json:', error);
-  }
-  
-  return defaultConfig;
+  return deepMerge(defaultConfig, objectDocsConfig);
 }
 
 export const siteConfig = getSiteConfig();
