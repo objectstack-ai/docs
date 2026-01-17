@@ -1,260 +1,112 @@
 ---
-title: ObjectStack 规范
-description: 协议驱动、本地优先、数据库无关的全栈开发平台
+title: 导读
+description: 为什么世界需要一个通用的企业级全栈协议标准？从代码驱动转向协议驱动的架构变革。
 ---
 
-# ObjectStack 平台规范
+# 导读：协议驱动范式 (The Protocol-Driven Paradigm)
 
-**ObjectStack** 是一个协议驱动的全栈开发平台，通过标准化的 JSON 协议将业务逻辑与技术实现分离。它使开发者能够构建可移植的、数据库无关的应用程序，并实现完全的数据主权。
+> "Code rots. Protocols endure." 
+> (代码会腐烂，协议永存。)
 
-## 核心架构原则
+在过去的一二十年里，企业软件开发陷入了一个西西弗斯式的循环：
 
-ObjectStack 建立在三个不可动摇的支柱之上：
+我们用 JSP 写了一遍 CRM，五年后用 Angular 重写，再过五年用 React 重写。后端也从 PHP 换到 Node.js，再到 Go。每一次技术栈的迭代，我们都在**重新实现完全相同的业务逻辑**——相同的表单验证、相同的权限判断、相同的审批流程。
 
-### 1. 协议驱动架构
-逻辑存在于**声明式协议**（JSON）中，而非命令式代码中。业务定义是数据，而非函数。这使得：
-- **可移植性**：协议与语言和框架无关
-- **可组合性**：从简单的声明式块构建复杂系统
-- **AI 生成**：从协议规范生成 80% 的应用代码
-- **版本控制**：将业务逻辑作为结构化数据进行版本管理
+这种**“代码驱动（Code-Driven）”**的开发模式带来了巨大的隐性成本：**业务逻辑与技术实现紧密耦合**。当技术框架过时，业务资产也随之贬值，甚至成为技术债。
 
-### 2. 本地优先设计
-应用程序**默认离线工作**。云连接是可选的，而非强制的。这确保了：
-- **数据主权**：用户拥有数据，而非平台
-- **零供应商锁定**：数据可导出为标准格式（.oos、.json）
-- **默认隐私**：无需遥测或云依赖
-- **弹性**：应用程序在无网络连接时也能运行
+**ObjectStack 的诞生，旨在终结这一循环。**
 
-### 3. 数据库无关
-一次编写，在**任何数据库**上运行。ObjectQL 完全抽象了数据层：
-- **跨数据库协议**：MySQL、PostgreSQL、Oracle、SQLite、SQL Server 使用统一查询语法
-- **零迁移成本**：切换数据库无需更改应用代码
-- **方言抽象**：引擎处理特定数据库的 SQL 生成
-- **统一驱动接口**：无论底层存储如何，API 都保持一致
+## 什么是 ObjectStack？
 
----
+ObjectStack 不是一个简单的框架或库，它是一套**全栈应用开发协议标准（Standard Protocols）**。
 
-## 平台组件
+它主张将应用的**“意图（Intent）”**与**“实现（Implementation）”**彻底分离。通过标准化的 JSON 协议来定义数据、界面和流程，从而使业务逻辑独立于具体的编程语言和数据库技术。
 
-ObjectStack 由三个解耦的引擎组成，它们通过标准化的 JSON 协议进行通信：
+ObjectStack 的核心架构由三大支柱构成：
 
-```mermaid
-graph TB
-    subgraph "应用层"
-        App[您的应用程序]
-    end
-    
-    subgraph "ObjectStack 平台"
-        OS[ObjectOS<br/>运行时与编排]
-        UI[ObjectUI<br/>声明式 UI 引擎]
-        QL[ObjectQL<br/>数据协议引擎]
-    end
-    
-    subgraph "基础设施层"
-        DB[(数据库<br/>MySQL/PG/Oracle/SQLite)]
-        Renderer[UI 渲染器<br/>React/Vue/Flutter]
-    end
-    
-    App --> OS
-    OS --> UI
-    OS --> QL
-    UI --> Renderer
-    QL --> DB
-    
-    style OS fill:#e1f5ff
-    style UI fill:#fff3e0
-    style QL fill:#f3e5f5
-```
+1.  **ObjectQL (The Data Protocol):** 数据库无关的通用数据协议。
+2.  **ObjectUI (The View Protocol):** 声明式的通用界面协议。
+3.  **ObjectOS (The Runtime Protocol):** 负责编排与治理的业务操作系统。
 
-### ObjectQL：数据协议引擎
 
-**角色**：数据库无关的查询引擎和模式编译器
 
-ObjectQL 定义了一种基于 JSON 的通用查询语言，可编译为任何支持数据库的原生 SQL。它通过完全抽象数据层来消除供应商锁定。
+## 核心哲学
 
-**核心能力**：
-- **模式定义**：将数据模型声明为 JSON 规范
-- **查询协议**：所有 CRUD 操作的统一 JSON 语法
-- **AST 编译**：将协议转译为特定数据库的 SQL
-- **虚拟城市**：多租户数据隔离机制
-- **驱动抽象**：可插拔数据库驱动（MySQL、PostgreSQL、Oracle、SQLite、SQL Server）
+### 1. 协议驱动开发 (Protocol-Driven Development)
 
-[→ ObjectQL 规范](/docs/objectql)
+在传统开发中，业务逻辑被硬编码在函数中：
 
-### ObjectUI：声明式 UI 引擎
-
-**角色**：基于协议的界面渲染器
-
-ObjectUI 将 UI 开发从命令式代码转变为声明式 JSON 规范。界面是数据，而非函数。
-
-**核心能力**：
-- **组件协议**：表单、表格、网格、仪表板的 JSON 定义
-- **数据绑定**：与 ObjectQL 数据层自动同步
-- **动作协议**：声明式事件处理（API 调用、导航、对话框）
-- **渲染器无关**：React 实现可用，Vue/Flutter 已规划
-- **主题系统**：可自定义样式而不改变结构
-
-[→ ObjectUI 规范](/docs/objectui)
-
-### ObjectOS：运行时平台
-
-**角色**：应用编排和平台服务
-
-ObjectOS 将 ObjectQL 和 ObjectUI 绑定到一个连贯的运行时环境中，提供身份管理、访问控制和部署能力。
-
-**核心能力**：
-- **QL-UI 绑定**：数据层和界面层的自动连接
-- **身份系统**：内置带 RBAC 的用户管理
-- **字段级安全**：细粒度数据访问控制
-- **插件架构**：可扩展的业务逻辑层
-- **部署模式**：独立（.oos 文件）、服务器（Docker）、多租户 SaaS
-
-[→ ObjectOS 规范](/docs/objectos)
-
----
-
-## 为什么选择 ObjectStack？
-
-### 对于个人开发者
-构建本地优先应用程序，**无需服务器基础设施**：
-- 个人工具（笔记、CRM、项目管理）
-- 使用 SQLite 的离线应用程序
-- 零部署复杂性——只需一个 .oos 文件
-- 完全的隐私和数据所有权
-
-### 对于企业 IT
-通过标准协议层**统一异构遗留系统**：
-- 连接多个数据库（Oracle、SQL Server、MySQL）
-- 在所有系统上提供统一的 ObjectQL API
-- 使用一致的查询接口消除数据孤岛
-- 将集成复杂性降低 10 倍
-
-### 对于 SaaS 初创公司
-专注于**核心业务逻辑**，而非基础设施：
-- 跳过数月的 CRUD/认证/权限样板代码
-- 在协议级别内置多租户
-- 数据库无关允许客户选择
-- 从 SQLite 扩展到 PostgreSQL 无需更改代码
-
-### 对于低代码平台供应商
-提供**真正的可移植性**，无供应商锁定：
-- 客户选择自己的数据库
-- 将应用程序导出/导入为标准 .oos 文件
-- 基于协议的设计支持可视化编辑工具
-- 对 AI 友好的规范用于代码生成
-
----
-
-## 设计理念
-
-ObjectStack 遵循**[宣言](/docs/concepts/manifesto)**中概述的原则：
-
-1. **协议中立性**：规范先于实现。协议层中没有数据库、语言或框架依赖。
-
-2. **机制优于策略**：协议定义接口（机制），而非实现（策略）。用户系统和业务逻辑属于 ObjectOS，而非 ObjectQL/UI 规范。
-
-3. **数据主权**：强制本地优先。所有核心功能必须离线工作。数据必须可导出为标准格式。
-
-4. **稳定性承诺**：破坏性更改需要 2 个主要版本的迁移窗口。基础设施必须稳定。
-
-这些原则是**不可动摇且不可协商的**。违反这些原则的功能不能添加到 ObjectStack。
-
----
-
-## 快速开始
-
-根据您的角色选择学习路径：
-
-### 快速开始（5 分钟）
-立即运行一个可工作的应用程序：
-- **[快速开始指南](/docs/concepts/quickstart)**：构建您的第一个 ObjectStack 应用
-
-### 概念基础（30 分钟）
-了解理念和架构：
-- **[欢迎使用 ObjectStack](/docs/concepts/welcome)**：平台概述和价值主张
-- **[宣言](/docs/concepts/manifesto)**：核心原则和设计决策
-- **[架构指南](/docs/concepts/architecture)**：技术设计和组件关系
-
-### 组件规范（每个 2-3 小时）
-深入了解每个引擎的协议规范：
-- **[ObjectQL 规范](/docs/objectql)**：模式定义、查询 DSL、聚合
-- **[ObjectUI 规范](/docs/objectui)**：组件协议、动作、渲染
-- **[ObjectOS 规范](/docs/objectos)**：身份管理、RBAC、部署
-
-### AI 辅助开发
-了解如何利用 LLM 进行快速开发：
-- **[AI 法典](/docs/concepts/ai-codex)**：使用 AI 从协议规范生成 80% 的应用程序
-
----
-
-## 示例：协议中的待办事项应用
-
-一个完整的应用程序定义为声明式 JSON：
-
-**数据层（ObjectQL 模式）**：
-```json
-{
-  "objects": {
-    "todos": {
-      "fields": {
-        "title": { "type": "text", "required": true },
-        "completed": { "type": "boolean", "defaultValue": false },
-        "priority": { "type": "select", "options": ["high", "medium", "low"] },
-        "owner": { "type": "lookup", "reference_to": "_users" }
-      },
-      "permission_set": {
-        "user": {
-          "allowRead": true,
-          "allowCreate": true,
-          "allowEdit": "owner eq $user.id",
-          "allowDelete": "owner eq $user.id"
-        }
-      }
-    }
+```javascript
+// The Old Way: Imperative & Coupled
+function createOrder(data) {
+  if (data.amount > 1000 && !user.isManager) {
+    throw new Error("Need approval");
   }
+  db.query("INSERT INTO orders ...");
 }
+
 ```
 
-**界面层（ObjectUI 协议）**：
-```json
-{
-  "type": "page",
-  "title": "我的任务",
-  "body": {
-    "type": "table",
-    "object": "todos",
-    "filters": [["completed", "=", false]],
-    "columns": [
-      { "field": "title", "label": "任务" },
-      { "field": "priority", "label": "优先级" },
-      { "field": "completed", "label": "完成", "type": "boolean" }
-    ],
-    "actions": [
-      { "label": "标记完成", "type": "update", "data": { "completed": true } },
-      { "label": "删除", "type": "delete", "confirm": true }
-    ]
-  }
-}
+在 ObjectStack 中，业务逻辑被定义为**数据（Metadata/Protocol）**：
+
+```yaml
+# The ObjectStack Way: Declarative & Decoupled
+object: order
+fields:
+  amount: { type: currency }
+validation:
+  - rule: "amount > 1000"
+    guard: "!user.isManager"
+    message: "Need approval"
+
 ```
 
-**结果**：一个功能齐全、数据库无关、权限控制的任务管理应用程序——完全定义为数据。
+* **差异：** 上述 YAML 配置不依赖任何语言。它可以被 Node.js 后端执行，可以被 Python 脚本分析，甚至可以直接传输给前端进行即时校验。
+* **价值：** 你的业务逻辑成为了**可移植、可分析、可进化的数字资产**，而不仅仅是一堆即将过时的代码。
 
----
+### 2. 本地优先 (Local-First & Data Sovereignty)
 
-## 社区和生态系统
+云原生（Cloud-Native）带来了便捷，但也剥夺了用户的数据主权。SaaS 厂商的数据孤岛让企业失去了对自己数据的物理控制权。
 
-- **GitHub**：[github.com/objectstack-ai](https://github.com/objectstack-ai)
-- **协议规范**：本文档站点（objectstack.org）
-- **参考实现**：开源引擎（MIT/Apache 2.0）
-- **社区插件**：通过 ObjectOS 插件架构可扩展
+ObjectStack 拥抱 **Local-First** 架构：
 
----
+* 应用首先在本地数据库（如 SQLite, RxDB）读写数据。
+* 操作即时响应，无需等待网络往返。
+* **ObjectOS** 负责在后台处理复杂的数据同步和冲突解决（CRDTs/LWW）。
 
-## 下一步
+这意味着：**即便断网，你的企业软件依然可用；即便云服务商倒闭，你的数据依然在你手中。**
 
-1. **理解理念**：阅读**[宣言](/docs/concepts/manifesto)**以了解 ObjectStack 的核心原则
-2. **构建您的第一个应用**：按照**[快速开始指南](/docs/concepts/quickstart)**部署一个可工作的应用程序
-3. **学习协议**：研究**[ObjectQL](/docs/objectql)**、**[ObjectUI](/docs/objectui)** 和 **[ObjectOS](/docs/objectos)** 规范
-4. **探索用例**：查看**[架构](/docs/concepts/architecture)**以了解企业模式
+### 3. 跨数据库 (Database-Agnostic)
 
-欢迎加入 ObjectStack 生态系统。让我们一起构建协议驱动开发的未来。
+企业不应被数据库厂商锁定。
+
+**ObjectQL** 充当了一个**数据库编译器**的角色。你编写标准的 ObjectQL Schema 和 Query AST，引擎负责将其编译为：
+
+* **PostgreSQL** (用于生产环境)
+* **SQLite** (用于边缘设备或本地开发)
+* **MySQL / Oracle / SQL Server** (用于遗留系统集成)
+
+这种能力让架构师可以在不同的场景下选择最优的存储引擎，而无需重写任何业务代码。
+
+## 为什么是现在？
+
+AI 正在重塑软件工程。
+
+当 AI 辅助编程（Copilot）日益普及，我们发现 AI 生成**结构化的协议（JSON/YAML）**比生成**过程式的代码（JavaScript/Python）**要准确得多、安全得多。
+
+* AI 生成代码容易产生幻觉（Hallucinations）和 Bug。
+* AI 生成符合 Schema 的 JSON 配置则是确定性的、可校验的。
+
+ObjectStack 是**为 AI 时代设计的架构**。它提供了一套 AI 能够完美理解和操作的标准语义层，使得“通过对话生成软件”成为可能。
+
+## 概览
+
+在接下来的章节中，我们将深入探讨这套协议的细节：
+
+* 前往 **[架构全景](https://www.google.com/search?q=./03-architecture.md)** 查看各组件如何协作。
+* 前往 **[核心价值](https://www.google.com/search?q=./02-core-values.md)** 了解更多关于本地优先的思考。
+* 前往 **[企业级模式](https://www.google.com/search?q=./04-enterprise-patterns.md)** 了解如何处理复杂的 ERP 场景。
+
+:::tip 记住
+ObjectStack 的目标不是让你写代码写得更快，而是让你写的代码**活得更久**。
+:::

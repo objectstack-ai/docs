@@ -1,53 +1,69 @@
 / (Root)
-├── index.md
+├── index.md (站点首页：宏大叙事与生态导航)
 │
-├── 01-concepts/ (序厅：企业级架构哲学)
-│   ├── 01-introduction.md
-│   ├── 02-core-values.md (Local-First, Protocol-Driven)
-│   ├── 03-architecture.md
-│   ├── 04-enterprise-patterns.md (新增：如何用协议描述 ERP/CRM 复杂业务)
-│   └── 05-terminology.md
+├── 01-concepts/ (序厅：哲学与核心概念)
+│   ├── 00-introduction.md (What is ObjectStack?)
+│   ├── 01-core-values.md (Local-First, Protocol-Driven, AI-Native)
+│   ├── 02-architecture.md (The Trinity: QL + UI + OS)
+│   ├── 03-enterprise-patterns.md (协议如何描述复杂 ERP 业务)
+│   └── 04-terminology.md (术语表)
 │
-├── 02-specifications/ (正厅：核心协议规范)
+├── 02-getting-started/ (新增：新手村 - 快速上手)
+│   ├── 01-installation.md (如何启动 ObjectOS Kernel)
+│   ├── 02-your-first-app.md (5分钟构建一个 CRM 模块)
+│   ├── 03-development-workflow.md (CLI 使用、调试与热重载)
+│   └── 04-deployment.md (Docker, Kubernetes 与边缘部署)
+│
+├── 03-specifications/ (正厅：核心协议规范 - The "Bible")
+│   │  _intro.md (协议层总览：Intent over Implementation)
 │   │
-│   ├── 01-objectql/ (数据与分析引擎协议)
+│   ├── 01-objectql/ (Data Protocol)
 │   │   ├── 00-overview.md
-│   │   ├── 01-schema-definition.md (基础建模：对象、字段、关系)
-│   │   ├── 02-advanced-types.md (企业级类型：Currency, Formula, Summary, Lookup)
-│   │   ├── 03-ast-structure.md (核心 AST)
-│   │   ├── 04-analytics-protocol.md (新增：聚合查询、透视表与 BI 数据源定义)
-│   │   ├── 05-transaction-model.md (新增：跨对象事务与原子操作规范)
-│   │   └── 06-wire-protocol.md
+│   │   ├── 01-schema-definition.md (Object, Fields, Relations)
+│   │   ├── 02-advanced-types.md (Currency, Formula, Summary)
+│   │   ├── 03-ast-structure.md (The JSON Wire Protocol)
+│   │   ├── 04-analytics-protocol.md (Aggregation, Pivot, BI Cubes)
+│   │   ├── 05-transaction-model.md (Atomic Mutation & Cross-Object Tx)
+│   │   └── 06-security-injection.md (原理：Compile-time Permission Injection)
 │   │
-│   ├── 02-objectui/ (界面与交互引擎协议)
-│   │   ├── 00-overview.md
-│   │   ├── 01-component-schema.md (基础组件：Input, Select, DatePicker)
-│   │   ├── 02-view-protocol.md (新增：复杂视图标准 - Grid, Kanban, Gantt, Calendar)
-│   │   ├── 03-layout-system.md (布局：Master-Detail, Tab, Wizard, Dashboard)
-│   │   ├── 04-action-triggers.md (交互：按钮点击后的 Client-side Logic)
-│   │   └── 05-report-template.md (新增：打印模板与 PDF 生成协议)
+│   ├── 02-objectui/ (View Protocol)
+│   │   ├── 00-overview.md (Server-Driven UI Philosophy)
+│   │   ├── 01-component-schema.md (Atoms: Input, Select, Date)
+│   │   ├── 02-view-protocol.md (Collections: Grid, Kanban, Gantt)
+│   │   ├── 03-layout-system.md (Containers: Master-Detail, Dashboard)
+│   │   ├── 04-action-triggers.md (Interactivity Protocol)
+│   │   └── 05-report-template.md (PDF Generation & Print)
 │   │
-│   └── 03-objectos/ (业务编排与治理协议)
-│       ├── 00-overview.md
-│       ├── 01-workflow-engine.md (新增：状态机、审批流与 BPMN 映射协议)
-│       ├── 02-automation-rules.md (新增：后端触发器与自动化脚本协议)
-│       ├── 03-permission-governance.md (升级：RBAC, 字段级安全, 记录级共享规则)
-│       ├── 04-audit-compliance.md (新增：审计日志结构与数据变更追踪)
-│       ├── 05-integration-etl.md (新增：数据导入导出与外部 API 映射标准)
-│       └── 06-plugin-manifest.md
+│   └── 03-objectos/ (Runtime Protocol)
+│       ├── 00-overview.md (The Kernel Metaphor)
+│       ├── 01-workflow-engine.md (FSM, BPMN Mapping, Approval)
+│       ├── 02-automation-rules.md (Triggers, Flows, Jobs)
+│       ├── 03-permission-governance.md (RBAC, FLS, Sharing Rules)
+│       ├── 04-audit-compliance.md (Audit Logs & History Tracking)
+│       ├── 05-integration-etl.md (Virtual Objects & Data Mapping)
+│       └── 06-plugin-manifest.md (Packaging & Lifecycle)
 │
-├── 03-compliance/ (兼容性与扩展接口)
-│   ├── 01-driver-spi/
-│   │   ├── db-connector.md
-│   │   └── analytics-adapter.md (新增：如何对接 ClickHouse/Elasticsearch 做分析)
-│   ├── 02-renderer-spi/
-│   │   ├── component-mapping.md
-│   │   └── view-adapter.md (新增：如何实现甘特图、日历等复杂视图)
-│   └── 03-tck/
+├── 04-development/ (新增：开发者手册 - SDK与工具链)
+│   ├── 01-cli-reference.md (@objectos/cli 命令详解)
+│   ├── 02-sdk-reference/
+│   │   ├── javascript-sdk.md (React/Node.js Client)
+│   │   ├── python-sdk.md (Data Analysis & AI Agents)
+│   │   └── go-sdk.md (Backend Microservices)
+│   └── 03-api-reference/ (OpenAPI/GraphQL 自动生成文档)
 │
-└── 04-implementations/ (生态索引)
-    ├── official-sdks.md
-    ├── business-modules/ (新增：标准业务模块参考)
-    │   ├── standard-hrm (HRM 模型参考)
-    │   └── standard-crm (CRM 模型参考)
-    └── community-drivers.md
+└── 05-ecosystem/ (生态与扩展 - 原 03/04 合并)
+    ├── 01-standard-modules/ (标准业务模型参考)
+    │   ├── standard-crm.md (客户、商机、合同模型定义)
+    │   ├── standard-hrm.md (组织、员工、薪资模型定义)
+    │   └── standard-finance.md (发票、总账模型定义)
+    │
+    ├── 02-drivers-spi/ (后端扩展接口)
+    │   ├── database-connectors.md (Postgres, Mongo, SQLite)
+    │   └── storage-adapters.md (S3, OSS, Local)
+    │
+    ├── 03-renderers-spi/ (前端扩展接口)
+    │   ├── react-renderer.md (Shadcn/Antd 实现参考)
+    │   └── flutter-renderer.md (Mobile 实现参考)
+    │
+    └── 04-compatibility-kit/ (TCK)
+        └── compliance-tests.md (如何验证你的 Driver 符合协议)

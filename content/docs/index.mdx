@@ -1,261 +1,111 @@
 ---
-title: ObjectStack Specification
-description: Protocol-Driven, Local-First, Database-Agnostic Full-Stack Development Platform
+title: "Introduction"
+description: Why the world needs a universal enterprise full-stack protocol standard. Shifting from Code-Driven to Protocol-Driven architecture.
 ---
 
-# ObjectStack Platform Specification
+# Introduction: The Protocol-Driven Paradigm
 
-**ObjectStack** is a protocol-driven full-stack development platform that separates business logic from technical implementation through standardized JSON protocols. It enables developers to build portable, database-agnostic applications with complete data sovereignty.
+> "Code rots. Protocols endure."
 
-## Core Architecture Principles
+For the past two decades, enterprise software development has been trapped in a Sisyphean cycle:
 
-ObjectStack is built on three unshakable pillars:
+We built CRMs with JSP, then rewrote them in Angular five years later, and rewrote them again in React five years after that. Backends shifted from PHP to Node.js, and then to Go. With every iteration of the tech stack, we are **re-implementing the exact same business logic**—the same form validations, the same permission checks, the same approval workflows.
 
-### 1. Protocol-Driven Architecture
-Logic resides in **declarative protocols** (JSON), not in imperative code. Business definitions are data, not functions. This enables:
-- **Portability**: Protocols are language and concepts agnostic
-- **Composability**: Complex systems built from simple, declarative blocks
-- **AI-Generation**: 80% of application code generated from protocol specifications
-- **Version Control**: Business logic versioned as structured data
+This **"Code-Driven"** development model carries a massive hidden cost: **Business logic is tightly coupled with technical implementation.** When the framework becomes obsolete, your business assets depreciate with it, eventually turning into technical debt.
 
-### 2. Local-First by Design
-Applications work **offline by default**. Cloud connectivity is optional, not mandatory. This ensures:
-- **Data Sovereignty**: Users own their data, not platforms
-- **Zero Vendor Lock-in**: Data exportable in standard formats (.oos, .json)
-- **Privacy by Default**: No telemetry or cloud dependencies required
-- **Resilience**: Applications function without network connectivity
+**ObjectStack was born to end this cycle.**
 
-### 3. Database Agnostic
-Write once, run on **any database**. ObjectQL abstracts the data layer completely:
-- **Cross-Database Protocol**: Single query syntax for MySQL, PostgreSQL, Oracle, SQLite, SQL Server
-- **Zero Migration Cost**: Switch databases without changing application code
-- **Dialect Abstraction**: Engine handles database-specific SQL generation
-- **Unified Driver Interface**: Consistent API regardless of underlying storage
+## What is ObjectStack?
 
----
+ObjectStack is not just a framework or a library; it is a **Universal Full-Stack Application Protocol Standard**.
 
-## Platform Components
+It advocates for the complete separation of **"Intent"** from **"Implementation"**. By defining data, interfaces, and processes through standardized JSON protocols, business logic becomes independent of specific programming languages and database technologies.
 
-ObjectStack consists of three decoupled engines that communicate via standardized JSON protocols:
+The core architecture of ObjectStack consists of three pillars:
 
-```mermaid
-graph TB
-    subgraph "Application Layer"
-        App[Your Application]
-    end
-    
-    subgraph "ObjectStack Platform"
-        OS[ObjectOS<br/>Runtime & Orchestration]
-        UI[ObjectUI<br/>Declarative UI Engine]
-        QL[ObjectQL<br/>Data Protocol Engine]
-    end
-    
-    subgraph "Infrastructure Layer"
-        DB[(Database<br/>MySQL/PG/Oracle/SQLite)]
-        Renderer[UI Renderer<br/>React/Vue/Flutter]
-    end
-    
-    App --> OS
-    OS --> UI
-    OS --> QL
-    UI --> Renderer
-    QL --> DB
-    
-    style OS fill:#e1f5ff
-    style UI fill:#fff3e0
-    style QL fill:#f3e5f5
-```
+1.  **ObjectQL (The Data Protocol):** A database-agnostic universal data protocol.
+2.  **ObjectUI (The View Protocol):** A declarative universal interface protocol.
+3.  **ObjectOS (The Runtime Protocol):** A business operating system responsible for orchestration and governance.
 
-### ObjectQL: The Data Protocol Engine
 
-**Role**: Database-agnostic query engine and schema compiler
 
-ObjectQL defines a universal JSON-based query language that compiles to native SQL for any supported database. It eliminates vendor lock-in by abstracting the data layer completely.
+## Core Philosophy
 
-**Key Capabilities**:
-- **Schema Definition**: Declare data models as JSON specifications
-- **Query Protocol**: Unified JSON syntax for all CRUD operations
-- **AST Compilation**: Transpiles protocols to database-specific SQL
-- **Virtual City**: Multi-tenant data isolation mechanism
-- **Driver Abstraction**: Pluggable database drivers (MySQL, PostgreSQL, Oracle, SQLite, SQL Server)
+### 1. Protocol-Driven Development
 
-[→ ObjectQL Specification](/docs/objectql)
+In traditional development, business logic is hard-coded into functions:
 
-### ObjectUI: The Declarative UI Engine
-
-**Role**: Protocol-based interface renderer
-
-ObjectUI transforms UI development from imperative code to declarative JSON specifications. Interfaces are data, not functions.
-
-**Key Capabilities**:
-- **Component Protocol**: JSON definitions for forms, tables, grids, dashboards
-- **Data Binding**: Automatic synchronization with ObjectQL data layer
-- **Action Protocol**: Declarative event handling (API calls, navigation, dialogs)
-- **Renderer Agnostic**: React implementation available, Vue/Flutter planned
-- **Theme System**: Customizable styling without changing structure
-
-[→ ObjectUI Specification](/docs/objectui)
-
-### ObjectOS: The Runtime Platform
-
-**Role**: Application orchestration and platform services
-
-ObjectOS binds ObjectQL and ObjectUI into a cohesive runtime environment, providing identity management, access control, and deployment capabilities.
-
-**Key Capabilities**:
-- **QL-UI Binding**: Automatic connection between data and interface layers
-- **Identity System**: Built-in user management with RBAC
-- **Field-Level Security**: Fine-grained data access control
-- **Plugin Architecture**: Extensible business logic layer
-- **Deployment Modes**: Standalone (.oos files), Server (Docker), Multi-tenant SaaS
-
-[→ ObjectOS Specification](/docs/objectos)
-
----
-
-## Why ObjectStack?
-
-### For Individual Developers
-Build local-first applications **without server infrastructure**:
-- Personal tools (notes, CRM, project management)
-- Offline-capable applications with SQLite
-- Zero deployment complexity—just a single .oos file
-- Complete privacy and data ownership
-
-### For Enterprise IT
-Unify **heterogeneous legacy systems** through a standard protocol layer:
-- Connect multiple databases (Oracle, SQL Server, MySQL)
-- Provide unified ObjectQL API across all systems
-- Eliminate data silos with consistent query interface
-- Reduce integration complexity by 10x
-
-### For SaaS Startups
-Focus on **core business logic**, not infrastructure:
-- Skip months of CRUD/auth/permissions boilerplate
-- Multi-tenancy built-in at protocol level
-- Database-agnostic allows customer choice
-- Scale from SQLite to PostgreSQL without code changes
-
-### For Low-Code Platform Vendors
-Offer **true portability** without vendor lock-in:
-- Customers choose their own database
-- Export/import applications as standard .oos files
-- Protocol-based design enables visual editing tools
-- AI-friendly specifications for code generation
-
----
-
-## Design Philosophy
-
-ObjectStack follows the principles outlined in **[The Manifesto](/docs/concepts/manifesto)**:
-
-1. **Protocol Neutrality**: Specifications before implementations. No database, language, or concepts dependencies in the protocol layer.
-
-2. **Mechanism over Policy**: Protocols define interfaces (mechanisms), not implementations (policies). User systems and business logic belong in ObjectOS, not in ObjectQL/UI specs.
-
-3. **Data Sovereignty**: Local-first by mandate. All core functionality must work offline. Data must be exportable in standard formats.
-
-4. **Stability Pledge**: Breaking changes require 2 major version migration windows. Infrastructure must be stable.
-
-These principles are **unshakable and non-negotiable**. Features that violate them cannot be added to ObjectStack.
-
----
-
-## Getting Started
-
-Choose your learning path based on your role:
-
-### Quick Start (5 minutes)
-Get a working application running immediately:
-- **[Quick Start Guide](/docs/concepts/quickstart)**: Build your first ObjectStack app
-
-### Conceptual Foundation (30 minutes)
-Understand the philosophy and architecture:
-- **[Welcome to ObjectStack](/docs/concepts/welcome)**: Platform overview and value proposition
-- **[The Manifesto](/docs/concepts/manifesto)**: Core principles and design decisions
-- **[Architecture Guide](/docs/concepts/architecture)**: Technical design and component relationships
-
-### Component Specifications (2-3 hours each)
-Deep dive into each engine's protocol specifications:
-- **[ObjectQL Spec](/docs/objectql)**: Schema definition, query DSL, aggregations
-- **[ObjectUI Spec](/docs/objectui)**: Component protocols, actions, rendering
-- **[ObjectOS Spec](/docs/objectos)**: Identity management, RBAC, deployment
-
-### AI-Assisted Development
-Learn how to leverage LLMs for rapid development:
-- **[The AI Codex](/docs/concepts/ai-codex)**: Using AI to generate 80% of your application from protocol specs
-
----
-
-## Example: Todo Application in Protocols
-
-A complete application defined as declarative JSON:
-
-**Data Layer (ObjectQL Schema)**:
-```json
-{
-  "objects": {
-    "todos": {
-      "fields": {
-        "title": { "type": "text", "required": true },
-        "completed": { "type": "boolean", "defaultValue": false },
-        "priority": { "type": "select", "options": ["high", "medium", "low"] },
-        "owner": { "type": "lookup", "reference_to": "_users" }
-      },
-      "permission_set": {
-        "user": {
-          "allowRead": true,
-          "allowCreate": true,
-          "allowEdit": "owner eq $user.id",
-          "allowDelete": "owner eq $user.id"
-        }
-      }
-    }
+```javascript
+// The Old Way: Imperative & Coupled
+function createOrder(data) {
+  if (data.amount > 1000 && !user.isManager) {
+    throw new Error("Need approval");
   }
+  db.query("INSERT INTO orders ...");
 }
+
 ```
 
-**Interface Layer (ObjectUI Protocol)**:
-```json
-{
-  "type": "page",
-  "title": "My Tasks",
-  "body": {
-    "type": "table",
-    "object": "todos",
-    "filters": [["completed", "=", false]],
-    "columns": [
-      { "field": "title", "label": "Task" },
-      { "field": "priority", "label": "Priority" },
-      { "field": "completed", "label": "Done", "type": "boolean" }
-    ],
-    "actions": [
-      { "label": "Mark Complete", "type": "update", "data": { "completed": true } },
-      { "label": "Delete", "type": "delete", "confirm": true }
-    ]
-  }
-}
+In ObjectStack, business logic is defined as **Data (Metadata/Protocol)**:
+
+```yaml
+# The ObjectStack Way: Declarative & Decoupled
+object: order
+fields:
+  amount: { type: currency }
+validation:
+  - rule: "amount > 1000"
+    guard: "!user.isManager"
+    message: "Need approval"
+
 ```
 
-**Result**: A fully functional, database-agnostic, permission-controlled task management application—defined entirely as data.
+* **The Difference:** The YAML configuration above relies on no specific language. It can be executed by a Node.js backend, analyzed by a Python script, or even transmitted to the frontend for immediate client-side validation.
+* **The Value:** Your business logic becomes a **portable, analyzable, and evolvable digital asset**, rather than a pile of code destined for obsolescence.
 
----
+### 2. Local-First & Data Sovereignty
 
-## Community and Ecosystem
+Cloud-Native brings convenience, but it also strips users of data sovereignty. Data silos created by SaaS vendors leave enterprises without physical control over their own data.
 
-- **GitHub**: [github.com/objectstack-ai](https://github.com/objectstack-ai)
-- **Protocol Specifications**: This documentation site (objectstack.org)
-- **Reference Implementations**: Open-source engines (MIT/Apache 2.0)
-- **Community Plugins**: Extensible through ObjectOS plugin architecture
+ObjectStack embraces a **Local-First** architecture:
 
----
+* Applications read and write data primarily to a local database (e.g., SQLite, RxDB).
+* Interactions are instantaneous, requiring no network round-trips.
+* **ObjectOS** handles complex data synchronization and conflict resolution (CRDTs/LWW) in the background.
 
-## Next Steps
+This means: **Even if the network goes down, your enterprise software remains usable. Even if the cloud provider goes bankrupt, your data remains in your hands.**
 
-1. **Understand the Philosophy**: Read **[The Manifesto](/docs/concepts/manifesto)** to understand ObjectStack's core principles
-2. **Build Your First App**: Follow the **[Quick Start Guide](/docs/concepts/quickstart)** to deploy a working application
-3. **Learn the Protocols**: Study **[ObjectQL](/docs/objectql)**, **[ObjectUI](/docs/objectui)**, and **[ObjectOS](/docs/objectos)** specifications
-4. **Explore Use Cases**: Review **[Architecture](/docs/concepts/architecture)** for enterprise patterns
+### 3. Database-Agnostic
 
-Welcome to the ObjectStack ecosystem. Let's build the future of protocol-driven development.
+Enterprises should not be locked into a specific database vendor.
 
+**ObjectQL** acts as a **Database Compiler**. You write standard ObjectQL Schema and Query ASTs, and the engine compiles them into:
+
+* **PostgreSQL** (For production environments)
+* **SQLite** (For edge devices or local development)
+* **MySQL / Oracle / SQL Server** (For legacy system integration)
+
+This capability allows architects to choose the optimal storage engine for different scenarios without rewriting a single line of business code.
+
+## Why Now?
+
+AI is reshaping software engineering.
+
+As AI-assisted programming (Copilot) becomes ubiquitous, we are discovering that AI generates **Structured Protocols (JSON/YAML)** far more accurately and safely than it generates **Imperative Code (JavaScript/Python)**.
+
+* AI-generated code is prone to hallucinations and bugs.
+* AI-generated JSON configuration, validated against a Schema, is deterministic and verifiable.
+
+ObjectStack is an **architecture designed for the AI Era**. It provides a standard semantic layer that AI can perfectly understand and manipulate, making "Software Generation via Conversation" a reality.
+
+## Overview
+
+In the following sections, we will explore the details of these protocols:
+
+* Go to **[Architecture Overview](https://www.google.com/search?q=./03-architecture.md)** to see how the components collaborate.
+* Go to **[Core Values](https://www.google.com/search?q=./02-core-values.md)** to learn more about Local-First thinking.
+* Go to **[Enterprise Patterns](https://www.google.com/search?q=./04-enterprise-patterns.md)** to understand how to handle complex ERP scenarios.
+
+:::tip Remember
+The goal of ObjectStack is not just to make you write code faster, but to make the code you write **live longer**.
+:::

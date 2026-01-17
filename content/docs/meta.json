@@ -1,9 +1,8 @@
 {
-  "title": "Documentation",
+  "title": "OpenStack",
   "pages": [
+    "index",
     "concepts",
-    "objectql",
-    "objectui",
-    "objectos"
+    "specifications"
   ]
 }

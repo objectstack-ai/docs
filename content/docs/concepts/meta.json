@@ -1,5 +1,4 @@
 {
   "title": "Concepts",
-  "root": true,
-  "pages": ["index", "core-values", "architecture", "enterprise-patterns", "terminology"]
+  "pages": ["core-values", "architecture", "enterprise-patterns", "terminology"]
 }
