@@ -1,11 +1,11 @@
 ---
-title: 聚合操作
-description: ObjectQL 中分组和聚合数据的完整参考
+title: Aggregation Operations
+description: Complete reference for grouping and aggregating data in ObjectQL
 ---
 
-# 聚合操作
+# Aggregation Operations
 
-本文档提供 ObjectQL 聚合操作的完整规范。
+This document provides the complete specification for ObjectQL's Aggregation operations.
 
 ## GroupBy
 
@@ -21,10 +21,10 @@ interface AggregateOptions {
 }
 ```
 
-### 基本 GroupBy
+### Basic GroupBy
 
 ```typescript
-// 按类别计数
+// Count by category
 await db.aggregate('product', {
   group_by: ['category'],
   fields: [
@@ -32,16 +32,16 @@ await db.aggregate('product', {
   ]
 })
 
-// 结果: [
+// Result: [
 //   { category: 'Electronics', total: 45 },
 //   { category: 'Books', total: 123 }
 // ]
 ```
 
-### 多重分组
+### Multiple Groupings
 
 ```typescript
-// 按年份和季度统计销售额
+// Sales by year and quarter
 await db.aggregate('order', {
   group_by: ['YEAR(created)', 'QUARTER(created)'],
   fields: [
@@ -52,31 +52,31 @@ await db.aggregate('order', {
 })
 ```
 
-## 聚合函数
+## Aggregate Functions
 
 ```typescript
-// 计数
+// Count
 { field: '_id', function: 'count' }
 
-// 求和
+// Sum
 { field: 'amount', function: 'sum' }
 
-// 平均值
+// Average
 { field: 'price', function: 'avg' }
 
-// 最小值
+// Min
 { field: 'price', function: 'min' }
 
-// 最大值
+// Max
 { field: 'price', function: 'max' }
 
-// 去重计数
+// Distinct count
 { field: 'customer_id', function: 'count_distinct' }
 ```
 
-## Having 子句
+## Having Clause
 
-过滤聚合结果:
+Filter aggregated results:
 
 ```typescript
 await db.aggregate('order', {
@@ -86,26 +86,26 @@ await db.aggregate('order', {
     { field: '_id', function: 'count', alias: 'order_count' }
   ],
   having: [
-    ['total_spent', '>', 1000]    // 仅消费 > 1000 的客户
+    ['total_spent', '>', 1000]    // Only customers who spent > 1000
   ]
 })
 ```
 
-## 完整聚合示例
+## Complete Aggregation Example
 
 ```typescript
-// 带过滤器的月度销售报告
+// Monthly sales report with filters
 const monthlySales = await db.aggregate('invoice', {
-  // 聚合前过滤(WHERE 子句)
+  // Pre-aggregation filters (WHERE clause)
   filters: [
     ['status', '=', 'paid'],
     ['created', '>=', '2024-01-01']
   ],
   
-  // 分组依据
+  // Group by
   group_by: ['YEAR(created)', 'MONTH(created)'],
   
-  // 聚合计算
+  // Aggregate calculations
   fields: [
     { field: 'amount', function: 'sum', alias: 'revenue' },
     { field: '_id', function: 'count', alias: 'invoice_count' },
@@ -113,19 +113,19 @@ const monthlySales = await db.aggregate('invoice', {
     { field: 'customer_id', function: 'count_distinct', alias: 'unique_customers' }
   ],
   
-  // 聚合后过滤(HAVING 子句)
+  // Post-aggregation filters (HAVING clause)
   having: [
-    ['revenue', '>', 50000]  // 仅收入 > 5 万的月份
+    ['revenue', '>', 50000]  // Only months with revenue > 50k
   ],
   
-  // 排序结果
+  // Sort results
   sort: 'YEAR(created) desc, MONTH(created) desc',
   
-  // 限制结果
-  limit: 12  // 最近 12 个月
+  // Limit results
+  limit: 12  // Last 12 months
 })
 
-// 结果: [
+// Result: [
 //   {
 //     year: 2024,
 //     month: 3,
@@ -138,8 +138,8 @@ const monthlySales = await db.aggregate('invoice', {
 // ]
 ```
 
-## 下一步
+## Next Steps
 
-- 学习[查询 DSL](/docs/02-objectql/query-dsl)进行基本查询
-- 掌握[变更操作](/docs/02-objectql/mutation)修改数据
-- 查看[Schema 定义](/docs/02-objectql/schema-definition)了解数据建模
+- Learn [Query DSL](/docs/02-objectql/protocol-spec/query-dsl) for basic queries
+- Master [Mutation Operations](/docs/02-objectql/protocol-spec/mutation) for data modification
+- Review [Schema Definition](/docs/02-objectql/protocol-spec/schema-definition) for data modeling

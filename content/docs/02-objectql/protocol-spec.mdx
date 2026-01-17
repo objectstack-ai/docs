@@ -11,14 +11,14 @@ ObjectQL uses a protocol-driven architecture with a comprehensive specification 
 
 The ObjectQL protocol specification is divided into four main components:
 
-### [Schema Definition](/docs/02-objectql/schema-definition)
+### [Schema Definition](/docs/02-objectql/protocol-spec/schema-definition)
 
 Define your data model with:
 - **Object definitions** - Database tables with metadata
 - **Field types** - Text, numeric, date/time, boolean, select, relationship, and special fields
 - **Field constraints** - Validation, indexes, and dependencies
 
-### [Query DSL](/docs/02-objectql/query-dsl)
+### [Query DSL](/docs/02-objectql/protocol-spec/query-dsl)
 
 Query your data with:
 - **Filters** - Comparison, string, list, null, and compound operators
@@ -26,7 +26,7 @@ Query your data with:
 - **Pagination** - Limit and skip for efficient data retrieval
 - **Field selection** - Choose specific fields including related data
 
-### [Aggregation Operations](/docs/02-objectql/aggregation)
+### [Aggregation Operations](/docs/02-objectql/protocol-spec/aggregation)
 
 Analyze your data with:
 - **GroupBy** - Group records by one or more fields
@@ -34,7 +34,7 @@ Analyze your data with:
 - **Having clause** - Filter aggregated results
 - **Pre and post-aggregation filters** - WHERE and HAVING clauses
 
-### [Mutation Operations](/docs/02-objectql/mutation)
+### [Mutation Operations](/docs/02-objectql/protocol-spec/mutation)
 
 Modify your data with:
 - **Insert** - Create new records
@@ -93,9 +93,9 @@ const stats = await db.aggregate('customer', {
 
 ## Next Steps
 
-- Start with [Schema Definition](/docs/02-objectql/schema-definition) to model your data
-- Learn [Query DSL](/docs/02-objectql/query-dsl) to retrieve data
-- Master [Aggregation](/docs/02-objectql/aggregation) for data analysis
-- Understand [Mutation Operations](/docs/02-objectql/mutation) for data modification
+- Start with [Schema Definition](/docs/02-objectql/protocol-spec/schema-definition) to model your data
+- Learn [Query DSL](/docs/02-objectql/protocol-spec/query-dsl) to retrieve data
+- Master [Aggregation](/docs/02-objectql/protocol-spec/aggregation) for data analysis
+- Understand [Mutation Operations](/docs/02-objectql/protocol-spec/mutation) for data modification
 - Explore [Core Features](/docs/02-objectql/core-features) for advanced capabilities
 - Check [Core Concepts](/docs/02-objectql/core-concepts) for foundational knowledge
