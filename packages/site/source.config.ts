@@ -26,10 +26,7 @@ export default defineConfig({
   mdxOptions: {
     // Rehype Code Plugin - Syntax highlighting configuration
     rehypeCodeOptions: {
-      themes: {
-        light: siteConfig.content.codeBlock.theme,
-        dark: siteConfig.content.codeBlock.theme,
-      },
+      theme: siteConfig.content.codeBlock.theme,
       // Enable inline code highlighting with tailing curly colon syntax
       // Example: `code{:js}` will highlight as JavaScript
       inline: 'tailing-curly-colon',
