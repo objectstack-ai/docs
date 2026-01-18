@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import OpenAI from 'openai';
-import { getAllMdxFiles, resolveTranslatedFilePath, translateContent } from '../utils/translate.mjs';
+import { getAllMdxFiles, resolveTranslatedFilePath, translateContent, getSiteConfig } from '../utils/translate.mjs';
 
 export function registerTranslateCommand(cli) {
   cli
@@ -21,6 +21,11 @@ export function registerTranslateCommand(cli) {
         apiKey: OPENAI_API_KEY,
         baseURL: OPENAI_BASE_URL,
       });
+
+      // Get language configuration
+      const config = getSiteConfig();
+      console.log(`Translation target: ${config.defaultLanguage} -> ${config.targetLanguage}`);
+      console.log(`Configured languages: ${config.languages.join(', ')}\n`);
 
       let targetFiles = [];
 

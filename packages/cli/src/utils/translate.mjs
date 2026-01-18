@@ -2,9 +2,59 @@ import fs from 'node:fs';
 import path from 'node:path';
 import OpenAI from 'openai';
 
-// Supported language suffixes for i18n
-const LANGUAGE_SUFFIXES = ['.cn.mdx', '.en.mdx'];
-const TARGET_LANGUAGE_SUFFIX = '.cn.mdx';
+/**
+ * Load site configuration from docs.site.json
+ * @returns {object} - The site configuration
+ */
+function loadSiteConfig() {
+  const configPath = path.resolve(process.cwd(), 'content/docs.site.json');
+  
+  if (!fs.existsSync(configPath)) {
+    console.warn(`Warning: docs.site.json not found at ${configPath}, using defaults`);
+    return {
+      i18n: {
+        enabled: true,
+        defaultLanguage: 'en',
+        languages: ['en', 'cn']
+      }
+    };
+  }
+  
+  try {
+    const configContent = fs.readFileSync(configPath, 'utf-8');
+    return JSON.parse(configContent);
+  } catch (error) {
+    console.error('Error loading docs.site.json:', error);
+    throw error;
+  }
+}
+
+// Load configuration
+const siteConfig = loadSiteConfig();
+const languages = siteConfig.i18n?.languages || ['en', 'cn'];
+const defaultLanguage = siteConfig.i18n?.defaultLanguage || 'en';
+
+// Generate language suffixes dynamically from config
+// e.g., ['en', 'cn'] -> ['.en.mdx', '.cn.mdx']
+const LANGUAGE_SUFFIXES = languages.map(lang => `.${lang}.mdx`);
+
+// Target language is the first non-default language
+const targetLanguage = languages.find(lang => lang !== defaultLanguage) || languages[0];
+const TARGET_LANGUAGE_SUFFIX = `.${targetLanguage}.mdx`;
+
+/**
+ * Get the current site configuration
+ * @returns {object} - Configuration object with languages info
+ */
+export function getSiteConfig() {
+  return {
+    languages,
+    defaultLanguage,
+    targetLanguage,
+    languageSuffixes: LANGUAGE_SUFFIXES,
+    targetLanguageSuffix: TARGET_LANGUAGE_SUFFIX,
+  };
+}
 
 /**
  * Check if a file has a language suffix
@@ -37,7 +87,8 @@ export function getAllMdxFiles(dir) {
 
 export function resolveTranslatedFilePath(enFilePath) {
   // Strategy: Use dot parser convention
-  // content/docs/path/to/file.mdx -> content/docs/path/to/file.cn.mdx
+  // content/docs/path/to/file.mdx -> content/docs/path/to/file.{targetLang}.mdx
+  // Target language is determined from docs.site.json configuration
   // Skip files that already have language suffix
   const absPath = path.resolve(enFilePath);
   
