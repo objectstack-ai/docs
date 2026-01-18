@@ -24,9 +24,51 @@ export const { docs, meta } = defineDocs({
 
 export default defineConfig({
   mdxOptions: {
+    // Rehype Code Plugin - Syntax highlighting configuration
     rehypeCodeOptions: {
-      theme: siteConfig.content.codeBlock.theme,
-    }
+      themes: {
+        light: siteConfig.content.codeBlock.theme,
+        dark: siteConfig.content.codeBlock.theme,
+      },
+      // Enable inline code highlighting with tailing curly colon syntax
+      // Example: `code{:js}` will highlight as JavaScript
+      inline: 'tailing-curly-colon',
+      // Filter meta string before processing (optional customization)
+      filterMetaString: (meta) => meta,
+      // Enable tab support for code blocks
+      tab: true,
+    },
+    // Remark Image Plugin - Image handling and optimization
+    remarkImageOptions: {
+      // Enable image optimization
+      // This plugin handles images and makes them compatible with Next.js
+      publicDir: 'public',
+      placeholder: 'blur',
+    },
+    // Remark Heading Plugin - Table of contents and heading processing
+    remarkHeadingOptions: {
+      // Configure heading processing for TOC
+      // This is used by fumadocs to generate the table of contents
+    },
+    // Remark Structure Plugin - Document structure extraction
+    remarkStructureOptions: {
+      // Extract structured data for search and navigation
+      // This plugin analyzes document structure for features like search
+    },
+    // Remark Code Tab Plugin - Code tabs for switching between examples
+    remarkCodeTabOptions: {
+      // Use Tabs component for code tabs
+      Tabs: 'Tabs',
+      // Parse MDX in tab values
+      parseMdx: false,
+    },
+    // Remark NPM Plugin - Package manager command tabs
+    remarkNpmOptions: {
+      // Persist tab selection across page navigation
+      persist: {
+        id: 'package-manager',
+      },
+    },
   }
 });
 
