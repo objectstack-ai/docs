@@ -88,7 +88,10 @@ export function getTranslations(): Record<string, LanguageTranslations> {
       translations[lang] = defaultTranslations[lang];
     } else {
       // If no translation exists for a configured language, provide a minimal fallback
-      console.warn(`Warning: No translations found for language "${lang}". Using minimal fallback.`);
+      // Only log warning in development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Warning: No translations found for language "${lang}". Using minimal fallback.`);
+      }
       translations[lang] = {
         displayName: lang.toUpperCase(),
       };

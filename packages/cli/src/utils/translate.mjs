@@ -11,6 +11,7 @@ function loadSiteConfig() {
   
   if (!fs.existsSync(configPath)) {
     console.warn(`Warning: docs.site.json not found at ${configPath}, using defaults`);
+    // Fallback matches the default configuration in packages/site/lib/site-config.ts
     return {
       i18n: {
         enabled: true,
