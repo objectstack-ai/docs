@@ -2,6 +2,8 @@ import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
 import { siteConfig } from './lib/site-config';
 import path from 'node:path';
 import fs from 'node:fs';
+import remarkDirective from 'remark-directive';
+import { remarkDirectiveAdmonition } from 'fumadocs-core/mdx-plugins';
 
 function resolveContentDir(dir: string) {
   if (process.env.DOCS_DIR && dir === 'content/docs') return process.env.DOCS_DIR;
@@ -24,6 +26,7 @@ export const { docs, meta } = defineDocs({
 
 export default defineConfig({
   mdxOptions: {
+    remarkPlugins: [remarkDirective, remarkDirectiveAdmonition],
     rehypeCodeOptions: {
       theme: siteConfig.content.codeBlock.theme,
     }
