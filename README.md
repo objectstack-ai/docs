@@ -13,8 +13,10 @@ This repository contains the documentation for:
 ## Features
 
 - 🌍 **Multi-language Support**: 
-  - Source: English (`content/docs/*.mdx`)
-  - Target: Chinese (`content/docs/*.cn.mdx`) - *Auto-translated via AI using dot parser*
+  - Configurable via `docs.site.json`
+  - Built-in support for: English, Chinese, Japanese, French, German, Spanish
+  - Extensible: Easy to add new languages
+  - Auto-translation via AI CLI using dot parser convention
 - 📝 **MDX Content**: Interactive documentation with Type-safe components.
 - 🛠️ **Automated Workflows**: 
   - AI Translation CLI (`packages/cli`)
@@ -76,12 +78,43 @@ The guide covers:
 
 ### Internationalization (i18n)
 
-The default language is configured in `lib/i18n.ts` as `en`. If you change the default language, you must also update the redirect destination in `vercel.json` to match (currently `/en/docs`).
+Language configuration is managed in `content/docs.site.json`:
+
+```json
+{
+  "i18n": {
+    "enabled": true,
+    "defaultLanguage": "en",
+    "languages": ["en", "cn"]
+  }
+}
+```
+
+**Configurable Options:**
+- `enabled`: Enable/disable i18n support
+- `defaultLanguage`: The default language for the site (e.g., "en")
+- `languages`: Array of supported language codes (e.g., ["en", "cn", "ja", "fr"])
+
+**Supported Languages:**
+The system includes built-in UI translations for:
+- `en` - English
+- `cn` - Chinese (Simplified) / 简体中文
+- `ja` - Japanese / 日本語
+- `fr` - French / Français
+- `de` - German / Deutsch
+- `es` - Spanish / Español
+
+To add a new language:
+1. Add the language code to the `languages` array in `docs.site.json`
+2. If UI translations don't exist, add them to `packages/site/lib/translations.ts`
+3. Create content files with the language suffix (e.g., `file.{lang}.mdx`)
+
+**Important:** If you change the default language, you must also update the redirect destination in `vercel.json` to match (currently `/en/docs`).
 
 ### Content Structure
 
-Content files are located in `content/docs/` and use language suffixes:
-- `{filename}.en.mdx` - English content
-- `{filename}.cn.mdx` - Chinese content
-- `meta.en.json` - English navigation
-- `meta.cn.json` - Chinese navigation
+Content files are located in `content/docs/` and use language suffixes based on the `languages` configuration:
+- `{filename}.{lang}.mdx` - Language-specific content (e.g., `index.en.mdx`, `index.cn.mdx`)
+- `meta.{lang}.json` - Language-specific navigation (e.g., `meta.en.json`, `meta.cn.json`)
+
+The CLI translate utility automatically generates language suffixes based on your configuration.
