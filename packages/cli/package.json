@@ -15,7 +15,7 @@
     "@objectdocs/site": "workspace:*",
     "@types/node": "^25.0.8",
     "cac": "^6.7.14",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.2.3",
     "openai": "^4.0.0",
     "typescript": "^5.9.3"
   }
