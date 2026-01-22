@@ -1,11 +1,6 @@
 {
-  "title": "Specifications",
+  "title": "Documentation",
   "pages": [
-    "sdk",
-    "cli",
-    "deployment",
-    "objectql",
-    "objectui",
-    "objectos"
+    "index"
   ]
 }
