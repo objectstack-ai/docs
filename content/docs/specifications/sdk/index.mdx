@@ -1,0 +1,609 @@
+---
+title: ObjectStack SDK
+description: TypeScript SDK for defining business objects, logic, and metadata as code
+---
+
+# ObjectStack SDK Specification
+
+The ObjectStack SDK (`@objectstack/sdk`) is a TypeScript library that enables developers to define enterprise application metadata through code. It provides a type-safe, IntelliSense-enabled API for defining data schemas, business logic, permissions, and UI layouts.
+
+## Philosophy
+
+The SDK embodies the principle of **"Metadata as Code"**:
+
+* **Type Safety**: Leverage TypeScript's type system to catch errors at compile time
+* **Developer Experience**: Full IntelliSense support in modern IDEs
+* **Version Control**: All metadata is stored as code in Git repositories
+* **Composability**: Build complex applications from simple, reusable definitions
+
+---
+
+## Installation
+
+```bash
+npm install @objectstack/sdk
+# or
+pnpm add @objectstack/sdk
+# or
+yarn add @objectstack/sdk
+```
+
+---
+
+## Core API
+
+### defineObject
+
+The primary API for defining business objects (entities).
+
+#### TypeScript Interface
+
+```typescript
+interface ObjectDefinition {
+  name: string;                    // Unique identifier (snake_case)
+  label: string;                   // Human-readable display name
+  pluralLabel?: string;            // Plural form for UI
+  description?: string;            // Documentation
+  fields: Record<string, FieldDefinition>;
+  triggers?: TriggerDefinitions;
+  permissions?: PermissionDefinitions;
+  indexes?: IndexDefinition[];
+  validations?: ValidationRule[];
+}
+
+function defineObject(definition: ObjectDefinition): ObjectMetadata;
+```
+
+#### Example
+
+```typescript
+import { defineObject, Field } from '@objectstack/sdk';
+
+export const Customer = defineObject({
+  name: 'customer',
+  label: 'Customer',
+  pluralLabel: 'Customers',
+  description: 'Enterprise customer records',
+  
+  fields: {
+    name: Field.String({ 
+      label: 'Company Name',
+      required: true,
+      maxLength: 200,
+      searchable: true
+    }),
+    
+    email: Field.Email({
+      label: 'Primary Email',
+      required: true,
+      unique: true
+    }),
+    
+    industry: Field.Select({
+      label: 'Industry',
+      options: ['Technology', 'Finance', 'Healthcare', 'Retail'],
+      nullable: true
+    }),
+    
+    revenue: Field.Currency({
+      label: 'Annual Revenue',
+      precision: 18,
+      scale: 2,
+      nullable: true
+    }),
+    
+    isActive: Field.Boolean({
+      label: 'Active',
+      defaultValue: true
+    }),
+    
+    createdAt: Field.DateTime({
+      label: 'Created Date',
+      autoCreateTime: true
+    })
+  }
+});
+```
+
+---
+
+## Field Types
+
+The SDK provides a comprehensive set of field type constructors.
+
+### Primitive Types
+
+#### String
+
+```typescript
+Field.String(options: {
+  label: string;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: RegExp | string;
+  defaultValue?: string;
+  searchable?: boolean;      // Enable full-text search
+  encrypted?: boolean;        // Store encrypted in DB
+})
+```
+
+#### Number
+
+```typescript
+Field.Number(options: {
+  label: string;
+  required?: boolean;
+  min?: number;
+  max?: number;
+  precision?: number;         // Total digits
+  scale?: number;             // Decimal places
+  defaultValue?: number;
+})
+```
+
+#### Boolean
+
+```typescript
+Field.Boolean(options: {
+  label: string;
+  required?: boolean;
+  defaultValue?: boolean;
+})
+```
+
+### Semantic Types
+
+#### Email
+
+```typescript
+Field.Email(options: {
+  label: string;
+  required?: boolean;
+  unique?: boolean;
+  verificationRequired?: boolean;
+})
+```
+
+#### Currency
+
+```typescript
+Field.Currency(options: {
+  label: string;
+  required?: boolean;
+  precision?: number;         // Default: 18
+  scale?: number;             // Default: 2
+  currency?: string;          // ISO code (USD, EUR, etc.)
+})
+```
+
+#### DateTime
+
+```typescript
+Field.DateTime(options: {
+  label: string;
+  required?: boolean;
+  nullable?: boolean;
+  defaultValue?: Date | 'now';
+  autoCreateTime?: boolean;   // Set on insert
+  autoUpdateTime?: boolean;   // Set on update
+  timezone?: 'UTC' | 'local';
+})
+```
+
+### Relational Types
+
+#### Reference (Foreign Key)
+
+```typescript
+Field.Reference(options: {
+  label: string;
+  referenceTo: string;        // Target object name
+  required?: boolean;
+  onDelete?: 'cascade' | 'set_null' | 'restrict';
+  displayField?: string;      // Which field to show in UI
+})
+```
+
+**Example:**
+
+```typescript
+fields: {
+  account: Field.Reference({
+    label: 'Account',
+    referenceTo: 'account',
+    required: true,
+    onDelete: 'restrict'
+  })
+}
+```
+
+#### MasterDetail (Parent-Child)
+
+```typescript
+Field.MasterDetail(options: {
+  label: string;
+  referenceTo: string;
+  required?: boolean;
+  cascade?: boolean;          // Delete children when parent deleted
+})
+```
+
+### Compound Types
+
+#### Select (Picklist)
+
+```typescript
+Field.Select(options: {
+  label: string;
+  options: string[] | { label: string; value: string }[];
+  required?: boolean;
+  defaultValue?: string;
+  nullable?: boolean;
+})
+```
+
+#### MultiSelect
+
+```typescript
+Field.MultiSelect(options: {
+  label: string;
+  options: string[] | { label: string; value: string }[];
+  maxSelections?: number;
+})
+```
+
+#### JSON
+
+```typescript
+Field.JSON(options: {
+  label: string;
+  schema?: JSONSchema;        // Optional JSON Schema for validation
+  encrypted?: boolean;
+})
+```
+
+---
+
+## Triggers (Business Logic Hooks)
+
+Triggers define business logic that executes automatically during data lifecycle events.
+
+### Trigger Types
+
+```typescript
+interface TriggerDefinitions {
+  beforeInsert?: TriggerFunction;
+  afterInsert?: TriggerFunction;
+  beforeUpdate?: TriggerFunction;
+  afterUpdate?: TriggerFunction;
+  beforeDelete?: TriggerFunction;
+  afterDelete?: TriggerFunction;
+}
+
+type TriggerFunction = (context: TriggerContext) => Promise<void> | void;
+
+interface TriggerContext {
+  doc: Record<string, any>;        // Current document
+  oldDoc?: Record<string, any>;    // Previous state (update/delete only)
+  user: UserContext;               // Current user
+  transaction: Transaction;        // DB transaction for atomic operations
+  objectQL: ObjectQLClient;        // Query other objects
+}
+```
+
+### Example
+
+```typescript
+export const Order = defineObject({
+  name: 'order',
+  label: 'Order',
+  
+  fields: {
+    totalAmount: Field.Currency({ label: 'Total' }),
+    status: Field.Select({ 
+      options: ['draft', 'submitted', 'approved', 'cancelled'] 
+    }),
+    approvedAt: Field.DateTime({ nullable: true }),
+    approvedBy: Field.Reference({ 
+      referenceTo: 'user', 
+      nullable: true 
+    })
+  },
+  
+  triggers: {
+    beforeInsert: async ({ doc }) => {
+      // Validate business rules
+      if (doc.totalAmount < 0) {
+        throw new Error('Total amount cannot be negative');
+      }
+      
+      // Auto-set defaults
+      if (!doc.status) {
+        doc.status = 'draft';
+      }
+    },
+    
+    afterUpdate: async ({ doc, oldDoc, user, transaction }) => {
+      // Track approval
+      if (doc.status === 'approved' && oldDoc.status !== 'approved') {
+        doc.approvedAt = new Date();
+        doc.approvedBy = user.id;
+        
+        // Create audit log
+        await transaction.insert('audit_log', {
+          objectType: 'order',
+          recordId: doc.id,
+          action: 'approved',
+          userId: user.id,
+          timestamp: new Date()
+        });
+      }
+    },
+    
+    beforeDelete: async ({ doc }) => {
+      // Prevent deletion of approved orders
+      if (doc.status === 'approved') {
+        throw new Error('Cannot delete approved orders');
+      }
+    }
+  }
+});
+```
+
+---
+
+## Permissions
+
+Define role-based access control (RBAC) at the object and field level.
+
+### Permission Structure
+
+```typescript
+interface PermissionDefinitions {
+  create?: string[] | PermissionRule;
+  read?: string[] | PermissionRule;
+  update?: string[] | PermissionRule;
+  delete?: string[] | PermissionRule;
+  fieldPermissions?: Record<string, FieldPermission>;
+}
+
+interface PermissionRule {
+  roles?: string[];
+  condition?: string;           // Expression evaluated at runtime
+}
+
+interface FieldPermission {
+  read?: string[] | PermissionRule;
+  edit?: string[] | PermissionRule;
+}
+```
+
+### Example
+
+```typescript
+export const Employee = defineObject({
+  name: 'employee',
+  label: 'Employee',
+  
+  fields: {
+    name: Field.String({ label: 'Name' }),
+    email: Field.Email({ label: 'Email' }),
+    salary: Field.Currency({ label: 'Salary' }),
+    department: Field.String({ label: 'Department' })
+  },
+  
+  permissions: {
+    create: ['hr_manager', 'admin'],
+    read: ['employee', 'hr_manager', 'admin'],
+    update: ['hr_manager', 'admin'],
+    delete: ['admin'],
+    
+    fieldPermissions: {
+      salary: {
+        read: ['hr_manager', 'admin'],
+        edit: ['hr_manager', 'admin']
+      }
+    }
+  }
+});
+```
+
+---
+
+## Indexes
+
+Define database indexes for query optimization.
+
+```typescript
+interface IndexDefinition {
+  name?: string;
+  fields: string[];
+  unique?: boolean;
+  type?: 'btree' | 'hash' | 'gin' | 'gist';
+}
+```
+
+### Example
+
+```typescript
+export const Product = defineObject({
+  name: 'product',
+  label: 'Product',
+  
+  fields: {
+    sku: Field.String({ label: 'SKU' }),
+    name: Field.String({ label: 'Name' }),
+    category: Field.String({ label: 'Category' }),
+    price: Field.Currency({ label: 'Price' })
+  },
+  
+  indexes: [
+    {
+      name: 'idx_product_sku',
+      fields: ['sku'],
+      unique: true
+    },
+    {
+      name: 'idx_product_category',
+      fields: ['category', 'price']
+    }
+  ]
+});
+```
+
+---
+
+## Validation Rules
+
+Define cross-field validation rules that run before saving data.
+
+```typescript
+interface ValidationRule {
+  name: string;
+  condition: string | ValidationFunction;
+  message: string;
+  level?: 'error' | 'warning';
+}
+
+type ValidationFunction = (doc: Record<string, any>) => boolean;
+```
+
+### Example
+
+```typescript
+export const Invoice = defineObject({
+  name: 'invoice',
+  label: 'Invoice',
+  
+  fields: {
+    startDate: Field.DateTime({ label: 'Start Date' }),
+    endDate: Field.DateTime({ label: 'End Date' }),
+    amount: Field.Currency({ label: 'Amount' }),
+    discount: Field.Currency({ label: 'Discount' })
+  },
+  
+  validations: [
+    {
+      name: 'date_range',
+      condition: (doc) => doc.endDate > doc.startDate,
+      message: 'End date must be after start date',
+      level: 'error'
+    },
+    {
+      name: 'discount_limit',
+      condition: (doc) => doc.discount <= doc.amount * 0.3,
+      message: 'Discount cannot exceed 30% of amount',
+      level: 'error'
+    }
+  ]
+});
+```
+
+---
+
+## Compilation & Runtime
+
+### Build Process
+
+When you run `ostack build`, the SDK:
+
+1. **Scans** all TypeScript files in `src/objects/`
+2. **Extracts** metadata from `defineObject()` calls
+3. **Validates** the definitions against the schema
+4. **Generates** ObjectQL protocol JSON files
+5. **Compiles** TypeScript trigger functions to JavaScript
+6. **Bundles** everything into a deployable artifact
+
+### Generated Output
+
+```
+build/
+├── metadata/
+│   ├── customer.json       # ObjectQL schema
+│   ├── order.json
+│   └── product.json
+├── triggers/
+│   ├── customer.js         # Compiled trigger functions
+│   ├── order.js
+│   └── product.js
+└── manifest.json           # Complete application manifest
+```
+
+---
+
+## Type Safety
+
+The SDK provides full TypeScript type inference:
+
+```typescript
+// The SDK knows the shape of your object
+const customer = Customer.create({
+  name: 'Acme Corp',          // ✓ Type-safe
+  email: 'contact@acme.com',  // ✓ Type-safe
+  revenue: 1000000,           // ✓ Type-safe
+  // age: 25                  // ✗ Error: Property doesn't exist
+});
+
+// IntelliSense for field names
+Customer.fields.name          // ✓ Autocomplete works
+Customer.fields.email         // ✓ Autocomplete works
+// Customer.fields.age        // ✗ Error: Property doesn't exist
+```
+
+---
+
+## Advanced Patterns
+
+### Composition
+
+```typescript
+// Base definition
+const AuditFields = {
+  createdAt: Field.DateTime({ autoCreateTime: true }),
+  createdBy: Field.Reference({ referenceTo: 'user' }),
+  updatedAt: Field.DateTime({ autoUpdateTime: true }),
+  updatedBy: Field.Reference({ referenceTo: 'user' })
+};
+
+// Reuse in multiple objects
+export const Contract = defineObject({
+  name: 'contract',
+  fields: {
+    title: Field.String({ label: 'Title' }),
+    ...AuditFields
+  }
+});
+```
+
+### Inheritance (Planned)
+
+```typescript
+const BaseObject = defineObject({
+  name: 'base',
+  fields: {
+    id: Field.UUID({ primary: true }),
+    ...AuditFields
+  }
+});
+
+export const CustomObject = defineObject({
+  extends: BaseObject,
+  name: 'custom',
+  fields: {
+    customField: Field.String({ label: 'Custom' })
+  }
+});
+```
+
+---
+
+## Next Steps
+
+* **[CLI Reference](./cli)**: Learn how to use the ObjectStack CLI
+* **[Deployment Guide](./deployment)**: Deploy your application
+* **[Migration Guide](./migrations)**: Handle database schema changes
+
+:::tip Best Practice
+Keep your object definitions small and focused. Create separate files for each business object and organize them by domain (e.g., `src/objects/sales/`, `src/objects/inventory/`).
+:::
