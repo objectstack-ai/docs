@@ -4,6 +4,10 @@ import path from 'node:path';
 import fs from 'node:fs';
 import remarkDirective from 'remark-directive';
 import { remarkDirectiveAdmonition } from 'fumadocs-core/mdx-plugins';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { transformerTwoslash } from 'fumadocs-twoslash';
 
 function resolveContentDir(dir: string) {
   if (process.env.DOCS_DIR && dir === 'content/docs') return process.env.DOCS_DIR;
@@ -26,9 +30,20 @@ export const { docs, meta } = defineDocs({
 
 export default defineConfig({
   mdxOptions: {
-    remarkPlugins: [remarkDirective, remarkDirectiveAdmonition],
+    remarkPlugins: [
+      remarkDirective, 
+      remarkDirectiveAdmonition,
+      remarkGfm,        // GitHub Flavored Markdown (tables, strikethrough, etc.)
+      remarkMath,       // Math support (LaTeX equations)
+    ],
+    rehypePlugins: [
+      rehypeKatex,      // Render math equations
+    ],
     rehypeCodeOptions: {
       theme: siteConfig.content.codeBlock.theme,
+      transformers: [
+        transformerTwoslash(), // Interactive TypeScript code examples
+      ],
     }
   }
 });
