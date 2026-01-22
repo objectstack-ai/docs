@@ -8,6 +8,6 @@ export default async function LangPage({
 }) {
   const { lang } = await params;
 
-  // Redirect to the framework documentation (the main root)
-  redirect(`/${lang}/framework`);
+  // Redirect to the framework documentation (under docs)
+  redirect(`/${lang}/docs/framework`);
 }

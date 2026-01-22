@@ -31,9 +31,9 @@ export const source = loader({
   i18n,
 });
 
-// Multi-root sources
+// Multi-root sources as subdirectories under /docs
 export const frameworkSource$ = loader({
-  baseUrl: '/framework',
+  baseUrl: '/docs/framework',
   source: {
     files: [
       ...frameworkSource.files,
@@ -43,7 +43,7 @@ export const frameworkSource$ = loader({
 });
 
 export const guidesSource$ = loader({
-  baseUrl: '/guides',
+  baseUrl: '/docs/guides',
   source: {
     files: [
       ...guidesSource.files,
@@ -53,7 +53,7 @@ export const guidesSource$ = loader({
 });
 
 export const apiSource$ = loader({
-  baseUrl: '/api',
+  baseUrl: '/docs/api',
   source: {
     files: [
       ...apiSource.files,

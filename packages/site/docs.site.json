@@ -44,17 +44,17 @@
       "tabs": [
         {
           "title": "Framework",
-          "url": "/framework",
+          "url": "/docs/framework",
           "description": "ObjectStack Framework Documentation"
         },
         {
           "title": "Guides",
-          "url": "/guides",
+          "url": "/docs/guides",
           "description": "Practical guides and tutorials"
         },
         {
           "title": "API",
-          "url": "/api",
+          "url": "/docs/api",
           "description": "Complete API reference"
         }
       ]
