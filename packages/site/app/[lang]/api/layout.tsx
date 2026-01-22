@@ -34,7 +34,7 @@ export default async function Layout({
         tabs: siteConfig.layout.sidebar.tabs && siteConfig.layout.sidebar.tabs.length > 0 ? 
           siteConfig.layout.sidebar.tabs.map(tab => ({
             title: tab.title,
-            url: tab.url,
+            url: `/${lang}${tab.url}`,
             description: tab.description,
           })) : undefined,
         banner: siteConfig.layout.sidebar.banner ? (
