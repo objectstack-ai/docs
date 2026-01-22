@@ -1,17 +1,38 @@
 ---
-title: 规范概述
+title: 文档概述
 description: ObjectStack 协议的权威指南。理解"意图优于实现"的哲学。
 ---
 
-# 规范概述
+# 文档概述
 
 > "我们塑造工具,随后工具塑造我们。" — Marshall McLuhan
 
-欢迎来到 ObjectStack 的**规范**部分("圣经")。
+欢迎来到 **ObjectStack 文档**。
 
-与*指南*(告诉你如何使用 SDK)或*概念*(解释哲学)不同,本节定义了生态系统的**严格契约**。它详细说明了每个 ObjectStack 实现必须遵守的线路格式、Schema 结构和确定性行为。
+文档现在围绕**三层企业架构**组织:
 
-如果你正在构建新的数据库驱动程序、自定义 UI 渲染器或生成软件的 AI Agent,这就是你的参考手册。
+## 架构层次
+
+### [创造层](../creator-layer)
+**"在 IDE 中定义世界"**
+
+开发者工作的地方——编写代码、定义元数据、构建业务逻辑。
+* **[SDK 参考](../creator-layer/sdk)**: 用于定义对象和逻辑的 TypeScript SDK
+* **[CLI 指南](../creator-layer/cli)**: 用于开发的命令行工具
+
+### [治理层](../governance-layer)
+**"Git 仓库即控制台"**
+
+代码通过 CI/CD 流水线转换为可部署制品的地方。
+* **[部署模式](../governance-layer/deployment)**: Docker、Kubernetes 和云策略
+
+### [执行层](../execution-layer)
+**"自带动力的三位一体引擎"**
+
+应用在客户基础设施上运行的地方。
+* **[ObjectQL](../execution-layer/objectql)**: 数据引擎规范
+* **[ObjectOS](../execution-layer/objectos)**: 运行时和编排规范
+* **[ObjectUI](../execution-layer/objectui)**: 视图引擎规范
 
 ## 核心哲学: 意图优于实现
 
@@ -22,8 +43,6 @@ description: ObjectStack 协议的权威指南。理解"意图优于实现"的�
 * **实现:** Python 的 `if` 语句、SQL 的 `WHERE` 子句或 React 条件渲染。
 
 ObjectStack 将这些完全分离。
-
-
 
 ### 关注点分离
 
@@ -37,24 +56,14 @@ ObjectStack 将这些完全分离。
 2.  **持久性:** 你今天编写的 JSON Schema 在 10 年后仍然有效,即使底层运行时从 Node.js 切换到 Bun 或 Rust。
 3.  **AI 原生性:** AI 生成结构化的 JSON 意图比生成充满副作用的命令式代码更安全、更准确。
 
-## 协议栈
+## 理解框架
 
-这些规范分为三大支柱,对应于"三位一体"架构:
+要了解 ObjectStack 如何工作:
 
-### 1. ObjectQL(数据规范)
-* **重点:** 数据建模、查询和变更。
-* **核心规范:** Schema 定义、AST 线路协议、事务模型。
-* **目标:** 使数据库层声明化且可互换。
-
-### 2. ObjectUI(视图规范)
-* **重点:** 界面结构、布局和交互。
-* **核心规范:** Component Schema、视图类型、Action 协议。
-* **目标:** 实现服务端驱动 UI,其中后端决定前端体验。
-
-### 3. ObjectOS(运行时规范)
-* **重点:** 身份、治理和编排。
-* **核心规范:** 工作流 FSM、权限注入、审计跟踪。
-* **目标:** 为业务逻辑提供标准操作环境。
+1. **从[概念](../concepts)开始**: 理解哲学和核心价值
+2. **阅读[企业框架](../concepts/enterprise-framework)**: 查看完整的三层架构
+3. **探索每一层**: 深入研究创造层、治理层和执行层
+4. **参考规范**: 在构建时作为技术参考
 
 ## 一致性与术语
 
@@ -65,8 +74,9 @@ ObjectStack 将这些完全分离。
 * **✅ 架构师:** 了解系统的能力和约束。
 * **✅ 驱动程序开发者:** 实现新的存储后端(例如 ClickHouse 驱动程序)。
 * **✅ 平台工程师:** 将 ObjectStack 集成到现有的微服务网格中。
-* **❌ 初级开发者:** 如果你只想构建一个应用,请从 **[入门指南](../index)** 开始。
+* **✅ 开发者:** 使用 ObjectStack 构建企业应用。
+* **❌ 首次访问者:** 请从 **[入门指南](../index)** 开始。
 
 ---
 
-**继续阅读第一个规范:** **[ObjectQL 概述](objectql/index)**
+**开始你的旅程:** **[企业框架概述](../concepts/enterprise-framework)**

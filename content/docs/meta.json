@@ -1,8 +1,11 @@
 {
-  "title": "OpenStack",
+  "title": "ObjectStack",
   "pages": [
     "index",
     "concepts",
+    "creator-layer",
+    "governance-layer",
+    "execution-layer",
     "specifications"
   ]
 }
