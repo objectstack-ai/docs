@@ -1,0 +1,82 @@
+---
+title: Documentation Overview
+description: The authoritative guide to the ObjectStack protocols. Understanding the philosophy of "Intent over Implementation".
+---
+
+# Documentation Overview
+
+> "We shape our tools and thereafter our tools shape us." — Marshall McLuhan
+
+Welcome to the **ObjectStack Documentation**.
+
+The documentation is now organized around the **Three-Layer Enterprise Architecture**:
+
+## Architecture Layers
+
+### [Creator Layer](../creator-layer)
+**"Define the World in Your IDE"**
+
+Where developers work—writing code, defining metadata, and building business logic.
+* **[SDK Reference](../creator-layer/sdk)**: TypeScript SDK for defining objects and logic
+* **[CLI Guide](../creator-layer/cli)**: Command-line tools for development
+
+### [Governance Layer](../governance-layer)
+**"Git Repository as Console"**
+
+Where code transforms into deployable artifacts through CI/CD pipelines.
+* **[Deployment Patterns](../governance-layer/deployment)**: Docker, Kubernetes, and cloud strategies
+
+### [Execution Layer](../execution-layer)
+**"Self-Powered Trinity Engine"**
+
+Where applications run on customer infrastructure.
+* **[ObjectQL](../execution-layer/objectql)**: Data engine specifications
+* **[ObjectOS](../execution-layer/objectos)**: Runtime and orchestration specifications
+* **[ObjectUI](../execution-layer/objectui)**: View engine specifications
+
+## Core Philosophy: Intent over Implementation
+
+The singular axiom driving these specifications is **Intent over Implementation**.
+
+In traditional software engineering, the "Business Intent" is inextricably mixed with "Technical Implementation."
+* **Intent:** "Users over 18 can see the 'Wine' category."
+* **Implementation:** A Python `if` statement, a SQL `WHERE` clause, or a React conditional render.
+
+ObjectStack separates these completely.
+
+### The Separation of Concerns
+
+| Layer | Responsibility | Format | Example |
+| :--- | :--- | :--- | :--- |
+| **Intent (The Spec)** | Defines *WHAT* the system is. | JSON / YAML | `visible_on: "user.age >= 18"` |
+| **Engine (The Runtime)** | Decides *HOW* to execute it. | Node.js / Go / Rust | Compiles to SQL or hydrates a React Tree. |
+
+By freezing the **Intent** into a standardized Data Protocol, we achieve:
+1.  **Portability:** The same logic runs on PostgreSQL, SQLite, or MongoDB.
+2.  **Longevity:** The JSON schema you write today will still be valid in 10 years, even if the underlying runtime switches from Node.js to Bun or Rust.
+3.  **AI-Nativity:** It is safer and more accurate for an AI to generate a structured JSON intent than to generate imperative code full of side effects.
+
+## Understanding the Framework
+
+To understand how ObjectStack works:
+
+1. **Start with [Concepts](../concepts)**: Understand the philosophy and core values
+2. **Read [Enterprise Framework](../concepts/enterprise-framework)**: See the complete three-layer architecture
+3. **Explore each layer**: Dive into Creator, Governance, and Execution layers
+4. **Reference specifications**: Use as technical reference when building
+
+## Conformance & Terminology
+
+In this documentation, the key words **"MUST"**, **"MUST NOT"**, **"REQUIRED"**, **"SHALL"**, **"SHALL NOT"**, **"SHOULD"**, **"SHOULD NOT"**, **"RECOMMENDED"**, **"MAY"**, and **"OPTIONAL"** are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
+
+### Who is this for?
+
+* **✅ Architect:** To understand the capabilities and constraints of the system.
+* **✅ Driver Developer:** To implement a new storage backend (e.g., a ClickHouse driver).
+* **✅ Platform Engineer:** To integrate ObjectStack into an existing microservices mesh.
+* **✅ Developer:** To build enterprise applications using ObjectStack.
+* **❌ First-time visitor:** Start with the **[Getting Started](../index)** guide instead.
+
+---
+
+**Begin your journey:** **[Enterprise Framework Overview](../concepts/enterprise-framework)**

@@ -1,0 +1,111 @@
+---
+title: "Introduction"
+description: Why the world needs a universal enterprise full-stack protocol standard. Shifting from Code-Driven to Protocol-Driven architecture.
+---
+
+# Introduction: The Protocol-Driven Paradigm
+
+> "Code rots. Protocols endure."
+
+For the past two decades, enterprise software development has been trapped in a Sisyphean cycle:
+
+We built CRMs with JSP, then rewrote them in Angular five years later, and rewrote them again in React five years after that. Backends shifted from PHP to Node.js, and then to Go. With every iteration of the tech stack, we are **re-implementing the exact same business logic**—the same form validations, the same permission checks, the same approval workflows.
+
+This **"Code-Driven"** development model carries a massive hidden cost: **Business logic is tightly coupled with technical implementation.** When the framework becomes obsolete, your business assets depreciate with it, eventually turning into technical debt.
+
+**ObjectStack was born to end this cycle.**
+
+## What is ObjectStack?
+
+ObjectStack is not just a framework or a library; it is a **Universal Full-Stack Application Protocol Standard**.
+
+It advocates for the complete separation of **"Intent"** from **"Implementation"**. By defining data, interfaces, and processes through standardized JSON protocols, business logic becomes independent of specific programming languages and database technologies.
+
+The core architecture of ObjectStack consists of three pillars:
+
+1.  **ObjectQL (The Data Protocol):** A database-agnostic universal data protocol.
+2.  **ObjectUI (The View Protocol):** A declarative universal interface protocol.
+3.  **ObjectOS (The Runtime Protocol):** A business operating system responsible for orchestration and governance.
+
+
+
+## Core Philosophy
+
+### 1. Protocol-Driven Development
+
+In traditional development, business logic is hard-coded into functions:
+
+```javascript
+// The Old Way: Imperative & Coupled
+function createOrder(data) {
+  if (data.amount > 1000 && !user.isManager) {
+    throw new Error("Need approval");
+  }
+  db.query("INSERT INTO orders ...");
+}
+
+```
+
+In ObjectStack, business logic is defined as **Data (Metadata/Protocol)**:
+
+```yaml
+# The ObjectStack Way: Declarative & Decoupled
+object: order
+fields:
+  amount: { type: currency }
+validation:
+  - rule: "amount > 1000"
+    guard: "!user.isManager"
+    message: "Need approval"
+
+```
+
+* **The Difference:** The YAML configuration above relies on no specific language. It can be executed by a Node.js backend, analyzed by a Python script, or even transmitted to the frontend for immediate client-side validation.
+* **The Value:** Your business logic becomes a **portable, analyzable, and evolvable digital asset**, rather than a pile of code destined for obsolescence.
+
+### 2. Local-First & Data Sovereignty
+
+Cloud-Native brings convenience, but it also strips users of data sovereignty. Data silos created by SaaS vendors leave enterprises without physical control over their own data.
+
+ObjectStack embraces a **Local-First** architecture:
+
+* Applications read and write data primarily to a local database (e.g., SQLite, RxDB).
+* Interactions are instantaneous, requiring no network round-trips.
+* **ObjectOS** handles complex data synchronization and conflict resolution (CRDTs/LWW) in the background.
+
+This means: **Even if the network goes down, your enterprise software remains usable. Even if the cloud provider goes bankrupt, your data remains in your hands.**
+
+### 3. Database-Agnostic
+
+Enterprises should not be locked into a specific database vendor.
+
+**ObjectQL** acts as a **Database Compiler**. You write standard ObjectQL Schema and Query ASTs, and the engine compiles them into:
+
+* **PostgreSQL** (For production environments)
+* **SQLite** (For edge devices or local development)
+* **MySQL / Oracle / SQL Server** (For legacy system integration)
+
+This capability allows architects to choose the optimal storage engine for different scenarios without rewriting a single line of business code.
+
+## Why Now?
+
+AI is reshaping software engineering.
+
+As AI-assisted programming (Copilot) becomes ubiquitous, we are discovering that AI generates **Structured Protocols (JSON/YAML)** far more accurately and safely than it generates **Imperative Code (JavaScript/Python)**.
+
+* AI-generated code is prone to hallucinations and bugs.
+* AI-generated JSON configuration, validated against a Schema, is deterministic and verifiable.
+
+ObjectStack is an **architecture designed for the AI Era**. It provides a standard semantic layer that AI can perfectly understand and manipulate, making "Software Generation via Conversation" a reality.
+
+## Overview
+
+In the following sections, we will explore the details of these protocols:
+
+* Go to **[Architecture Overview](concepts/architecture)** to see how the components collaborate.
+* Go to **[Core Values](concepts/core-values)** to learn more about Local-First thinking.
+* Go to **[Enterprise Patterns](concepts/enterprise-patterns)** to understand how to handle complex ERP scenarios.
+
+:::tip Remember
+The goal of ObjectStack is not just to make you write code faster, but to make the code you write **live longer**.
+:::

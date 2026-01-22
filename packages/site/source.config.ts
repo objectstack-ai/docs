@@ -23,9 +23,25 @@ function resolveContentDir(dir: string) {
 }
 
 const docsDir = resolveContentDir('content/docs');
+const frameworkDir = resolveContentDir('content/framework');
+const guidesDir = resolveContentDir('content/guides');
+const apiDir = resolveContentDir('content/api');
 
+// Define multiple document sources for multi-root setup
 export const { docs, meta } = defineDocs({
   dir: docsDir,
+});
+
+export const { docs: frameworkDocs, meta: frameworkMeta } = defineDocs({
+  dir: frameworkDir,
+});
+
+export const { docs: guidesDocs, meta: guidesMeta } = defineDocs({
+  dir: guidesDir,
+});
+
+export const { docs: apiDocs, meta: apiMeta } = defineDocs({
+  dir: apiDir,
 });
 
 export default defineConfig({

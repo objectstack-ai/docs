@@ -41,7 +41,23 @@
       "prefetch": true,
       "defaultOpenLevel": 1,
       "collapsible": true,
-      "tabs": []
+      "tabs": [
+        {
+          "title": "Framework",
+          "url": "/framework",
+          "description": "ObjectStack Framework Documentation"
+        },
+        {
+          "title": "Guides",
+          "url": "/guides",
+          "description": "Practical guides and tutorials"
+        },
+        {
+          "title": "API",
+          "url": "/api",
+          "description": "Complete API reference"
+        }
+      ]
     },
     "toc": {
       "enabled": true,
