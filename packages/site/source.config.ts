@@ -31,7 +31,7 @@ export const { docs, meta } = defineDocs({
 export default defineConfig({
   mdxOptions: {
     remarkPlugins: [
-      remarkDirective, 
+      remarkDirective,
       remarkDirectiveAdmonition,
       remarkGfm,        // GitHub Flavored Markdown (tables, strikethrough, etc.)
       remarkMath,       // Math support (LaTeX equations)
