@@ -8,22 +8,11 @@ const fumadocsMiddleware = createI18nMiddleware(i18n);
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
   const path = request.nextUrl.pathname;
   
-  // Handle root path separately with custom language detection
+  // Handle root path - redirect to English docs
   if (path === '/') {
-    const acceptLanguage = request.headers.get('accept-language') || '';
-    
-    // Simple language detection: check if zh is in Accept-Language
-    if (acceptLanguage.toLowerCase().includes('zh')) {
-      // Redirect to Chinese docs
-      const url = request.nextUrl.clone();
-      url.pathname = '/cn/docs';
-      return NextResponse.redirect(url);
-    } else {
-      // Redirect to default language (English)
-      const url = request.nextUrl.clone();
-      url.pathname = '/en/docs';
-      return NextResponse.redirect(url);
-    }
+    const url = request.nextUrl.clone();
+    url.pathname = '/en/docs';
+    return NextResponse.redirect(url);
   }
   
   // For all other paths, pass through to fumadocs middleware

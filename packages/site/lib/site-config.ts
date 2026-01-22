@@ -91,8 +91,7 @@ const defaultConfig: SiteConfig = {
   i18n: {
     enabled: true,
     defaultLanguage: 'en',
-    languages: ["en", "cn"
-    ],
+    languages: ["en"],
   },
   branding: {
     logo: {
