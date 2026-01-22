@@ -1,4 +1,5 @@
 import 'fumadocs-ui/style.css';
+import 'katex/dist/katex.min.css';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { defineI18nUI } from 'fumadocs-ui/i18n';
 import { i18n } from '@/lib/i18n';
