@@ -1,0 +1,660 @@
+---
+title: Deployment Guide
+description: Deploy ObjectStack Enterprise Framework applications to production environments
+---
+
+# Deployment Guide
+
+This guide covers deploying ObjectStack Enterprise Framework applications to various production environments, including Docker, Kubernetes, and cloud platforms.
+
+## Overview
+
+ObjectStack applications compile to a self-contained artifact that includes:
+
+* **Runtime Kernel**: ObjectQL + ObjectOS + ObjectUI engines
+* **Business Logic**: Compiled TypeScript triggers and workflows
+* **Metadata**: Object schemas, permissions, and UI definitions
+* **Migrations**: Database schema update scripts
+
+---
+
+## Deployment Targets
+
+### Docker Deployment
+
+The most common deployment method uses Docker containers.
+
+#### Building the Docker Image
+
+```bash
+ostack build --target docker
+```
+
+**Generated Dockerfile:**
+
+```dockerfile
+FROM node:20-alpine AS base
+
+WORKDIR /app
+
+# Copy built artifacts
+COPY build/ ./
+
+# Install production dependencies
+RUN npm ci --omit=dev
+
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node healthcheck.js
+
+# Run the application
+CMD ["node", "kernel/objectstack-runtime.js"]
+```
+
+#### Building and Running
+
+```bash
+# Build the image
+docker build -t my-erp:latest .
+
+# Run locally
+docker run -d \
+  --name my-erp \
+  -p 3000:3000 \
+  -e DATABASE_URL=postgresql://user:pass@db:5432/mydb \
+  -e SECRET_KEY=your-secret-key \
+  my-erp:latest
+
+# Check logs
+docker logs -f my-erp
+
+# Stop
+docker stop my-erp
+```
+
+---
+
+### Docker Compose
+
+For multi-service deployments:
+
+**docker-compose.yml:**
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/mydb
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+  
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=mydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+  
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+**Usage:**
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f app
+
+# Scale the application
+docker-compose up -d --scale app=3
+
+# Stop all services
+docker-compose down
+```
+
+---
+
+### Kubernetes Deployment
+
+For production-grade orchestration with high availability.
+
+#### Kubernetes Manifests
+
+**deployment.yaml:**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: objectstack-app
+  namespace: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: objectstack-app
+  template:
+    metadata:
+      labels:
+        app: objectstack-app
+    spec:
+      containers:
+      - name: app
+        image: my-registry/my-erp:v1.0.0
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: database-url
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: secret-key
+        - name: NODE_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: objectstack-app
+  namespace: production
+spec:
+  selector:
+    app: objectstack-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: production
+type: Opaque
+stringData:
+  database-url: "postgresql://user:pass@postgres:5432/mydb"
+  secret-key: "your-secret-key-here"
+```
+
+#### Deploy to Kubernetes
+
+```bash
+# Create namespace
+kubectl create namespace production
+
+# Apply manifests
+kubectl apply -f deployment.yaml
+
+# Check deployment status
+kubectl get deployments -n production
+kubectl get pods -n production
+
+# View logs
+kubectl logs -f -l app=objectstack-app -n production
+
+# Scale deployment
+kubectl scale deployment/objectstack-app --replicas=5 -n production
+```
+
+---
+
+### Cloud Platforms
+
+#### AWS Elastic Container Service (ECS)
+
+**Using the CLI:**
+
+```bash
+ostack deploy cloud --provider aws --region us-east-1
+```
+
+**Manual Deployment:**
+
+1. **Build and push image to ECR:**
+
+```bash
+# Authenticate to ECR
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin 123456789.dkr.ecr.us-east-1.amazonaws.com
+
+# Tag and push
+docker tag my-erp:latest 123456789.dkr.ecr.us-east-1.amazonaws.com/my-erp:latest
+docker push 123456789.dkr.ecr.us-east-1.amazonaws.com/my-erp:latest
+```
+
+2. **Create ECS Task Definition:**
+
+```json
+{
+  "family": "my-erp-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::123456789:role/ecsTaskExecutionRole",
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "123456789.dkr.ecr.us-east-1.amazonaws.com/my-erp:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {"name": "NODE_ENV", "value": "production"}
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789:secret:db-url"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/my-erp",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+```
+
+3. **Create ECS Service:**
+
+```bash
+aws ecs create-service \
+  --cluster my-cluster \
+  --service-name my-erp-service \
+  --task-definition my-erp-task \
+  --desired-count 3 \
+  --launch-type FARGATE \
+  --network-configuration "awsvpcConfiguration={subnets=[subnet-12345],securityGroups=[sg-12345]}"
+```
+
+#### Google Cloud Run
+
+```bash
+# Build and deploy in one command
+gcloud run deploy my-erp \
+  --source . \
+  --region us-central1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars NODE_ENV=production \
+  --set-secrets DATABASE_URL=db-url:latest
+```
+
+#### Azure Container Instances
+
+```bash
+# Create resource group
+az group create --name my-erp-rg --location eastus
+
+# Deploy container
+az container create \
+  --resource-group my-erp-rg \
+  --name my-erp \
+  --image myregistry.azurecr.io/my-erp:latest \
+  --cpu 1 \
+  --memory 1 \
+  --ports 3000 \
+  --environment-variables NODE_ENV=production \
+  --secure-environment-variables DATABASE_URL=$DATABASE_URL
+```
+
+---
+
+## Database Migrations
+
+### Pre-Deployment Migration
+
+Run migrations before deploying the new version:
+
+```bash
+# Using kubectl for Kubernetes
+kubectl run migration-job \
+  --image=my-erp:v1.0.0 \
+  --restart=Never \
+  --command -- ostack migrate up
+
+# Using Docker
+docker run --rm \
+  -e DATABASE_URL=$DATABASE_URL \
+  my-erp:latest \
+  ostack migrate up
+```
+
+### Zero-Downtime Deployment
+
+Use a two-phase deployment:
+
+**Phase 1: Deploy backward-compatible schema**
+
+```bash
+# Deploy version with additive changes only
+kubectl set image deployment/objectstack-app app=my-erp:v1.1.0
+```
+
+**Phase 2: Remove deprecated fields**
+
+```bash
+# After all pods updated, run cleanup migration
+kubectl run cleanup-job --image=my-erp:v1.1.0 --command -- ostack migrate cleanup
+```
+
+---
+
+## Environment Configuration
+
+### Production Environment Variables
+
+```bash
+# Application
+NODE_ENV=production
+PORT=3000
+LOG_LEVEL=warn
+
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+DATABASE_POOL_MIN=5
+DATABASE_POOL_MAX=20
+
+# Security
+SECRET_KEY=your-strong-secret-key
+SESSION_SECRET=your-session-secret
+CORS_ORIGINS=https://app.example.com,https://admin.example.com
+
+# Features
+ENABLE_API_DOCS=false
+ENABLE_DEBUGGING=false
+MAX_UPLOAD_SIZE=10mb
+
+# Monitoring
+SENTRY_DSN=https://...
+NEWRELIC_LICENSE_KEY=...
+```
+
+### Secrets Management
+
+#### Kubernetes Secrets
+
+```bash
+# Create secret from file
+kubectl create secret generic app-secrets \
+  --from-env-file=.env.production \
+  -n production
+
+# Create from literal values
+kubectl create secret generic app-secrets \
+  --from-literal=database-url='postgresql://...' \
+  --from-literal=secret-key='...' \
+  -n production
+```
+
+#### Docker Secrets
+
+```bash
+# Create secret
+echo "postgresql://..." | docker secret create db_url -
+
+# Use in service
+docker service create \
+  --name my-erp \
+  --secret db_url \
+  my-erp:latest
+```
+
+#### Cloud Provider Secret Managers
+
+**AWS Secrets Manager:**
+
+```bash
+# Store secret
+aws secretsmanager create-secret \
+  --name my-erp/database-url \
+  --secret-string "postgresql://..."
+
+# Reference in ECS task definition
+"secrets": [
+  {
+    "name": "DATABASE_URL",
+    "valueFrom": "arn:aws:secretsmanager:region:account:secret:my-erp/database-url"
+  }
+]
+```
+
+---
+
+## Monitoring and Observability
+
+### Health Checks
+
+ObjectStack provides built-in health endpoints:
+
+* `GET /health` - Liveness probe (is the app running?)
+* `GET /ready` - Readiness probe (can the app serve traffic?)
+* `GET /metrics` - Prometheus metrics
+
+### Logging
+
+Configure structured JSON logging for production:
+
+```typescript
+// objectstack.config.ts
+export default defineConfig({
+  runtime: {
+    logLevel: 'info',
+    logFormat: 'json',
+    logDestination: 'stdout'
+  }
+});
+```
+
+### Application Performance Monitoring
+
+**Sentry Integration:**
+
+```typescript
+// objectstack.config.ts
+import * as Sentry from '@sentry/node';
+
+export default defineConfig({
+  plugins: [
+    {
+      name: 'sentry',
+      setup: () => {
+        Sentry.init({
+          dsn: process.env.SENTRY_DSN,
+          environment: process.env.NODE_ENV
+        });
+      }
+    }
+  ]
+});
+```
+
+---
+
+## CI/CD Best Practices
+
+### Deployment Checklist
+
+- [ ] Run tests in CI (`ostack test`)
+- [ ] Lint code (`ostack lint`)
+- [ ] Build Docker image
+- [ ] Push to registry with version tag
+- [ ] Run database migrations
+- [ ] Deploy to staging environment
+- [ ] Run smoke tests
+- [ ] Deploy to production (blue-green or canary)
+- [ ] Monitor metrics and logs
+- [ ] Rollback if issues detected
+
+### Blue-Green Deployment
+
+```bash
+# Deploy green environment
+kubectl apply -f deployment-green.yaml
+
+# Test green environment
+curl https://green.example.com/health
+
+# Switch traffic
+kubectl patch service my-app -p '{"spec":{"selector":{"version":"green"}}}'
+
+# Monitor for 10 minutes
+# If successful, scale down blue
+
+# If issues, rollback
+kubectl patch service my-app -p '{"spec":{"selector":{"version":"blue"}}}'
+```
+
+---
+
+## Scaling Strategies
+
+### Horizontal Scaling
+
+**Kubernetes Horizontal Pod Autoscaler:**
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: objectstack-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: objectstack-app
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+```
+
+### Vertical Scaling
+
+Adjust resource limits based on monitoring:
+
+```yaml
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "2000m"
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Pod CrashLoopBackOff:**
+
+```bash
+# Check logs
+kubectl logs -f pod-name
+
+# Common causes:
+# - Missing environment variables
+# - Database connection failure
+# - Failed migrations
+```
+
+**High Memory Usage:**
+
+```bash
+# Check memory usage
+kubectl top pods
+
+# Adjust memory limits or investigate memory leaks
+```
+
+**Database Connection Pool Exhausted:**
+
+```typescript
+// Increase pool size in config
+database: {
+  pool: {
+    min: 10,
+    max: 50
+  }
+}
+```
+
+---
+
+## Next Steps
+
+* **[Security Guide](../../guides/security)**: Secure your deployment
+* **[Monitoring Guide](../../guides/monitoring)**: Set up comprehensive monitoring
+* **[Backup & Recovery](../../guides/backup)**: Data protection strategies
+
+:::warning Production Checklist
+Before going to production, ensure you have:
+- Database backups configured
+- Monitoring and alerting set up
+- SSL/TLS certificates installed
+- Secrets properly managed
+- Disaster recovery plan documented
+:::
