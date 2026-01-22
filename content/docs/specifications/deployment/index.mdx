@@ -275,6 +275,7 @@ docker push 123456789.dkr.ecr.us-east-1.amazonaws.com/my-erp:latest
   "family": "my-erp-task",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::123456789:role/ecsTaskExecutionRole",
   "cpu": "512",
   "memory": "1024",
   "containerDefinitions": [
