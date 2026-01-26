@@ -14,7 +14,7 @@
   "dependencies": {
     "@fumadocs/ui": "^16.4.7",
     "fumadocs-core": "^16.4.7",
-    "fumadocs-mdx": "^14.2.5",
+    "fumadocs-mdx": "^14.2.6",
     "fumadocs-ui": "^16.4.7",
     "next": "^16.1.2",
     "@tailwindcss/postcss": "^4.1.18",
