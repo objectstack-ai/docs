@@ -12,7 +12,7 @@
     "test": "pnpm -r test"
   },
   "dependencies": {
-    "@fumadocs/cli": "^1.2.2",
+    "@fumadocs/cli": "^1.2.3",
     "client-only": "^0.0.1",
     "fumadocs-core": "16.4.7",
     "fumadocs-mdx": "14.2.5",
